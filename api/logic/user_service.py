@@ -1,4 +1,4 @@
-from template.models.user import User
+from api.models.user import User
 
 
 class UserService:
