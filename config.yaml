@@ -1,0 +1,17 @@
+LOGGING_CONF:
+  version: 1
+  formatters:
+    simple:
+      # {}-formatting(std.format), please see https://docs.python.org/3/library/logging.html#logrecord-attributes
+      format: "{asctime} {levelname: <8} {threadName: <10.10} {module: >32}::{funcName: <20.20} {message}"
+      datefmt: "%m/%d/%Y %I:%M:%S %p"
+      style: "{"
+  handlers:
+    console:
+      class: logging.StreamHandler
+      level: DEBUG
+      formatter: simple
+      stream: ext://sys.stdout
+  root:
+    level: DEBUG
+    handlers: [console]
