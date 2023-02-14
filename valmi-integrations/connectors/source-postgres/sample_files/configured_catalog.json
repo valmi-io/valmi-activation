@@ -1,0 +1,30 @@
+{
+    "streams": [
+        {
+            "sync_mode": "full_refresh",
+            "destination_sync_mode":"append",
+            "stream": {
+                "name": "actor",
+                "supported_sync_modes": [
+                    "full_refresh",
+                    "incremental"
+                ],
+                "source_defined_cursor": false,
+                "json_schema": {
+                    "type": "object",
+                    "properties": {
+                        "actor_id": {
+                            "type": "number"
+                        },
+                        "first_name": {
+                            "type": "string"
+                        },
+                        "last_name": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        }
+    ]
+}

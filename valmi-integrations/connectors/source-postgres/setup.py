@@ -1,4 +1,3 @@
-
 from setuptools import find_packages, setup
 
 MAIN_REQUIREMENTS = [
@@ -13,8 +12,8 @@ TEST_REQUIREMENTS = [
 setup(
     name="source_postgres",
     description="Source implementation for Postgres.",
-    author="Airbyte",
-    author_email="contact@airbyte.io",
+    author="valmi.io",
+    author_email="contact@valmi.io",
     packages=find_packages(),
     install_requires=MAIN_REQUIREMENTS,
     package_data={"": ["*.json", "*.yaml"]},
