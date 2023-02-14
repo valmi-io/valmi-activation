@@ -71,7 +71,8 @@ class SourcePostgres(Source):
                     stream_name = row[0]
                     result = connection.execute(
                         text(
-                            "SELECT column_name, data_type FROM information_schema.columns WHERE table_name = '{0}';".format(
+                            "SELECT column_name, data_type FROM information_schema.columns \
+                                 WHERE table_name = '{0}';".format(
                                 stream_name
                             )
                         )
