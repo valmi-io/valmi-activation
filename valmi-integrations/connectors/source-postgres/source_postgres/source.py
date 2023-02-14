@@ -1,8 +1,3 @@
-#
-# Copyright (c) 2023 Airbyte, Inc., all rights reserved.
-#
-
-
 import json
 from datetime import datetime
 from typing import Dict, Generator
