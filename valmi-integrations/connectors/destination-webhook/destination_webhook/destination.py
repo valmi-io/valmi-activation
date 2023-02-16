@@ -14,6 +14,8 @@ from airbyte_cdk.models.airbyte_protocol import Type
 
 from extensions import ValmiDestination
 
+from .catalog import get_catalog
+
 
 class DestinationWebhook(ValmiDestination):
     def __init__(self):
@@ -56,7 +58,7 @@ class DestinationWebhook(ValmiDestination):
         pass
 
     def discover(self, logger: AirbyteLogger, config: json) -> AirbyteCatalog:
-        return catalog.get_catalog()
+        return get_catalog()
 
     def check(self, logger: AirbyteLogger, config: Mapping[str, Any]) -> AirbyteConnectionStatus:
         """
