@@ -4,7 +4,7 @@
             "sync_mode": "full_refresh",
             "destination_sync_mode":"append",
             "stream": {
-                "name": "customer_list",
+                "name": "actor",
                 "supported_sync_modes": [
                     "full_refresh",
                     "incremental"
@@ -13,13 +13,13 @@
                 "json_schema": {
                     "type": "object",
                     "properties": {
-                        "address": {
+                        "actor_id": {
+                            "type": "number"
+                        },
+                        "first_name": {
                             "type": "string"
                         },
-                        "city": {
-                            "type": "string"
-                        },
-                        "phone": {
+                        "last_name": {
                             "type": "string"
                         }
                     }

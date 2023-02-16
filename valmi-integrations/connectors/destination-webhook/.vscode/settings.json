@@ -1,9 +1,5 @@
 {
   "python.analysis.typeCheckingMode": "off",
-  "python.analysis.diagnosticSeverityOverrides": {
-    "reportMissingImports": "none",
-    "reportMissingModuleSource": "none",
-  },
   "python.linting.flake8Enabled": true,
   "python.linting.enabled": true,
 

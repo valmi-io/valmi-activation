@@ -2,7 +2,7 @@ FROM python:3.9.11-alpine3.15 as base
 
 # build and load all requirements
 FROM base as builder
-WORKDIR /valmi/integration_code
+WORKDIR /airbyte/integration_code
 
 # upgrade pip to the latest version
 RUN apk --no-cache upgrade \
@@ -16,7 +16,7 @@ RUN pip install --prefix=/install .
 
 # build a clean environment
 FROM base
-WORKDIR /valmi/integration_code
+WORKDIR /airbyte/integration_code
 
 # copy all loaded and built libraries to a pure basic image
 COPY --from=builder /install /usr/local
@@ -29,10 +29,10 @@ RUN apk --no-cache add bash
 
 # copy payload code only
 COPY main.py ./
-COPY source_postgres ./source_postgres
+COPY destination_webhook ./destination_webhook
 
-ENV VALMI_ENTRYPOINT "python /valmi/integration_code/main.py"
-ENTRYPOINT ["python", "/valmi/integration_code/main.py"]
+ENV AIRBYTE_ENTRYPOINT "python /airbyte/integration_code/main.py"
+ENTRYPOINT ["python", "/airbyte/integration_code/main.py"]
 
-LABEL io.valmi.version=0.1.0
-LABEL io.valmi.name=valmi/source-postgres
+LABEL io.airbyte.version=0.1.0
+LABEL io.airbyte.name=airbyte/destination-webhook

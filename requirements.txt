@@ -1,5 +1,10 @@
 fastapi
 uvicorn
-pydantic
+pydantic[email]
 vyper-config
 tenacity
+dagster-graphql
+alembic
+starlette 
+psycopg2-binary
+sqlalchemy-utils

@@ -2,6 +2,8 @@ from setuptools import find_packages, setup
 
 MAIN_REQUIREMENTS = [
     "airbyte-cdk~=0.2",
+    "sqlalchemy~=2.0",
+    "psycopg2-binary~=2.8",
 ]
 
 TEST_REQUIREMENTS = [
