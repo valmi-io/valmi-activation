@@ -59,5 +59,4 @@ async def source_check(source_unique_name: str, source_config: SourceDockerConfi
 
     # shutil.rmtree("/tmp/{0}".format(newid))
     os.unlink("/tmp/{0}".format(newid))
-    print(" ".join(lines))
     return Response(content="".join(lines))
