@@ -11,6 +11,7 @@ install_requires = [
     "starlette ",
     "psycopg2-binary",
     "sqlalchemy-utils",
+    "airbyte-cdk",
 ]
 
 

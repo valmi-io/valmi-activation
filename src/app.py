@@ -1,3 +1,4 @@
+import json
 from typing import Any
 
 from fastapi import FastAPI
@@ -13,15 +14,17 @@ def create_app() -> FastAPI:
 
     @app.get("/health")
     async def health() -> Json[Any]:
-        return {"message": "Hello World"}
+        return json.dumps({"status": "ok"})
 
     @app.get("/")
     async def root() -> Json[Any]:
-        return {"message": "Hello World"}
+        return json.dumps({"message": "Hello World"})
 
-    from api.routers import orders, products, stores
+    from api.routers import orders, products, sources, stores
 
     app.include_router(orders.router)
     app.include_router(products.router)
     app.include_router(stores.router)
+    app.include_router(sources.router)
+
     return app

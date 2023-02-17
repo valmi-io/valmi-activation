@@ -1,5 +1,3 @@
-import logging
-
 from vyper import v
 
 
@@ -9,4 +7,3 @@ def setup_vyper() -> None:
     v.add_config_path(".")
     v.read_in_config()
     v.automatic_env()
-    logging.config.dictConfig(v.get("LOGGING_CONF"))

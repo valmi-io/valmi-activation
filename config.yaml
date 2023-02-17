@@ -1,6 +1,7 @@
 DAGSTER_HOST: "localhost"
 DAGSTER_PORT: 3000
 DATABASE_URL: "postgresql://postgres:changeme@localhost:5432/valmi"
+LOGGER_NAME: "valmi"
 LOGGING_CONF:
   version: 1
   formatters:
@@ -18,3 +19,4 @@ LOGGING_CONF:
   root:
     level: DEBUG
     handlers: [console]
+  disable_existing_loggers: false

@@ -7,13 +7,13 @@ from typing import Any
 
 import uvicorn
 from tenacity import after_log, retry, stop_after_attempt, wait_exponential
+from vyper import v
 
 from app import create_app
 from vyperconfig import setup_vyper
 
 # Logging init
-logger = logging.getLogger(__name__)
-logger.info("Starting server...")
+logger = logging.getLogger(v.get("LOGGER_NAME"))
 
 
 def retry_wrapper(func: Any) -> Any:
@@ -47,9 +47,14 @@ def fail_handler(func: Any) -> Any:
 
 
 def main() -> None:
-    setup_vyper()
+    uvicorn.run(app())
 
-    uvicorn.run(create_app())
+
+def app():
+    setup_vyper()
+    logging.config.dictConfig(v.get("LOGGING_CONF"))
+    logger.info("Starting server...")
+    return create_app()
 
 
 if __name__ == "__main__":
