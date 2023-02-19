@@ -47,6 +47,7 @@ class Order(Base):
     order_id = sa.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     date = sa.Column(sa.DateTime, server_default=sa.func.now(), nullable=False)
     items = relationship("OrderItem", backref="order")
+    name = sa.Column(sa.Text, nullable=False)
 
     @hybrid_property
     def total(self):
