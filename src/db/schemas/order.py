@@ -11,6 +11,7 @@ from .utils import to_camel
 class OrderItemCreate(BaseModel):
     product_id: UUID4
     quantity: int = Field(..., gt=0)
+    store_id: UUID4
 
     class Config:
         orm_mode = True
