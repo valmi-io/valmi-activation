@@ -1,6 +1,6 @@
 import os
 
-from dagster import graph, op
+from dagster import ScheduleDefinition, graph, op
 
 
 @op

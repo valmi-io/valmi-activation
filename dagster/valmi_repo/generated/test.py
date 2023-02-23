@@ -2,7 +2,7 @@ import os
 
 from dagster_docker import docker_container_op
 
-from dagster import graph, op
+from dagster import ScheduleDefinition, graph, op
 
 first_op = docker_container_op.configured(
     {
