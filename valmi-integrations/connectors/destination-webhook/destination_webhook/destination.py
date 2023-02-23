@@ -47,7 +47,7 @@ class DestinationWebhook(ValmiDestination):
             # print(msg.json(exclude_none=True))
             if msg.type == Type.RECORD:
                 r = requests.get(
-                    "http://localhost:8000/test?actor_id={0}&first_name={1}&last_name={2}".format(
+                    "http://localhost:8080/test?actor_id={0}&first_name={1}&last_name={2}".format(
                         msg.record.data["actor_id"], msg.record.data["first_name"], msg.record.data["last_name"]
                     )
                 )
