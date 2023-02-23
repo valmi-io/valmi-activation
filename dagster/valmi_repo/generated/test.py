@@ -2,7 +2,7 @@ import os
 
 from dagster_docker import docker_container_op
 
-from dagster import ScheduleDefinition, graph, op
+from dagster import DefaultScheduleStatus, ScheduleDefinition, graph, op
 
 first_op = docker_container_op.configured(
     {
@@ -36,4 +36,9 @@ def job():
 
 
 def schedule():
-    return ScheduleDefinition(cron_schedule="0 0 * * *", job=job(), execution_timezone="US/Central")
+    return ScheduleDefinition(
+        cron_schedule="0 0 * * *",
+        job=job(),
+        default_status=DefaultScheduleStatus.RUNNING,
+        execution_timezone="US/Central",
+    )

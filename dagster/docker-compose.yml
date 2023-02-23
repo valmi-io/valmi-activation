@@ -54,7 +54,7 @@ services:
     expose:
       - "3000"
     ports:
-      - "3000:3000"
+      - "4002:3000"
     environment:
       DAGSTER_POSTGRES_USER: "postgres_user"
       DAGSTER_POSTGRES_PASSWORD: "postgres_password"
