@@ -4,8 +4,12 @@ from typing import Any
 from fastapi import FastAPI
 from pydantic import Json
 
+from orchestrator.Orchestrator import Orchestrator
+
 
 def create_app() -> FastAPI:
+    orchestrator = Orchestrator()
+
     app = FastAPI(
         title="valmi.io",
         description="Rest API for valmi engine",
@@ -19,6 +23,10 @@ def create_app() -> FastAPI:
     @app.get("/")
     async def root() -> Json[Any]:
         return json.dumps({"message": "Hello World"})
+
+    @app.on_event("shutdown")
+    def shutdown_event() -> None:
+        orchestrator.destroy()
 
     from api.routers import orders, products, sources, stores
 

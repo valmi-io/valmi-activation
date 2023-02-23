@@ -1,3 +1,5 @@
+APP_BACKEND: host.docker.internal
+APP_BACKEND_PORT: 4000
 DATABASE_URL: "postgresql://postgres:changeme@localhost:5432/valmi"
 LOGGER_NAME: "valmi"
 LOGGING_CONF:

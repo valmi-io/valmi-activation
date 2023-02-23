@@ -61,3 +61,4 @@ class OrderItem(Base):
     product_id = sa.Column(ForeignKey("products.product_id"), primary_key=True)
     product = relationship("Product", uselist=False)
     quantity = sa.Column(sa.Integer, nullable=False)
+

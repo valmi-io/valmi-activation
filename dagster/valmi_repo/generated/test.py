@@ -7,7 +7,16 @@ from dagster import DefaultScheduleStatus, ScheduleDefinition, graph, op
 first_op = docker_container_op.configured(
     {
         "image": "valmi/source-postgres:dev",
-        "command": ["spec"],
+        "command": [
+            "read",
+            "--config",
+            "/tmp/secrets/config.json",
+            "--catalog",
+            "/tmp/sample_files/configured_catalog.json",
+        ],
+        "container_kwargs": {  # keyword args to be passed to the container. example:
+            "volumes": ["/tmp:/tmp:z"],
+        },
     },
     name="first_op",
 )
@@ -15,6 +24,9 @@ second_op = docker_container_op.configured(
     {
         "image": "valmi/destination-webhook:dev",
         "command": ["spec"],
+        "container_kwargs": {  # keyword args to be passed to the container. example:
+            "volumes": ["/tmp:/tmp:z"],
+        },
     },
     name="second_op",
 )

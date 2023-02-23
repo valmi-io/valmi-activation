@@ -34,6 +34,7 @@ services:
       - valmi-network
     volumes: # Make docker client accessible so we can terminate containers from dagit
       - /var/run/docker.sock:/var/run/docker.sock
+      - /tmp:/tmp:z
 
   # This service runs dagit, which loads your user code from the user code container.
   # Since our instance uses the QueuedRunCoordinator, any runs submitted from dagit will be put on
@@ -93,10 +94,12 @@ services:
       - valmi-repo
 
   valmi-activation:
-    image: valmi/valmi-activation:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
       - "8000:8000"
-    command: ["uvicorn", "main:app",   "--port", "8000",  "--log-level" ,"debug"]
+    command: ["uvicorn", "main:app",   "--port", "8000", "--host", "0.0.0.0",  "--log-level" ,"debug", "--reload"]
     container_name: valmi-activation
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock

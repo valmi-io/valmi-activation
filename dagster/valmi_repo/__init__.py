@@ -1,9 +1,15 @@
 import importlib
+import shutil
 from os.path import basename, dirname, isfile, join
 
 from dagster import repository
 
 GENERATED_DIR = "generated"
+
+
+# read the dagster jobs from storage and store into GENERATED_DIR
+def get_dagster_jobs():
+    shutil.unpack_archive()
 
 
 @repository

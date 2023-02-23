@@ -10,8 +10,8 @@ RUN set -x \
     && /opt/valmi-activation/bin/python -m pip install --upgrade pip \
     && /opt/valmi-activation/bin/python -m pip install --no-cache-dir --timeout 1000 -r /tmp/test-requirements.txt \
     && mkdir -p /workspace && chown -R $USER_ID:$GROUP_ID /workspace && chown -R $USER_ID:$GROUP_ID /opt/valmi-activation
-RUN addgroup --gid $GROUP_ID user
-RUN adduser --disabled-password --gecos '' --uid $USER_ID --gid $GROUP_ID user
+#RUN addgroup --gid $GROUP_ID user
+#RUN adduser --disabled-password --gecos '' --uid $USER_ID --gid $GROUP_ID user
 
 RUN curl -fsSL https://get.docker.com | sh
 
