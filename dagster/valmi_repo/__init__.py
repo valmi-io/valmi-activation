@@ -13,7 +13,7 @@ def get_dagster_jobs():
 
 
 @repository
-def deploy_docker_repository():
+def valmi_repo():
     import glob
 
     modules = glob.glob(join(dirname(__file__), GENERATED_DIR, "*.py"))

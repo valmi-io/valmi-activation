@@ -1,0 +1,56 @@
+import os
+
+from dagster_docker import docker_container_op
+
+from dagster import DefaultScheduleStatus, ScheduleDefinition, graph, op
+
+source_op = docker_container_op.configured(
+    {
+        "image": "{{ sync['source']['container_image'] }}",
+        "command": [
+            "read",
+            "--config",
+            "/tmp/config.json",
+            "--catalog",
+            "/tmp/configured_catalog.json",
+        ],
+        "container_kwargs": {  # keyword args to be passed to the container. example:
+            "volumes": ["{{prefix}}/{{app}}/config/{{sync['id']}}-{{ sync['source']['id'] }}.json:/tmp/config.json" , "{{prefix}}/{{app}}/catalog/{{sync['id']}}-{{ sync['source']['id'] }}.json:/tmp/configured_catalog.json"],
+        },
+    },
+    name="source_op",
+)
+destination_op = docker_container_op.configured(
+    {
+        "image": "{{ sync['destination']['container_image'] }}",
+        "command": ["spec"],
+        "container_kwargs": {  # keyword args to be passed to the container. example:
+            "volumes": ["{{prefix}}/{{app}}/config/{{sync['id']}}-{{ sync['destination']['id'] }}.json:/tmp/config.json" , "{{prefix}}/{{app}}/catalog/{{sync['id']}}-{{ sync['destination']['id'] }}.json:/tmp/configured_catalog.json"],
+        },
+    },
+    name="destination_op",
+)
+
+
+@op
+def finalizer(context, a, b) -> None:
+    context.log.info("finalizer")
+
+
+def job():
+    @graph
+    def sync_graph():
+        a = source_op()
+        b = destination_op()
+        finalizer(a, b)
+
+    return sync_graph.to_job(name=os.path.basename(__file__)[:-3].capitalize())
+
+
+def schedule():
+    return ScheduleDefinition(
+        cron_schedule="0 0 * * *",
+        job=job(),
+        default_status=DefaultScheduleStatus.RUNNING,
+        execution_timezone="US/Central",
+    )

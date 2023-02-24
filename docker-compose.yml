@@ -111,6 +111,10 @@ services:
       - valmi-db
     environment:
       DATABASE_URL: "postgresql://postgres:changeme@valmi-db:5432/valmi"
+      APP_BACKEND: "host.docker.internal"
+      DAGIT_HOST: "dagit"
+      DAGIT_PORT: 3000
+
 
   
 networks:

@@ -1,4 +1,4 @@
-from setuptools import find_packages, setup
+from setuptools import setup
 
 install_requires = [
     "fastapi",
@@ -12,6 +12,7 @@ install_requires = [
     "psycopg2-binary",
     "sqlalchemy-utils",
     "airbyte-cdk",
+    "jinja2",
 ]
 
 
