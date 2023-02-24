@@ -1,4 +1,6 @@
 *
+!docker-entrypoint.sh
+!import_storage_to_stdin.py
 !extensions
 !Dockerfile
 !main.py

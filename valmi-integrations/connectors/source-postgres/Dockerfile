@@ -30,9 +30,12 @@ RUN apk --no-cache add bash
 # copy payload code only
 COPY main.py ./
 COPY source_postgres ./source_postgres
+COPY export_stdout_to_storage.py ./
+COPY docker-entrypoint.sh ./
+RUN chmod +x ./docker-entrypoint.sh
 
 ENV VALMI_ENTRYPOINT "python /valmi/integration_code/main.py"
-ENTRYPOINT ["python", "/valmi/integration_code/main.py"]
-
+ENV VALMI_INTERMEDIATE_STORE "{\"provider\": \"local\", \"local\": {\"directory\": \"/tmp/shared_dir/intermediate_store\"}}"
+ENTRYPOINT ["./docker-entrypoint.sh"]
 LABEL io.valmi.version=0.1.0
 LABEL io.valmi.name=valmi/source-postgres
