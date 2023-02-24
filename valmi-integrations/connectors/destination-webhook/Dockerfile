@@ -30,6 +30,7 @@ RUN apk --no-cache add bash
 # copy payload code only
 COPY main.py ./
 COPY destination_webhook ./destination_webhook
+COPY extensions ./extensions
 
 ENV AIRBYTE_ENTRYPOINT "python /airbyte/integration_code/main.py"
 ENTRYPOINT ["python", "/airbyte/integration_code/main.py"]

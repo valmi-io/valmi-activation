@@ -34,8 +34,7 @@ services:
       - valmi-network
     volumes: # Make docker client accessible so we can terminate containers from dagit
       - /var/run/docker.sock:/var/run/docker.sock
-      - /tmp:/tmp:z
-
+      - /tmp/shared_dir:/tmp/shared_dir:z
   # This service runs dagit, which loads your user code from the user code container.
   # Since our instance uses the QueuedRunCoordinator, any runs submitted from dagit will be put on
   # a queue and later dequeued and launched by dagster-daemon.
@@ -63,6 +62,8 @@ services:
     volumes: # Make docker client accessible so we can terminate containers from dagit
       - /var/run/docker.sock:/var/run/docker.sock
       - /tmp/io_manager_storage:/tmp/io_manager_storage
+      - /tmp/shared_dir:/tmp/shared_dir
+
     networks:
       - valmi-network
     depends_on:
@@ -87,6 +88,7 @@ services:
     volumes: # Make docker client accessible so we can launch containers using host docker
       - /var/run/docker.sock:/var/run/docker.sock
       - /tmp/io_manager_storage:/tmp/io_manager_storage
+      - /tmp/shared_dir:/tmp/shared_dir
     networks:
       - valmi-network
     depends_on:
@@ -103,7 +105,7 @@ services:
     container_name: valmi-activation
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - /tmp:/tmp:z
+      - /tmp/shared_dir:/tmp/shared_dir:z
       - .:/workspace:z
     networks:
       - valmi-network
