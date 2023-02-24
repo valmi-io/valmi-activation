@@ -16,13 +16,14 @@ def read():
             time.sleep(5)
             yield ""
         list_dir = sorted([f.lower() for f in os.listdir(path_name)], key=lambda x: int(x[:-5]))
-        for f in list_dir:
-            if f.endswith(".vald"):
-                with open(join(path_name, f), "r") as f:
+        for fn in list_dir:
+            if fn.endswith(".vald"):
+                with open(join(path_name, fn), "r") as f:
                     for line in f.readlines():
                         yield line
-            if f.startswith(f"{MAGIC_NUM}"):
+            if fn.startswith(f"{MAGIC_NUM}"):
                 return
 
 
-print(read(), end="")
+for line in read():
+    print(line, end="")

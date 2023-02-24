@@ -5,12 +5,19 @@
 
 import json
 from typing import Any, Iterable, Mapping
+from urllib.parse import quote, urlencode
 
 import requests
 from airbyte_cdk import AirbyteLogger
 from airbyte_cdk.destinations import Destination
-from airbyte_cdk.models import AirbyteCatalog, AirbyteConnectionStatus, AirbyteMessage, ConfiguredAirbyteCatalog
-from airbyte_cdk.models.airbyte_protocol import Type
+from airbyte_cdk.models import (
+    AirbyteCatalog,
+    AirbyteConnectionStatus,
+    AirbyteMessage,
+    AirbyteStateMessage,
+    ConfiguredAirbyteCatalog,
+)
+from airbyte_cdk.models.airbyte_protocol import Status, Type
 
 from extensions import ValmiDestination
 
@@ -46,16 +53,23 @@ class DestinationWebhook(ValmiDestination):
         for msg in input_messages:
             # print(msg.json(exclude_none=True))
             if msg.type == Type.RECORD:
+                # construct props
+                print(msg)
+                props = {}
+                for prop in msg.record.data:
+                    props[prop] = msg.record.data[prop]
+
                 r = requests.get(
-                    "http://host.docker.internal:8080/test?actor_id={0}&first_name={1}&last_name={2}".format(
-                        msg.record.data["actor_id"], msg.record.data["first_name"], msg.record.data["last_name"]
-                    )
+                    f"http://{config['host']}:{config['port']}/{msg.record.stream}?{ urlencode(props, quote_via=quote)}"
                 )
+
                 # print(r.json())
 
             # print(msg.json(exclude_none=True))
 
-        pass
+        out_record = AirbyteStateMessage(data={"checkpoint": "checkpoint"})
+        out_message = AirbyteMessage(type=Type.STATE, state=out_record)
+        yield out_message
 
     def discover(self, logger: AirbyteLogger, config: json) -> AirbyteCatalog:
         return get_catalog()
