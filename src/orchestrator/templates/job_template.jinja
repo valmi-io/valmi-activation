@@ -4,7 +4,7 @@ from dagster_docker import docker_container_op
 
 from dagster import DefaultScheduleStatus, ScheduleDefinition, graph, op
 
-source_op_{{ sync['id'] }}_{{ sync['source']['id'] }} = docker_container_op.configured(
+source_op = docker_container_op.configured(
     {
         "image": "{{ sync['source']['container_image'] }}",
         "command": [
@@ -15,18 +15,24 @@ source_op_{{ sync['id'] }}_{{ sync['source']['id'] }} = docker_container_op.conf
             "/tmp/configured_catalog.json",
         ],
         "container_kwargs": {  # keyword args to be passed to the container. example:
-            "volumes": ["{{ prefix }}/{{ app }}/repo/config/{{ sync['id'] }}-{{ sync['source']['id'] }}.json:/tmp/config.json" , "{{prefix}}/{{app}}/repo/catalog/{{sync['id']}}-{{ sync['source']['id'] }}.json:/tmp/configured_catalog.json"],
+            "volumes": ["{{ prefix }}/intermediate_store:{{ prefix }}/intermediate_store","{{ prefix }}/{{ app }}/repo/config/{{ sync['id'] }}-{{ sync['source']['id'] }}.json:/tmp/config.json" , "{{prefix}}/{{app}}/repo/catalog/{{sync['id']}}-{{ sync['source']['id'] }}.json:/tmp/configured_catalog.json"],
         },
+        "env_vars": list({**os.environ}.keys()),
     },
     name="source_op_{{ sync['id'] }}_{{ sync['source']['id'] }}",
 )
-destination_op_{{ sync['id'] }}_{{ sync['destination']['id'] }} = docker_container_op.configured(
+destination_op = docker_container_op.configured(
     {
         "image": "{{ sync['destination']['container_image'] }}",
-        "command": ["spec"],
+        "command": ["write",
+            "--config",
+            "/tmp/config.json",
+            "--catalog",
+            "/tmp/configured_catalog.json"],
         "container_kwargs": {  # keyword args to be passed to the container. example:
-            "volumes": ["{{ prefix }}/{{ app }}/repo/config/{{sync['id']}}-{{ sync['destination']['id'] }}.json:/tmp/config.json" , "{{prefix}}/{{app}}/repo/catalog/{{sync['id']}}-{{ sync['destination']['id'] }}.json:/tmp/configured_catalog.json"],
+            "volumes": ["{{ prefix }}/intermediate_store:{{ prefix }}/intermediate_store","{{ prefix }}/{{ app }}/repo/config/{{sync['id']}}-{{ sync['destination']['id'] }}.json:/tmp/config.json" , "{{prefix}}/{{app}}/repo/catalog/{{sync['id']}}-{{ sync['destination']['id'] }}.json:/tmp/configured_catalog.json"],
         },
+        "env_vars": list({**os.environ}.keys()),
     },
     name="destination_op_{{ sync['id'] }}_{{ sync['destination']['id'] }}",
 )
@@ -40,8 +46,8 @@ def finalizer(context, a, b) -> None:
 def job():
     @graph(name="graph_{{ sync['id'] }}_{{ sync['source']['id'] }}_{{ sync['destination']['id'] }}")
     def sync_graph():
-        a = source_op_{{ sync['id'] }}_{{ sync['source']['id'] }} ()
-        b = destination_op_{{ sync['id'] }}_{{ sync['destination']['id'] }}()
+        a = source_op ()
+        b = destination_op()
         finalizer(a, b)
 
     return sync_graph.to_job(name=os.path.basename(__file__)[:-3].capitalize())
