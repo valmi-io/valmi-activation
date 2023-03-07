@@ -2,8 +2,8 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
-from db.models import Order, OrderItem
-from db.schemas import OrderCreate
+from metastore.models import Order, OrderItem
+from api.schemas import OrderCreate
 
 from .base import BaseService
 

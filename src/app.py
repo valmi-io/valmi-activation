@@ -4,11 +4,11 @@ from typing import Any
 from fastapi import FastAPI
 from pydantic import Json
 
-from orchestrator.Orchestrator import Orchestrator
+from orchestrator.repo import Repo
 
 
 def create_app() -> FastAPI:
-    orchestrator = Orchestrator()
+    repo = Repo()
 
     app = FastAPI(
         title="valmi.io",
@@ -26,7 +26,7 @@ def create_app() -> FastAPI:
 
     @app.on_event("shutdown")
     def shutdown_event() -> None:
-        orchestrator.destroy()
+        repo.destroy()
 
     from api.routers import orders, products, sources, stores
 

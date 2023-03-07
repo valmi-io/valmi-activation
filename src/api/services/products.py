@@ -1,8 +1,8 @@
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from db.models import Product, Store
-from db.schemas import ProductCreate, ProductUpdate
+from metastore.models import Product, Store
+from api.schemas import ProductCreate, ProductUpdate
 
 from .base import BaseService
 

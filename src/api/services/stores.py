@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 
-from db.models import Store
-from db.schemas import StoreCreate, StoreUpdate
+from metastore.models import Store
+from api.schemas import StoreCreate, StoreUpdate
 
 from .base import BaseService
 
