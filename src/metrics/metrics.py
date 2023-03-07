@@ -1,6 +1,7 @@
 # Metric Server - API to query metrics of the runs
 # Finalizer of the jobs stores summary metrics in the db
 # metrics of the running jobs are in memory :: aggregated until the last checkpoint
+# serve samples from intermediate_storage
 
 
 from pydantic.types import UUID4
