@@ -1,9 +1,6 @@
 # Metric Server - API to query metrics of the runs
 # Finalizer of the jobs stores summary metrics in the db
-# Samples will be stored in the intermediate_storage
 # metrics of the running jobs are in memory :: aggregated until the last checkpoint
-# Reinit metrics of running jobs on RESTART from intermediate_storage
-# API to receive the last uploaded metrics from the connector about the url of the file.
 
 
 from pydantic.types import UUID4
@@ -56,7 +53,7 @@ class Metrics:
                 PRIMARY KEY (sync_id, connector_id, run_id, chunk_id))"
             )
 
-    def get_metrics(self, sync_id: UUID4, run_id: UUID4):
+    def get_metrics(self, sync_id: UUID4, run_id: UUID4) -> dict[str, int]:
         # get the metrics of the run
         # deduplicate by chunk_id and return
         aggregated_metrics = self.con.sql(
@@ -73,24 +70,57 @@ class Metrics:
         return {x: y for x, y in aggregated_metrics}
 
     def put_metrics(
-        self, sync_id: UUID4, container_id: UUID4, run_id: UUID4, chunk_id: UUID4, metrics: list[dict[str, str | int]]
+        self, sync_id: UUID4, connector_id: UUID4, run_id: UUID4, chunk_id: UUID4, metrics: dict[str, str | int]
+    ):
+        """
+        DISABLE AGGREGATION IF IT IS SLOW
+        """
+        # aggregate for every MAX chunks
+        MAX = 10
+        sync_info = self.con.sql(
+            f"SELECT COUNT(*) FROM {SYNC_INFO_TABLE} WHERE sync_id = '{sync_id}' \
+                        AND run_id = '{run_id}' AND connector_id= '{connector_id}'"
+        ).fetchone()
+        if sync_info[0] > MAX:
+            print("AGGREGATING")
+            # new chunk
+            # aggregate until the last checkpoint
+            old_metrics = self.get_metrics(sync_id=sync_id, run_id=run_id)
+            if len(old_metrics.keys()) > 0:
+                self.con.begin()
+                self.con.sql(
+                    f"DELETE FROM {SYNC_INFO_TABLE} WHERE sync_id = '{sync_id}' \
+                        AND run_id = '{run_id}' AND connector_id= '{connector_id}'"
+                )
+                self.con.sql(f"DELETE FROM {METRICS_TABLE} WHERE chunk_id = '{chunk_id}'")
+                # generate CHUNK_ID
+                self._insert_metrics(sync_id, connector_id, run_id, uuid.uuid4(), old_metrics)
+                self.con.commit()
+
+        self.con.begin()
+        self._insert_metrics(sync_id, connector_id, run_id, chunk_id, metrics)
+        self.con.commit()
+
+    def _insert_metrics(
+        self, sync_id: UUID4, connector_id: UUID4, run_id: UUID4, chunk_id: UUID4, metrics: dict[str, str | int]
     ):
         # put the metrics of the run
         now = datetime.now()
-
         inserts = []
-        for metric in metrics:
-            for metric_type, count in metric.items():
-                inserts.append(f"('{chunk_id}','{metric_type}','{count}','{now}')")
 
-        self.con.begin()
+        for metric_type, count in metrics.items():
+            inserts.append(f"('{chunk_id}','{metric_type}','{count}','{now}')")
+
         self.con.sql(
             f"INSERT INTO {SYNC_INFO_TABLE} VALUES \
                 ('{sync_id}', '{connector_id}', '{run_id}','{chunk_id}', '{now}') \
                     ON CONFLICT DO NOTHING"
         )
         self.con.sql(f"INSERT INTO {METRICS_TABLE} VALUES {', '.join(inserts)}")
-        self.con.commit()
+
+    def get_samples(self, sync_id: UUID4, run_id: UUID4):
+        # get the samples from the intermediate store
+        pass
 
     def finalise(self, sync_id: UUID4, run_id: UUID4):
         # aggregate and store the finalised metrics into the metastore
@@ -109,12 +139,12 @@ if __name__ == "__main__":
             run_id = uuid.uuid4()
             for k in range(0, 100):
                 chunk_id = uuid.uuid4()
-                print(f"{sync_id} {run_id} {chunk_id}")
-
                 metric_type = random.choice(["failed", "succeeded"])
                 # count = random.choice(range(0, 1000))
                 count = 1
-                metrics.put_metrics(sync_id, connector_id, run_id, chunk_id, [{metric_type: count}])
+                metrics.put_metrics(sync_id, connector_id, run_id, chunk_id, {metric_type: count})
+            print(f"{sync_id} {run_id} {chunk_id}")
+        # print(metrics.get_metrics(sync_id, run_id))
 
     print(metrics.get_metrics(sync_id, run_id))
     print("db size: ", metrics.size())
