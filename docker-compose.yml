@@ -132,6 +132,8 @@ services:
   valmi-app-backend:
     env_file:
       - ./valmi-app-backend/.env
+    ports:
+      - "4000:4000"
     build:
       context: ./valmi-app-backend
       dockerfile: Dockerfile
