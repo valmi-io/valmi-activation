@@ -18,7 +18,7 @@ logger = logging.getLogger(v.get("LOGGER_NAME"))
 
 @router.post("/{connector_type}/spec", response_model=str)
 async def get_source_spec(connector_type: str, docker_item: DockerItem) -> str:
-    logger.debug("Getting spec for source: ", connector_type)
+    logger.debug("Getting spec for source: %s", connector_type)
     lines = []
     proc = subprocess.Popen(
         [
