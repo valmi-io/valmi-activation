@@ -87,8 +87,7 @@ class Metrics:
         ).fetchone()
         if sync_info[0] > MAX:
             print("AGGREGATING")
-            # new chunk
-            # aggregate until the last checkpoint
+            # aggregate ignoring the last chunk
             old_metrics = self.get_metrics(sync_id=sync_id, run_id=run_id, ingore_chunk_id=chunk_id)
             if len(old_metrics.keys()) > 0:
                 self.con.begin()
