@@ -9,23 +9,23 @@ from fastapi import Response
 from fastapi.routing import APIRouter
 from vyper import v
 
-from  api.schemas import SourceDockerConfig, SourceDockerItem
+from api.schemas import SourceDockerConfig, DockerItem
 
-router = APIRouter(prefix="/sources")
+router = APIRouter(prefix="/connectors")
 
 logger = logging.getLogger(v.get("LOGGER_NAME"))
 
 
-@router.post("/{source_unique_name}/spec", response_model=str)
-async def get_source_spec(source_unique_name: str, docker_item: SourceDockerItem) -> str:
-    logger.debug("Getting spec for source: %s", source_unique_name)
+@router.post("/{connector_type}/spec", response_model=str)
+async def get_source_spec(connector_type: str, docker_item: DockerItem) -> str:
+    logger.debug("Getting spec for source: ", connector_type)
     lines = []
     proc = subprocess.Popen(
         [
             "docker",
             "run",
             "--rm",
-            "{0}:{1}".format(docker_item.source_docker_image, docker_item.source_docker_tag),
+            "{0}:{1}".format(docker_item.docker_image, docker_item.docker_tag),
             "spec",
         ],
         stdout=subprocess.PIPE,

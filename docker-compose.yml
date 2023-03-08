@@ -146,6 +146,7 @@ services:
       - valmi-db
     environment:
       DATABASE_URL: "postgresql://postgres:changeme@valmi-db:5432/valmi_app"
+      ACTIVATION_SERVER: "http://valmi-activation:8000"
 
 
 

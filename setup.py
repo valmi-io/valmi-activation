@@ -19,6 +19,6 @@ install_requires = [
 setup(
     name="valmi-activation",
     install_requires=install_requires,
-    include_package_data=True,
+    include_package_data=False,
     extras_require={"dev": ["flake8", "black", "mypy"]},
 )

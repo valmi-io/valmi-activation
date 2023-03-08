@@ -3,9 +3,9 @@ from pydantic import BaseModel
 from .utils import to_camel
 
 
-class SourceDockerItem(BaseModel):
-    source_docker_image: str
-    source_docker_tag: str
+class DockerItem(BaseModel):
+    docker_image: str
+    docker_tag: str
 
     class Config:
         orm_mode = True
@@ -13,5 +13,5 @@ class SourceDockerItem(BaseModel):
         allow_population_by_field_name = True
 
 
-class SourceDockerConfig(SourceDockerItem):
+class SourceDockerConfig(DockerItem):
     config_json_str: str
