@@ -5,6 +5,9 @@ DAGIT_PORT: 4002
 APP: "valmi"
 REPO_NAME: "valmi-repo"
 DATABASE_URL: "postgresql://postgres:changeme@localhost:5432/valmi"
+DAGTSER_MAX_TRIES: 3
+DAGSTER_MIN_RETRY_INTERVAL: 10
+DAGSTER_MAX_RETRY_INTERVAL: 120
 LOGGER_NAME: "valmi"
 LOGGING_CONF:
   version: 1

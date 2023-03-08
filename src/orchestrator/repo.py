@@ -10,6 +10,7 @@ from dagster_graphql import DagsterGraphQLClient, ShutdownRepositoryLocationInfo
 from jinja2 import Environment, FileSystemLoader
 from pydantic import Json
 from vyper import v
+from utils.utils import retry_on_exception, exception_to_sys_exit
 
 logger = logging.getLogger(v.get("LOGGER_NAME"))
 GENERATED_DIR = "generated"
@@ -208,13 +209,7 @@ class JobCreatorThread(threading.Thread):
                     self.gen_dagster_job_archive(dirs, json.loads(resp.text))
 
                     # restart dagster repository
-                    shutdown_info: ShutdownRepositoryLocationInfo = self.dagster_client.shutdown_repository_location(
-                        v.get("REPO_NAME")
-                    )
-                    if shutdown_info.status == ShutdownRepositoryLocationStatus.SUCCESS:
-                        logger.info("Dagster repo successfully shutdown")
-                    else:
-                        raise Exception(f"Repository location shutdown failed: {shutdown_info.message}")
+                    self.restart_dagster_repo()
 
                     with open(join(SHARED_DIR, f'{v.get("APP")}-syncs.json'), "w") as replace_file:
                         replace_file.write(resp.text)
@@ -222,6 +217,17 @@ class JobCreatorThread(threading.Thread):
             except Exception:
                 logger.exception("Error while fetching sync jobs and creating dagster jobs")
             time.sleep(5)
+
+    @exception_to_sys_exit
+    @retry_on_exception
+    def restart_dagster_repo(self) -> None:
+        shutdown_info: ShutdownRepositoryLocationInfo = self.dagster_client.shutdown_repository_location(
+            v.get("REPO_NAME")
+        )
+        if shutdown_info.status == ShutdownRepositoryLocationStatus.SUCCESS:
+            logger.info("Dagster repo successfully shutdown")
+        else:
+            raise Exception(f"Repository location shutdown failed: {shutdown_info.message}")
 
     # make a zip archive of all dagster jobs
     def gen_dagster_job_archive(self, dirs: dict[str, str], syncs: Json[any]) -> None:
