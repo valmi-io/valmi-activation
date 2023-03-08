@@ -4,6 +4,7 @@
 # serve samples from intermediate_storage
 
 
+import time
 from pydantic.types import UUID4
 import duckdb
 import uuid
@@ -54,15 +55,17 @@ class Metrics:
                 PRIMARY KEY (sync_id, connector_id, run_id, chunk_id))"
             )
 
-    def get_metrics(self, sync_id: UUID4, run_id: UUID4) -> dict[str, int]:
+    def get_metrics(self, sync_id: UUID4, run_id: UUID4, ingore_chunk_id: UUID4 = None) -> dict[str, int]:
         # get the metrics of the run
         # deduplicate by chunk_id and return
+        ignore_clause = " AND s.chunk_id != '%s'" % ingore_chunk_id if ingore_chunk_id else ""
         aggregated_metrics = self.con.sql(
             f"SELECT metric_type, SUM(count) as count \
                 FROM {METRICS_TABLE} m2 INNER JOIN \
                         ( SELECT s.chunk_id AS chunk_id, max(m.created_at) AS created_at \
                         FROM {METRICS_TABLE} m INNER JOIN {SYNC_INFO_TABLE} s ON s.chunk_id = m.chunk_id \
                         WHERE s.sync_id = '{sync_id}' AND s.run_id = '{run_id}' \
+                            {ignore_clause} \
                         GROUP BY s.chunk_id ) deduped_chunks \
                     ON m2.chunk_id = deduped_chunks.chunk_id AND \
                         m2.created_at = deduped_chunks.created_at\
@@ -86,7 +89,7 @@ class Metrics:
             print("AGGREGATING")
             # new chunk
             # aggregate until the last checkpoint
-            old_metrics = self.get_metrics(sync_id=sync_id, run_id=run_id)
+            old_metrics = self.get_metrics(sync_id=sync_id, run_id=run_id, ingore_chunk_id=chunk_id)
             if len(old_metrics.keys()) > 0:
                 self.con.begin()
                 self.con.sql(
@@ -142,8 +145,15 @@ if __name__ == "__main__":
                 chunk_id = uuid.uuid4()
                 metric_type = random.choice(["failed", "succeeded"])
                 # count = random.choice(range(0, 1000))
-                count = 1
+                count = 2
                 metrics.put_metrics(sync_id, connector_id, run_id, chunk_id, {metric_type: count})
+
+                # inserting again to test deduplication
+                time.sleep(0.001)
+                count = 1
+
+                metrics.put_metrics(sync_id, connector_id, run_id, chunk_id, {metric_type: count})
+
             print(f"{sync_id} {run_id} {chunk_id}")
         # print(metrics.get_metrics(sync_id, run_id))
 
