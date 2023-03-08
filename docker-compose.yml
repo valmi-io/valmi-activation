@@ -128,13 +128,14 @@ services:
 
 
   valmi-app-backend:
+    env_file:
+      - ./valmi-app-backend/.env
     build:
       context: ./valmi-app-backend
       dockerfile: Dockerfile
-    command: ["python", "manage.py", "runserver", "${PORT}"]
     container_name: valmi-app-backend
     volumes:
-      - .:/workspace:z
+      - ./valmi-app-backend:/workspace:z
     networks:
       - valmi-network
     depends_on:
