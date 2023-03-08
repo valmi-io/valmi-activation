@@ -16,6 +16,8 @@ RUN set -x \
 RUN curl -fsSL https://get.docker.com | sh
 
 #USER user
+#COPY wait-for-it.sh . 
+#RUN chmod +x /wait-for-it.sh
 
 WORKDIR /workspace 
 #COPY . /workspace/

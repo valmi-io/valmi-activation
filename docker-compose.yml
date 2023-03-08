@@ -34,6 +34,7 @@ services:
       - valmi-network
     depends_on:
       - valmi-db
+      - valmi-repo
       
   # This service runs the dagster-daemon process, which is responsible for taking runs
   # off of the queue and launching them, as well as creating runs from schedules or sensors.
@@ -58,6 +59,8 @@ services:
       - valmi-network
     depends_on:
       - valmi-db
+      - valmi-repo
+
 
 ###############################################################################################
   # This service runs the postgres DB used by dagster for run storage, schedule storage,
@@ -101,7 +104,6 @@ services:
     volumes: # Make docker client accessible so we can terminate containers from dagit
       - /var/run/docker.sock:/var/run/docker.sock
       - /tmp/shared_dir:/tmp/shared_dir:z
-
 
   valmi-activation:
     build:
