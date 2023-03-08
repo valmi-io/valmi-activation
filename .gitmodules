@@ -1,0 +1,6 @@
+[submodule "valmi-app-backend"]
+	path = valmi-app-backend
+	url = git@github.com:valmi-io/valmi-app-backend.git
+[submodule "valmi-app"]
+	path = valmi-app
+	url = git@github.com:valmi-io/valmi-app.git

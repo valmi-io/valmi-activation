@@ -3,7 +3,7 @@ from logging.config import fileConfig
 from alembic import context
 from vyper import v
 
-from db.models import Base
+from metastore.models import Base
 from vyperconfig import setup_vyper
 
 # this is the Alembic Config object, which provides
@@ -62,7 +62,7 @@ def run_migrations_online() -> None:
     """
 
     setup_vyper()
-    from db.session import engine, validate_database
+    from metastore.session import engine, validate_database
 
     validate_database()
     with engine.connect() as connection:

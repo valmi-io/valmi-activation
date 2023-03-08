@@ -1,40 +1,6 @@
 version: "3.8" 
 
 services:
-  # This service runs the postgres DB used by dagster for run storage, schedule storage,
-  # and event log storage.
-  valmi-db:
-    image: postgres:11
-    container_name: valmi-db
-    environment:
-      POSTGRES_USER: "postgres"
-      POSTGRES_PASSWORD: "changeme"
-      POSTGRES_DB: "valmi"
-    networks:
-      - valmi-network
-
-  # This service runs the gRPC server that loads your user code, in both dagit
-  # and dagster-daemon. By setting DAGSTER_CURRENT_IMAGE to its own image, we tell the
-  # run launcher to use this same image when launching runs in a new container as well.
-  # Multiple containers like this can be deployed separately - each just needs to run on
-  # its own port, and have its own entry in the workspace.yaml file that's loaded by dagit.
-  valmi-repo:
-    build:
-      context: ./dagster
-      dockerfile: Dockerfile_user_code
-    container_name: valmi-repo
-    image: valmi-repo
-    restart: always
-    environment:
-      DAGSTER_POSTGRES_USER: "postgres"
-      DAGSTER_POSTGRES_PASSWORD: "changeme"
-      DAGSTER_POSTGRES_DB: "valmi"
-      DAGSTER_CURRENT_IMAGE: "valmi-repo"
-    networks:
-      - valmi-network
-    volumes: # Make docker client accessible so we can terminate containers from dagit
-      - /var/run/docker.sock:/var/run/docker.sock
-      - /tmp/shared_dir:/tmp/shared_dir:z
   # This service runs dagit, which loads your user code from the user code container.
   # Since our instance uses the QueuedRunCoordinator, any runs submitted from dagit will be put on
   # a queue and later dequeued and launched by dagster-daemon.
@@ -68,7 +34,6 @@ services:
       - valmi-network
     depends_on:
       - valmi-db
-      - valmi-repo
 
   # This service runs the dagster-daemon process, which is responsible for taking runs
   # off of the queue and launching them, as well as creating runs from schedules or sensors.
@@ -93,7 +58,50 @@ services:
       - valmi-network
     depends_on:
       - valmi-db
-      - valmi-repo
+
+###############################################################################################
+  # This service runs the postgres DB used by dagster for run storage, schedule storage,
+  # and event log storage.
+  valmi-db:
+    image: postgres:13.2
+    container_name: valmi-db
+    command: ["postgres", "-c", "log_statement=all"]
+    volumes:
+       - postgres:/data/postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "changeme"
+      POSTGRES_DB: "valmi_activation"
+      PGDATA: /data/postgres
+    restart: unless-stopped
+    networks:
+      - valmi-network
+
+  # This service runs the gRPC server that loads your user code, in both dagit
+  # and dagster-daemon. By setting DAGSTER_CURRENT_IMAGE to its own image, we tell the
+  # run launcher to use this same image when launching runs in a new container as well.
+  # Multiple containers like this can be deployed separately - each just needs to run on
+  # its own port, and have its own entry in the workspace.yaml file that's loaded by dagit.
+  valmi-repo:
+    build:
+      context: ./dagster
+      dockerfile: Dockerfile_user_code
+    container_name: valmi-repo
+    image: valmi-repo
+    restart: always
+    environment:
+      DAGSTER_POSTGRES_USER: "postgres"
+      DAGSTER_POSTGRES_PASSWORD: "changeme"
+      DAGSTER_POSTGRES_DB: "valmi"
+      DAGSTER_CURRENT_IMAGE: "valmi-repo"
+    networks:
+      - valmi-network
+    volumes: # Make docker client accessible so we can terminate containers from dagit
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /tmp/shared_dir:/tmp/shared_dir:z
+
 
   valmi-activation:
     build:
@@ -111,14 +119,34 @@ services:
       - valmi-network
     depends_on:
       - valmi-db
+      - dagit
     environment:
-      DATABASE_URL: "postgresql://postgres:changeme@valmi-db:5432/valmi"
+      DATABASE_URL: "postgresql://postgres:changeme@valmi-db:5432/valmi_activation"
       APP_BACKEND: "host.docker.internal"
       DAGIT_HOST: "dagit"
       DAGIT_PORT: 3000
 
 
-  
+  valmi-app-backend:
+    build:
+      context: ./valmi-app-backend
+      dockerfile: Dockerfile
+    command: ["python", "manage.py", "runserver", "${PORT}"]
+    container_name: valmi-app-backend
+    volumes:
+      - .:/workspace:z
+    networks:
+      - valmi-network
+    depends_on:
+      - valmi-db
+    environment:
+      DATABASE_URL: "postgresql://postgres:changeme@valmi-db:5432/valmi_app"
+
+
+
+volumes:
+    postgres:
+
 networks:
   valmi-network:
     driver: bridge

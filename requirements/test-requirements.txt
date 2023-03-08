@@ -4,7 +4,13 @@
 #
 #    pip-compile --output-file=requirements/test-requirements.txt requirements/test-requirements.in
 #
-alembic==1.9.3
+airbyte-cdk==0.30.1
+    # via -r requirements/requirements.txt
+airbyte-protocol-models==1.0.0
+    # via
+    #   -r requirements/requirements.txt
+    #   airbyte-cdk
+alembic==1.10.1
     # via
     #   -r requirements/requirements.txt
     #   dagster
@@ -19,18 +25,32 @@ anyio==3.6.2
 appdirs==1.4.4
     # via black
 attrs==22.2.0
-    # via pytest
+    # via
+    #   -r requirements/requirements.txt
+    #   cattrs
+    #   jsonschema
+    #   pytest
+    #   requests-cache
 backoff==2.2.1
     # via
     #   -r requirements/requirements.txt
+    #   airbyte-cdk
     #   gql
 black==20.8b1
     # via -r requirements/test-requirements.in
+cachetools==5.3.0
+    # via
+    #   -r requirements/requirements.txt
+    #   airbyte-cdk
+cattrs==22.2.0
+    # via
+    #   -r requirements/requirements.txt
+    #   requests-cache
 certifi==2022.12.7
     # via
     #   -r requirements/requirements.txt
     #   requests
-charset-normalizer==3.0.1
+charset-normalizer==3.1.0
     # via
     #   -r requirements/requirements.txt
     #   requests
@@ -44,20 +64,24 @@ coloredlogs==14.0
     # via
     #   -r requirements/requirements.txt
     #   dagster
-coverage[toml]==7.1.0
+coverage[toml]==7.2.1
     # via pytest-cov
 croniter==1.3.8
     # via
     #   -r requirements/requirements.txt
     #   dagster
-dagster==1.1.18
+dagster==1.1.21
     # via
     #   -r requirements/requirements.txt
     #   dagster-graphql
-dagster-graphql==1.1.18
+dagster-graphql==1.1.21
     # via -r requirements/requirements.txt
 debugpy==1.6.6
     # via -r requirements/test-requirements.in
+deprecated==1.2.13
+    # via
+    #   -r requirements/requirements.txt
+    #   airbyte-cdk
 distconfig3==1.0.1
     # via
     #   -r requirements/requirements.txt
@@ -70,20 +94,31 @@ docstring-parser==0.15
     # via
     #   -r requirements/requirements.txt
     #   dagster
+dpath==2.0.8
+    # via
+    #   -r requirements/requirements.txt
+    #   airbyte-cdk
 email-validator==1.3.1
     # via
     #   -r requirements/requirements.txt
     #   pydantic
 exceptiongroup==1.1.0
-    # via pytest
-fastapi==0.92.0
+    # via
+    #   -r requirements/requirements.txt
+    #   cattrs
+    #   pytest
+fastapi==0.93.0
     # via -r requirements/requirements.txt
 flake8==6.0.0
     # via -r requirements/test-requirements.in
-fsspec==2023.1.0
+fsspec==2023.3.0
     # via
     #   -r requirements/requirements.txt
     #   universal-pathlib
+genson==1.2.2
+    # via
+    #   -r requirements/requirements.txt
+    #   airbyte-cdk
 gql[requests]==3.4.0
     # via
     #   -r requirements/requirements.txt
@@ -102,7 +137,11 @@ graphql-relay==3.2.0
     # via
     #   -r requirements/requirements.txt
     #   graphene
-grpcio==1.47.2
+greenlet==2.0.2
+    # via
+    #   -r requirements/requirements.txt
+    #   sqlalchemy
+grpcio==1.47.5
     # via
     #   -r requirements/requirements.txt
     #   dagster
@@ -128,12 +167,25 @@ idna==3.4
     #   yarl
 iniconfig==2.0.0
     # via pytest
+isodate==0.6.1
+    # via
+    #   -r requirements/requirements.txt
+    #   airbyte-cdk
 isort==5.6.4
     # via -r requirements/test-requirements.in
 jinja2==3.1.2
     # via
     #   -r requirements/requirements.txt
+    #   airbyte-cdk
     #   dagster
+jsonref==0.3.0
+    # via
+    #   -r requirements/requirements.txt
+    #   airbyte-cdk
+jsonschema==3.2.0
+    # via
+    #   -r requirements/requirements.txt
+    #   airbyte-cdk
 mako==1.2.4
     # via
     #   -r requirements/requirements.txt
@@ -165,7 +217,12 @@ pathspec==0.11.0
 pendulum==2.1.2
     # via
     #   -r requirements/requirements.txt
+    #   airbyte-cdk
     #   dagster
+platformdirs==3.1.0
+    # via
+    #   -r requirements/requirements.txt
+    #   requests-cache
 pluggy==1.0.0
     # via pytest
 protobuf==3.20.3
@@ -177,14 +234,20 @@ psycopg2-binary==2.9.5
     # via -r requirements/requirements.txt
 pycodestyle==2.10.0
     # via flake8
-pydantic[email]==1.10.5
+pydantic[email]==1.9.2
     # via
     #   -r requirements/requirements.txt
+    #   airbyte-cdk
+    #   airbyte-protocol-models
     #   dagster
     #   fastapi
 pyflakes==3.0.1
     # via flake8
-pytest==7.2.1
+pyrsistent==0.19.3
+    # via
+    #   -r requirements/requirements.txt
+    #   jsonschema
+pytest==7.2.2
     # via
     #   -r requirements/test-requirements.in
     #   pytest-cov
@@ -193,10 +256,11 @@ pytest-cov==4.0.0
 python-dateutil==2.8.2
     # via
     #   -r requirements/requirements.txt
+    #   airbyte-cdk
     #   croniter
     #   dagster
     #   pendulum
-python-dotenv==0.21.1
+python-dotenv==1.0.0
     # via
     #   -r requirements/requirements.txt
     #   dagster
@@ -208,9 +272,10 @@ pytzdata==2020.1
     # via
     #   -r requirements/requirements.txt
     #   pendulum
-pyyaml==6.0
+pyyaml==5.4.1
     # via
     #   -r requirements/requirements.txt
+    #   airbyte-cdk
     #   dagster
     #   vyper-config
 regex==2022.10.31
@@ -219,10 +284,16 @@ requests==2.28.2
     # via
     #   -r requirements/requirements.txt
     #   -r requirements/test-requirements.in
+    #   airbyte-cdk
     #   dagster
     #   dagster-graphql
     #   gql
+    #   requests-cache
     #   requests-toolbelt
+requests-cache==1.0.0
+    # via
+    #   -r requirements/requirements.txt
+    #   airbyte-cdk
 requests-toolbelt==0.10.1
     # via
     #   -r requirements/requirements.txt
@@ -231,7 +302,10 @@ six==1.16.0
     # via
     #   -r requirements/requirements.txt
     #   grpcio
+    #   isodate
+    #   jsonschema
     #   python-dateutil
+    #   url-normalize
 sniffio==1.3.0
     # via
     #   -r requirements/requirements.txt
@@ -255,7 +329,7 @@ tabulate==0.9.0
     # via
     #   -r requirements/requirements.txt
     #   dagster
-tenacity==8.2.1
+tenacity==8.2.2
     # via -r requirements/requirements.txt
 toml==0.10.2
     # via
@@ -267,11 +341,11 @@ tomli==2.0.1
     #   -r requirements/requirements.txt
     #   dagster
     #   pytest
-toposort==1.9
+toposort==1.10
     # via
     #   -r requirements/requirements.txt
     #   dagster
-tqdm==4.64.1
+tqdm==4.65.0
     # via
     #   -r requirements/requirements.txt
     #   dagster
@@ -282,6 +356,7 @@ typed-ast==1.4.3
 typing-extensions==4.5.0
     # via
     #   -r requirements/requirements.txt
+    #   alembic
     #   black
     #   dagster
     #   mypy
@@ -290,20 +365,29 @@ universal-pathlib==0.0.21
     # via
     #   -r requirements/requirements.txt
     #   dagster
+url-normalize==1.4.3
+    # via
+    #   -r requirements/requirements.txt
+    #   requests-cache
 urllib3==1.26.14
     # via
     #   -r requirements/requirements.txt
     #   gql
     #   requests
+    #   requests-cache
 uvicorn==0.20.0
     # via -r requirements/requirements.txt
 vyper-config==1.1.1
     # via -r requirements/requirements.txt
-watchdog==2.2.1
+watchdog==2.3.1
     # via
     #   -r requirements/requirements.txt
     #   dagster
     #   vyper-config
+wrapt==1.15.0
+    # via
+    #   -r requirements/requirements.txt
+    #   deprecated
 yarl==1.8.2
     # via
     #   -r requirements/requirements.txt
