@@ -9,7 +9,7 @@ from fastapi import Response
 from fastapi.routing import APIRouter
 from vyper import v
 
-from db.schemas import SourceDockerConfig, SourceDockerItem
+from  api.schemas import SourceDockerConfig, SourceDockerItem
 
 router = APIRouter(prefix="/sources")
 

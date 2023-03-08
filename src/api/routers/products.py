@@ -6,8 +6,8 @@ from pydantic.types import UUID4
 from starlette.exceptions import HTTPException
 
 from api.services import ProductsService, get_products_service
-from db import models
-from db.schemas import Product, ProductCreate, ProductUpdate
+from metastore import models
+from  api.schemas import Product, ProductCreate, ProductUpdate
 
 router = APIRouter(prefix="/products")
 

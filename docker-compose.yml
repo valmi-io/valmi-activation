@@ -24,7 +24,7 @@ services:
     environment:
       DAGSTER_POSTGRES_USER: "postgres"
       DAGSTER_POSTGRES_PASSWORD: "changeme"
-      DAGSTER_POSTGRES_DB: "valmi"
+      DAGSTER_POSTGRES_DB: "valmi_dagster"
     volumes: # Make docker client accessible so we can terminate containers from dagit
       - /var/run/docker.sock:/var/run/docker.sock
       - /tmp/io_manager_storage:/tmp/io_manager_storage
@@ -34,7 +34,7 @@ services:
       - valmi-network
     depends_on:
       - valmi-db
-
+      
   # This service runs the dagster-daemon process, which is responsible for taking runs
   # off of the queue and launching them, as well as creating runs from schedules or sensors.
   dagster_daemon:
@@ -49,7 +49,7 @@ services:
     environment:
       DAGSTER_POSTGRES_USER: "postgres"
       DAGSTER_POSTGRES_PASSWORD: "changeme"
-      DAGSTER_POSTGRES_DB: "valmi"
+      DAGSTER_POSTGRES_DB: "valmi_dagster"
     volumes: # Make docker client accessible so we can launch containers using host docker
       - /var/run/docker.sock:/var/run/docker.sock
       - /tmp/io_manager_storage:/tmp/io_manager_storage
@@ -73,7 +73,7 @@ services:
     environment:
       POSTGRES_USER: "postgres"
       POSTGRES_PASSWORD: "changeme"
-      POSTGRES_DB: "valmi_activation"
+      POSTGRES_DB: "valmi_dagster"
       PGDATA: /data/postgres
     restart: unless-stopped
     networks:
@@ -94,7 +94,7 @@ services:
     environment:
       DAGSTER_POSTGRES_USER: "postgres"
       DAGSTER_POSTGRES_PASSWORD: "changeme"
-      DAGSTER_POSTGRES_DB: "valmi"
+      DAGSTER_POSTGRES_DB: "valmi_dagster"
       DAGSTER_CURRENT_IMAGE: "valmi-repo"
     networks:
       - valmi-network

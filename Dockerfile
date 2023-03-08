@@ -17,9 +17,10 @@ RUN curl -fsSL https://get.docker.com | sh
 
 #USER user
 
-WORKDIR /workspace
+WORKDIR /workspace 
 #COPY . /workspace/
 ENV PATH="/opt/valmi-activation/bin:${PATH}"
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONPATH /workspace/src
+ENTRYPOINT ["/workspace/docker-entrypoint.sh"]
 CMD ["uvicorn", "main:app",   "--port", "8000", "--host","0.0.0.0", "--log-level" ,"debug"]

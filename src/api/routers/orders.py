@@ -5,8 +5,8 @@ from fastapi.routing import APIRouter
 from pydantic.types import UUID4
 
 from api.services import OrdersService, get_orders_service
-from db import models
-from db.schemas import Order, OrderCreate, OrderDetail
+from metastore import models
+from  api.schemas import Order, OrderCreate, OrderDetail
 
 router = APIRouter(prefix="/orders")
 
