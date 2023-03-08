@@ -28,7 +28,7 @@ echo $port
 
 # Wait for the backend to be up, if we know where it is.
 if [ -n "$host" ]; then
-  /workspace/wait-for-it.sh "$host:${port:-5432}"
+  /workspace/wait-for-it.sh "$host:${port:-5432}" -t 60
 fi
 
 cd /workspace/src && alembic upgrade head
