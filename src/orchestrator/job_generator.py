@@ -12,7 +12,7 @@ from dagster_graphql import ShutdownRepositoryLocationInfo, ShutdownRepositoryLo
 from jinja2 import Environment, FileSystemLoader
 from pydantic import Json
 from vyper import v
-from utils.utils import retry_on_exception, exception_to_sys_exit
+from utils.retry_decorators import retry_on_exception, exception_to_sys_exit
 from api.schemas import SyncScheduleCreate
 from api.services import get_syncs_service
 from metastore.session import get_session
