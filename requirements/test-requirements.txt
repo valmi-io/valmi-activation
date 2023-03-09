@@ -138,9 +138,7 @@ graphql-relay==3.2.0
     #   -r requirements/requirements.txt
     #   graphene
 greenlet==2.0.2
-    # via
-    #   -r requirements/requirements.txt
-    #   sqlalchemy
+    # via -r requirements/requirements.txt
 grpcio==1.47.5
     # via
     #   -r requirements/requirements.txt
