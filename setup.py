@@ -13,7 +13,7 @@ install_requires = [
     "sqlalchemy-utils",
     "airbyte-cdk",
     "jinja2",
-    "duckdb=0.7.1",
+    "duckdb==0.7.1",
 ]
 
 
