@@ -12,10 +12,15 @@ from contextlib import asynccontextmanager
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     from orchestrator.repo import Repo
+    from warmup import ImageWarmupManager
 
+    img_manager = ImageWarmupManager()
     repo = Repo()
+
     yield
+
     repo.destroy()
+    img_manager.destroy()
 
 
 def create_app() -> FastAPI:
@@ -46,10 +51,9 @@ def create_app() -> FastAPI:
     async def root() -> Json[Any]:
         return json.dumps({"message": "Valmi.io Activation Platform"})
 
-    from api.routers import connectors, syncs, sync_runs, metrics
+    from api.routers import connectors, syncs, metrics
 
     app.include_router(connectors.router)
     app.include_router(syncs.router)
-    app.include_router(sync_runs.router)
     app.include_router(metrics.router)
     return app

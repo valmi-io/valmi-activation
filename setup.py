@@ -8,7 +8,7 @@ install_requires = [
     "tenacity",
     "dagster-graphql",
     "alembic",
-    "starlette ",
+    "starlette",
     "psycopg2-binary",
     "sqlalchemy-utils",
     "airbyte-cdk",
@@ -20,6 +20,6 @@ install_requires = [
 setup(
     name="valmi-activation",
     install_requires=install_requires,
-    include_package_data=False,
+    include_package_data=True,
     extras_require={"dev": ["flake8", "black", "mypy"]},
 )

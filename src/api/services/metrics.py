@@ -1,14 +1,13 @@
-from sqlalchemy.orm import Session
 from vyper import v
-from api.schemas import MetricCreate, Metric
+from api.schemas import MetricCreate, MetricBase
 from metrics.metrics import Metrics
 
 
 class MetricsService(object):
-    def __init__(self, db_session: Session):
+    def __init__(self):
         self.metrics = Metrics(delete_db=v.get_bool("DELETE_METRICS_DB"))
 
-    def create(self, obj: MetricCreate) -> Metric:
+    def create(self, obj: MetricCreate) -> None:
         """
         sync_schedule: SyncSchedule = self.model(**obj.dict())
         self.db_session.add(sync_schedule)
@@ -16,4 +15,7 @@ class MetricsService(object):
         self.db_session.commit()
         return sync_schedule
         """
-        return self.metrics.put_metrics(**obj.dict())
+        self.metrics.put_metrics(**obj.dict())
+
+    def get_metrics(self, obj: MetricBase) -> dict[str, dict[str | int]]:
+        return self.metrics.get_metrics(**obj.dict())

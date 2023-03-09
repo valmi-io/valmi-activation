@@ -161,3 +161,4 @@ cython_debug/
 .DS_Store
 valmi_metrics.db
 .python-version
+valmi_metrics.db.wal
