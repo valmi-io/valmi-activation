@@ -41,8 +41,8 @@ def get_jobs_schedules_from_py_files(files):
     schedules = [getattr(mod, "schedule") for mod in modules]
 
     return {
-        "jobs": dict(zip([f"{file}".capitalize() for file in imports], jobs)),
-        "schedules": dict(zip([f"{file}_schedule".capitalize() for file in imports], schedules)),
+        "jobs": dict(zip([f"{file}" for file in imports], jobs)),
+        "schedules": dict(zip([f"{file}_schedule" for file in imports], schedules)),
     }
 
 

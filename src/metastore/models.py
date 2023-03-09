@@ -62,3 +62,26 @@ class OrderItem(Base):
     product = relationship("Product", uselist=False)
     quantity = sa.Column(sa.Integer, nullable=False)
 
+
+class SyncSchedule(Base):
+    __tablename__ = "sync_schedules"
+
+    sync_id = sa.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    last_run_at = sa.Column(sa.DateTime, server_default=sa.func.now(), nullable=False)
+    run_interval = sa.Column(sa.Integer, nullable=False)
+    status = sa.Column(sa.Text, nullable=False)
+    created_at = sa.Column(sa.DateTime, server_default=sa.func.now(), nullable=False)
+    updated_at = sa.Column(sa.DateTime, server_default=sa.func.now(), onupdate=sa.func.now(), nullable=False)
+
+
+class SyncRun(Base):
+    __tablename__ = "sync_runs"
+
+    sync_id = sa.Column(ForeignKey("sync_schedules.sync_id"), nullable=False)
+    run_id = sa.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    run_at = sa.Column(sa.DateTime, server_default=sa.func.now(), nullable=False)
+    status = sa.Column(sa.Text, nullable=False)
+    metrics = sa.Column(sa.JSON, nullable=True)
+    remarks = sa.Column(sa.JSON, nullable=True)  # store error messages or anything else
+    created_at = sa.Column(sa.DateTime, server_default=sa.func.now(), nullable=False)
+    updated_at = sa.Column(sa.DateTime, server_default=sa.func.now(), onupdate=sa.func.now(), nullable=False)

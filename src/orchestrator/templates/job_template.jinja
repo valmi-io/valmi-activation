@@ -6,7 +6,7 @@ from dagster import DefaultScheduleStatus, ScheduleDefinition, graph, op
 
 source_op = docker_container_op.configured(
     {
-        "image": "{{ sync['source']['container_image'] }}",
+        "image": "{{ sync['source']['credential']['docker_image'] }}:{{ sync['source']['credential']['docker_tag'] }}",
         "command": [
             "read",
             "--config",
@@ -19,44 +19,44 @@ source_op = docker_container_op.configured(
         },
         "env_vars": list({**os.environ}.keys()),
     },
-    name="source_op_{{ sync['id'] }}_{{ sync['source']['id'] }}",
+    name="source_op_{{ sync['id'].replace('-','_') }}_{{ sync['source']['id'].replace('-','_') }}",
 )
 destination_op = docker_container_op.configured(
-    {
-        "image": "{{ sync['destination']['container_image'] }}",
-        "command": ["write",
-            "--config",
-            "/tmp/config.json",
-            "--catalog",
-            "/tmp/configured_catalog.json"],
-        "container_kwargs": {  # keyword args to be passed to the container. example:
+        {
+            "image": "{{ sync['destination']['credential']['docker_image'] }}:{{ sync['destination']['credential']['docker_tag'] }}",
+            "command": ["write",
+                "--config",
+                "/tmp/config.json",
+                "--catalog",
+                "/tmp/configured_catalog.json"],
+            "container_kwargs": {  # keyword args to be passed to the container. example:
             "volumes": ["{{ prefix }}/intermediate_store:{{ prefix }}/intermediate_store","{{ prefix }}/{{ app }}/repo/config/{{sync['id']}}-{{ sync['destination']['id'] }}.json:/tmp/config.json" , "{{prefix}}/{{app}}/repo/catalog/{{sync['id']}}-{{ sync['destination']['id'] }}.json:/tmp/configured_catalog.json"],
         },
         "env_vars": list({**os.environ}.keys()),
     },
-    name="destination_op_{{ sync['id'] }}_{{ sync['destination']['id'] }}",
+    name="destination_op_{{ sync['id'].replace('-','_') }}_{{ sync['destination']['id'].replace('-','_') }}",
 )
 
 
-@op(name="finalizer_{{ sync['id'] }}_{{ sync['source']['id'] }}_{{ sync['destination']['id'] }}")
+@op(name="finalizer_{{ sync['id'].replace('-','_') }}_{{ sync['source']['id'].replace('-','_') }}_{{ sync['destination']['id'].replace('-','_') }}")
 def finalizer(context, a, b) -> None:
     context.log.info("finalizer")
 
 
 def job():
-    @graph(name="graph_{{ sync['id'] }}_{{ sync['source']['id'] }}_{{ sync['destination']['id'] }}")
+    @graph(name="graph_{{ sync['id'].replace('-','_') }}_{{ sync['source']['id'].replace('-','_') }}_{{ sync['destination']['id'].replace('-','_') }}")
     def sync_graph():
         a = source_op ()
         b = destination_op()
-        finalizer(a, b)
+        finalizer(a, b) 
 
-    return sync_graph.to_job(name=os.path.basename(__file__)[:-3].capitalize())
+    return sync_graph.to_job(name="{{ sync['id'].replace('-','_') }}")
 
 
 def schedule():
     return ScheduleDefinition(
-        cron_schedule="0 0 * * *",
+        cron_schedule="0 0 1 1 *",
         job=job(),
-        default_status=DefaultScheduleStatus.RUNNING,
+        default_status=DefaultScheduleStatus.STOPPED,
         execution_timezone="US/Central",
     )

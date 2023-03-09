@@ -1,38 +1,27 @@
 import json
 from typing import Any
 
-from fastapi import FastAPI, Response, Request
+from fastapi import FastAPI, Response
 from pydantic import Json
 
-from orchestrator.repo import Repo
-from vyperconfig import v
+from vyper import v
 import logging
+from contextlib import asynccontextmanager
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    from orchestrator.repo import Repo
+
+    repo = Repo()
+    yield
+    repo.destroy()
 
 
 def create_app() -> FastAPI:
-    repo = Repo()
-
-    app = FastAPI(
-        title="valmi.io",
-        description="Rest API for valmi engine",
-        version="1.0",
-    )
+    app = FastAPI(title="valmi.io", description="Rest API for valmi engine", version="1.0", lifespan=lifespan)
 
     if v.get_bool("DEBUG"):
-
-        class LogRequestsMiddleware:
-            def __init__(self, app) -> None:
-                self.app = app
-
-            async def __call__(self, scope, receive, send) -> None:
-                receive_cached_ = await receive()
-
-                async def receive_cached():
-                    return receive_cached_
-
-                request = Request(scope, receive=receive_cached)
-                logging.info(f"{request.method} {request.url} {receive_cached_}")
-                await self.app(scope, receive_cached, send)
 
         @app.middleware("http")
         async def log_request(request, call_next):
@@ -49,25 +38,18 @@ def create_app() -> FastAPI:
                 media_type=response.media_type,
             )
 
-        app.add_middleware(LogRequestsMiddleware)
-
     @app.get("/health")
     async def health() -> Json[Any]:
         return json.dumps({"status": "ok"})
 
     @app.get("/")
     async def root() -> Json[Any]:
-        return json.dumps({"message": "Hello World"})
+        return json.dumps({"message": "Valmi.io Activation Platform"})
 
-    @app.on_event("shutdown")
-    def shutdown_event() -> None:
-        repo.destroy()
+    from api.routers import connectors, syncs, sync_runs, metrics
 
-    from api.routers import orders, products, sources, stores
-
-    app.include_router(orders.router)
-    app.include_router(products.router)
-    app.include_router(stores.router)
-    app.include_router(sources.router)
-
+    app.include_router(connectors.router)
+    app.include_router(syncs.router)
+    app.include_router(sync_runs.router)
+    app.include_router(metrics.router)
     return app

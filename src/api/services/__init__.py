@@ -3,21 +3,26 @@ from sqlalchemy.orm import Session
 
 from metastore.session import get_session
 
-from .orders import OrdersService
-from .products import ProductsService
-from .stores import StoresService
+
+from .syncs import SyncsService
+from .sync_runs import SyncRunsService
+from .metrics import MetricsService
 
 
-def get_stores_service(db_session: Session = Depends(get_session)) -> StoresService:
-    return StoresService(db_session)
+def get_syncs_service(db_session: Session = Depends(get_session)) -> SyncsService:
+    return SyncsService(db_session)
 
 
-def get_products_service(db_session: Session = Depends(get_session)) -> ProductsService:
-    return ProductsService(db_session)
+def get_sync_runs_service(db_session: Session = Depends(get_session)) -> SyncRunsService:
+    return SyncRunsService(db_session)
 
 
-def get_orders_service(db_session: Session = Depends(get_session)) -> OrdersService:
-    return OrdersService(db_session)
+def get_metrics_service() -> MetricsService:
+    return MetricsService()
 
 
-__all__ = ("get_stores_service", "get_products_service", "get_orders_service")
+__all__ = (
+    "get_syncs_service",
+    "get_sync_runs_service",
+    "get_metrics_service",
+)

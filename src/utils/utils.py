@@ -2,7 +2,7 @@ from typing import Any
 from tenacity import after_log, retry, stop_after_attempt, wait_exponential
 import logging
 import sys
-from vyperconfig import v
+from vyper import v
 import functools
 
 # Logging init

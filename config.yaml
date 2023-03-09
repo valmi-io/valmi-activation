@@ -1,3 +1,5 @@
+DEBUG: True
+DELETE_METRICS_DB: False
 APP_BACKEND: localhost
 APP_BACKEND_PORT: 4000
 DAGIT_HOST: localhost
@@ -9,7 +11,11 @@ DAGTSER_MAX_TRIES: 3
 DAGSTER_MIN_RETRY_INTERVAL: 10
 DAGSTER_MAX_RETRY_INTERVAL: 120
 LOGGER_NAME: "valmi"
-DEBUG: True
+ADMIN_USERNAME: "admin-changeme"
+ADMIN_EMAIL: "admin-changeme@valmi.io"
+ADMIN_PASSWORD: "changeme"
+
+HTTP_REQ_TIMEOUT: 10 #seconds
 LOGGING_CONF:
   version: 1
   formatters:

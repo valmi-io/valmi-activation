@@ -46,7 +46,9 @@ async def source_check(source_unique_name: str, source_config: SourceDockerConfi
         f.write(source_config.config_json_str)
     lines = []
     args = shlex.split(
-        "docker run --network host --rm -v /tmp/{0}:/secrets/config.json {1}:{2} check --config /secrets/config.json".format(
+        "docker run --network host \
+            --rm -v /tmp/{0}:/secrets/config.json \
+                {1}:{2} check --config /secrets/config.json".format(
             newid, source_config.source_docker_image, source_config.source_docker_tag
         )
     )
