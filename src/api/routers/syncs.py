@@ -26,6 +26,7 @@ async def get_sync_schedules(
 
 @router.get("/{sync_id}/runs/", response_model=List[SyncRun])
 async def get_sync_runs(
+    sync_id: UUID4,
     before: datetime = None,
     limit: int = 0,
     sync_runs_service: SyncRunsService = Depends(get_sync_runs_service),
@@ -35,7 +36,7 @@ async def get_sync_runs(
     # return sync_runs_service.list()
 
 
-@router.get("/sync/{sync_id}/run/{run_id}/samples/{connector_id}", response_model=Json[Any])
+@router.get("/{sync_id}/runs/{run_id}/samples/{connector_id}", response_model=Json[Any])
 async def get_run_samples(
     sync_id: UUID4,
     run_id: UUID4,

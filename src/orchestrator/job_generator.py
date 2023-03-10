@@ -16,6 +16,7 @@ from utils.retry_decorators import retry_on_exception, exception_to_sys_exit
 from api.schemas import SyncScheduleCreate
 from api.services import get_syncs_service
 from metastore.session import get_session
+from .dagster_client import ValmiDagsterClient
 
 logger = logging.getLogger(v.get("LOGGER_NAME"))
 GENERATED_DIR = "generated"
@@ -25,7 +26,7 @@ SHARED_DIR = "/tmp/shared_dir"
 
 
 class JobCreatorThread(threading.Thread):
-    def __init__(self, threadID: int, name: str, dagster_client) -> None:
+    def __init__(self, threadID: int, name: str, dagster_client: ValmiDagsterClient) -> None:
         threading.Thread.__init__(self)
         self.threadID = threadID
         self.exitFlag = False

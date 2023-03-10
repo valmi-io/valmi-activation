@@ -18,5 +18,7 @@ class SyncScheduleCreate(SyncScheduleBase):
 
 
 class SyncSchedule(SyncScheduleCreate):
+    run_status: Optional[str]
+
     class Config:
         orm_mode = True

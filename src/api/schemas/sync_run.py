@@ -14,10 +14,12 @@ class SyncRunUpdate(SyncRunBase):
     status: Optional[str]
     metrics: Optional[Json[Any]]
     remarks: Optional[Json[Any]]
+    dagster_run_id: Optional[str]
 
 
 class SyncRunCreate(SyncRunBase):
     sync_id: UUID4
+    run_id: UUID4
     run_at: datetime
     status: str
     metrics: Optional[Json[Any]]

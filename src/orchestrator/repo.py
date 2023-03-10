@@ -1,9 +1,9 @@
 import logging
 
-from dagster_graphql import DagsterGraphQLClient
 from vyper import v
 from orchestrator.job_generator import JobCreatorThread
 from orchestrator.run_manager import SyncRunnerThread
+from .dagster_client import ValmiDagsterClient
 
 logger = logging.getLogger(v.get("LOGGER_NAME"))
 
@@ -15,7 +15,7 @@ class Repo:
         return cls.instance
 
     def __init__(self) -> None:
-        self.client = DagsterGraphQLClient(v.get("DAGIT_HOST"), port_number=v.get_int("DAGIT_PORT"))
+        self.client = ValmiDagsterClient(v.get("DAGIT_HOST"), port_number=v.get_int("DAGIT_PORT"))
 
         self.jobCreatorThread = JobCreatorThread(1, "JobCreatorThread", self.client)
         self.jobCreatorThread.start()

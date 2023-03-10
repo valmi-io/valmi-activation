@@ -1,7 +1,8 @@
+import signal
 from typing import Any
 from tenacity import after_log, retry, stop_after_attempt, wait_exponential
 import logging
-import sys
+import os
 from vyper import v
 import functools
 
@@ -39,6 +40,7 @@ def exception_to_sys_exit(func: Any) -> Any:
                 str(func.__name__),
                 str(e),
             )
-            sys.exit(1)
+            # TODO: do clean shutdown of the uvicorn app.
+            os.kill(os.getpid(), signal.SIGINT)
 
     return wrapper

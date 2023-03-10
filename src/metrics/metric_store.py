@@ -1,6 +1,4 @@
-# Metric Server - API to query metrics of the runs
 # Finalizer of the jobs stores summary metrics in the db
-# metrics of the running jobs are in memory :: aggregated until the last checkpoint
 # serve samples from intermediate_storage
 
 
@@ -12,6 +10,8 @@ from datetime import datetime
 
 METRICS_TABLE = "metrics"
 DB_NAME = "valmi_metrics.db"
+
+MAGIC_CHUNK_ID = 2**63 - 1
 
 
 class Metrics:
@@ -40,11 +40,11 @@ class Metrics:
         if not metric_table_found:
             self.con.sql(
                 f"CREATE TABLE {METRICS_TABLE} (sync_id VARCHAR, connector_id VARCHAR, run_id VARCHAR, \
-                    chunk_id VARCHAR, metric_type VARCHAR,\
+                    chunk_id BIGINT, metric_type VARCHAR,\
                     count BIGINT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)"
             )
 
-    def get_metrics(self, sync_id: UUID4, run_id: UUID4, ingore_chunk_id: UUID4 = None) -> dict[str, dict[str, int]]:
+    def get_metrics(self, sync_id: UUID4, run_id: UUID4, ingore_chunk_id: int = None) -> dict[str, dict[str, int]]:
         # get the metrics of the run
         # deduplicate by chunk_id and return
         ignore_clause = " AND m.chunk_id != '%s'" % ingore_chunk_id if ingore_chunk_id else ""
@@ -67,9 +67,7 @@ class Metrics:
             metric_map[y] = z
         return ret_map
 
-    def put_metrics(
-        self, sync_id: UUID4, connector_id: UUID4, run_id: UUID4, chunk_id: UUID4, metrics: dict[str, int]
-    ):
+    def put_metrics(self, sync_id: UUID4, connector_id: UUID4, run_id: UUID4, chunk_id: int, metrics: dict[str, int]):
         """
         DISABLE AGGREGATION IF IT IS SLOW
         """
@@ -92,7 +90,7 @@ class Metrics:
                             AND run_id = '{run_id}' AND connector_id= '{connector_id}' AND chunk_id != '{chunk_id}'"
                     )
                     # generate CHUNK_ID
-                    self._insert_metrics(sync_id, connector_id, run_id, uuid.uuid4(), old_metric)
+                    self._insert_metrics(sync_id, connector_id, run_id, MAGIC_CHUNK_ID, old_metric)
                     self.con.commit()
 
         self.con.begin()
@@ -100,7 +98,7 @@ class Metrics:
         self.con.commit()
 
     def _insert_metrics(
-        self, sync_id: UUID4, connector_id: UUID4, run_id: UUID4, chunk_id: UUID4, metrics: dict[str, int]
+        self, sync_id: UUID4, connector_id: UUID4, run_id: UUID4, chunk_id: int, metrics: dict[str, int]
     ):
         # put the metrics of the run
         now = datetime.now()
@@ -108,7 +106,7 @@ class Metrics:
 
         for metric_type, count in metrics.items():
             inserts.append(
-                f"('{sync_id}', '{connector_id}', '{run_id}', '{chunk_id}','{metric_type}','{count}','{now}')"
+                f"('{sync_id}', '{connector_id}', '{run_id}', {chunk_id},'{metric_type}','{count}','{now}')"
             )
 
         self.con.sql(f"INSERT INTO {METRICS_TABLE} VALUES {','.join(inserts)}")
@@ -133,7 +131,7 @@ if __name__ == "__main__":
         for j in range(0, 10):
             run_id = uuid.uuid4()
             for k in range(0, 100):
-                chunk_id = uuid.uuid4()
+                chunk_id = k
                 metric_type = random.choice(["failed", "succeeded"])
                 # count = random.choice(range(0, 1000))
                 count = 1

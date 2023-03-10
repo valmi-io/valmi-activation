@@ -111,8 +111,10 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8000:8000"
-    command: ["uvicorn", "main:app",   "--port", "8000", "--host", "0.0.0.0",  "--log-level" ,"debug", "--reload"]
+    command: ["uvicorn", "main:app",   "--port", "8000", "--host", "0.0.0.0",  "--log-level" ,"debug","--reload"]
     container_name: valmi-activation
+    restart: on-failure
+
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /tmp/shared_dir:/tmp/shared_dir:z
@@ -138,6 +140,7 @@ services:
       context: ./valmi-app-backend
       dockerfile: Dockerfile
     container_name: valmi-app-backend
+    restart: on-failure
     volumes:
       - ./valmi-app-backend:/workspace:z
     networks:

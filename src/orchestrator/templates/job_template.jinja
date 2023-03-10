@@ -19,7 +19,7 @@ source_op = docker_container_op.configured(
         },
         "env_vars": list({**os.environ}.keys()),
     },
-    name="source_op_{{ sync['id'].replace('-','_') }}_{{ sync['source']['id'].replace('-','_') }}",
+    name="source_op_{{ sync['id'].replace('-','_') }}",
 )
 destination_op = docker_container_op.configured(
         {
@@ -34,17 +34,17 @@ destination_op = docker_container_op.configured(
         },
         "env_vars": list({**os.environ}.keys()),
     },
-    name="destination_op_{{ sync['id'].replace('-','_') }}_{{ sync['destination']['id'].replace('-','_') }}",
+    name="destination_op_{{ sync['id'].replace('-','_') }}",
 )
 
 
-@op(name="finalizer_{{ sync['id'].replace('-','_') }}_{{ sync['source']['id'].replace('-','_') }}_{{ sync['destination']['id'].replace('-','_') }}")
+@op(name="finalizer_{{ sync['id'].replace('-','_') }}")
 def finalizer(context, a, b) -> None:
     context.log.info("finalizer")
 
 
 def job():
-    @graph(name="graph_{{ sync['id'].replace('-','_') }}_{{ sync['source']['id'].replace('-','_') }}_{{ sync['destination']['id'].replace('-','_') }}")
+    @graph(name="graph_{{ sync['id'].replace('-','_') }}")
     def sync_graph():
         a = source_op ()
         b = destination_op()

@@ -7,36 +7,118 @@
 import logging
 import threading
 import time
-
+import uuid
+from api.services import get_syncs_service, get_sync_runs_service
+from metastore.session import get_session
 from vyper import v
+from metastore.models import SyncStatus, SyncConfigStatus
+from api.schemas import SyncRunCreate
+from datetime import datetime
+from dagster import DagsterRunStatus
+from utils.retry_decorators import exception_to_sys_exit
+from .dagster_client import ValmiDagsterClient
 
 logger = logging.getLogger(v.get("LOGGER_NAME"))
+TICK_INTERVAL = 5
 
 
 class SyncRunnerThread(threading.Thread):
-    def __init__(self, threadID: int, name: str, dagster_client) -> None:
+    def __init__(self, threadID: int, name: str, dagster_client: ValmiDagsterClient) -> None:
         threading.Thread.__init__(self)
         self.threadID = threadID
         self.exitFlag = False
         self.name = name
-        self.dagster_client = dagster_client
+        self.dc = dagster_client
+
+        dbSession = next(get_session())
+        self.sync_service = get_syncs_service(dbSession)
+        self.run_service = get_sync_runs_service(dbSession)
+
+    @exception_to_sys_exit
+    def _run(self):
+        while not self.exitFlag:
+            time.sleep(TICK_INTERVAL)
+            try:
+                syncs_to_handle = self.sync_service.get_syncs_to_run()
+                print(syncs_to_handle)
+
+                for sync in syncs_to_handle:
+                    if sync.status != SyncConfigStatus.ACTIVE:
+                        # terminate dagster runs
+                        pass
+                    elif sync.run_status == SyncStatus.STOPPED:
+                        logger.info("Sync is stopped %s", sync.sync_id)
+
+                        run = SyncRunCreate(
+                            run_id=uuid.uuid4(),
+                            sync_id=sync.sync_id,
+                            run_at=datetime.now(),
+                            status=SyncStatus.SCHEDULED,
+                        )
+
+                        sync.last_run_at = run.run_at
+                        sync.run_status = SyncStatus.SCHEDULED
+                        sync.last_run_id = run.run_id
+
+                        self.sync_service.update_sync_and_create_run(sync, run)
+
+                    elif sync.run_status == SyncStatus.FAILED:
+                        # TODO: check if retry is needed, else set it to stopped
+
+                        sync.run_status = SyncStatus.STOPPED
+                        run.status = SyncStatus.STOPPED
+                        self.sync_service.update_sync_and_run(sync, run)
+
+                    elif sync.run_status == SyncStatus.SCHEDULED:
+                        # submit job to dagster,
+                        # TODO: if already submitted, but failed to set metastore status, check below TODO
+                        try:
+                            dagster_run_id = self.dc.submit_job_execution(
+                                self.dc.su(sync.sync_id),
+                                tags={"sync_id": self.dc.su(sync.sync_id), "run_id": self.dc.su(sync.last_run_id)},
+                            )
+
+                            # TODO: saving dagster run id in the metastore, but if it crashes before this.
+                            # we will have to handle it.
+                            # Python dagster client has no api to obtain dagster run id from job name.
+                            # We can use the graphql api to get the dagster run id from the job name.
+
+                            run = self.run_service.get(sync.last_run_id)
+
+                            sync.run_status = SyncStatus.RUNNING
+                            run.status = SyncStatus.RUNNING
+                            run.dagster_run_id = dagster_run_id
+
+                            self.sync_service.update_sync_and_run(sync, run)
+
+                        except Exception:
+                            logger.exception("Error while submitting job to dagster and saving state to metastore")
+                            raise
+
+                    elif sync.run_status == SyncStatus.RUNNING:
+                        # check dagster status
+                        run = self.run_service.get(sync.last_run_id)
+
+                        dagster_run_status, queryresult = self.dc.get_run_status(run.dagster_run_id)
+
+                        logger.debug(queryresult)
+
+                        if dagster_run_status == DagsterRunStatus.SUCCESS:
+                            sync.run_status = SyncStatus.STOPPED
+                            run.status = SyncStatus.STOPPED
+                            run.remarks = {"status": str(DagsterRunStatus.SUCCESS)}
+
+                        elif dagster_run_status == DagsterRunStatus.FAILURE:
+                            sync.run_status = SyncStatus.FAILED
+                            run.status = SyncStatus.FAILED
+                            run.remarks = {
+                                "status": str(DagsterRunStatus.FAILURE),
+                                "error": queryresult,
+                            }
+                        self.sync_service.update_sync_and_run(sync, run)
+            except Exception:
+                logger.exception("Error while handling syncs in run manager")
+                raise
 
     def run(self) -> None:
-        while not self.exitFlag:
-            try:
-                # Part 2:
-                # get_all_running_jobs
-                # get status from dagster
-                # update metastore accordingly
-
-                # Part 1:
-                # get_all_jobs
-                # for each_job:
-                # if not running and past scheduled time
-                # start job dagster client with attached tags
-                # update metastore
-
-                pass
-            except Exception:
-                logger.exception("Error while running jobs")
-            time.sleep(5)
+        self._run()

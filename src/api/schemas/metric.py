@@ -12,7 +12,7 @@ class MetricBase(BaseModel):
 
 
 class MetricCreate(MetricBase):
-    chunk_id: UUID4
+    chunk_id: int
     connector_id: UUID4
     metrics: dict[str, int]
 
