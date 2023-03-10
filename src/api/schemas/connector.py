@@ -1,3 +1,4 @@
+from typing import Dict
 from pydantic import BaseModel
 
 from .utils import to_camel
@@ -12,5 +13,5 @@ class DockerItem(BaseModel):
         allow_population_by_field_name = True
 
 
-class SourceDockerConfig(DockerItem):
-    config_json_str: str
+class ConnectorConfig(DockerItem):
+    config: Dict

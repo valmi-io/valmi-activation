@@ -3,6 +3,7 @@ import json
 import os
 import sys
 from os.path import join
+import json
 
 buffer_size = 2
 lines = []
@@ -26,6 +27,8 @@ def store(lines, last=False):
 
 for line in sys.stdin:
     lines.append(line)
+    if(json.loads(line)['type'] != 'LOG'):
+        print(line)
     counter = counter + 1
     if counter >= buffer_size:
         store(lines)

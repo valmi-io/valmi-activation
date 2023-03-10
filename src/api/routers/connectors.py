@@ -1,4 +1,5 @@
 import io
+import json
 import logging
 import os
 import shlex
@@ -9,7 +10,8 @@ from fastapi import Response
 from fastapi.routing import APIRouter
 from vyper import v
 
-from api.schemas import SourceDockerConfig, DockerItem
+from api.schemas import DockerItem
+from api.schemas.connector import ConnectorConfig
 
 router = APIRouter(prefix="/connectors")
 
@@ -35,21 +37,21 @@ async def get_source_spec(connector_type: str, docker_item: DockerItem) -> str:
     return Response(content="".join(lines))
 
 
-@router.post("/{source_unique_name}/check", response_model=str)
-async def source_check(source_unique_name: str, source_config: SourceDockerConfig) -> str:
-    logger.debug("Checking source config: %s", source_unique_name)
+@router.post("/{connector_type}/check", response_model=str)
+async def source_check(connector_type: str, config: ConnectorConfig) -> str:
+    logger.debug("Checking  config: %s", connector_type)
     newid: str = str(uuid.uuid4())
 
     # filename: str = "/tmp/{0}/config.json".format(newid)
     # os.makedirs(os.path.dirname(filename), exist_ok=True)
-    with open("/tmp/{0}".format(newid), "w") as f:
-        f.write(source_config.config_json_str)
+    with open("/tmp/shared_dir/{0}".format(newid), "w") as f:
+        f.write(json.dumps(config.config))
     lines = []
     args = shlex.split(
         "docker run --network host \
-            --rm -v /tmp/{0}:/secrets/config.json \
+            --rm -v /tmp/shared_dir/{0}:/secrets/config.json \
                 {1}:{2} check --config /secrets/config.json".format(
-            newid, source_config.source_docker_image, source_config.source_docker_tag
+            newid, config.docker_image, config.docker_tag
         )
     )
     proc = subprocess.Popen(
@@ -60,5 +62,5 @@ async def source_check(source_unique_name: str, source_config: SourceDockerConfi
         lines.append(line)
 
     # shutil.rmtree("/tmp/{0}".format(newid))
-    os.unlink("/tmp/{0}".format(newid))
+    os.unlink("/tmp/shared_dir/{0}".format(newid))
     return Response(content="".join(lines))

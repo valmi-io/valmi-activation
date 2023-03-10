@@ -64,6 +64,7 @@ class SyncRunnerThread(threading.Thread):
 
                     elif sync.run_status == SyncStatus.FAILED:
                         # TODO: check if retry is needed, else set it to stopped
+                        run = self.run_service.get(sync.last_run_id)
 
                         sync.run_status = SyncStatus.STOPPED
                         run.status = SyncStatus.STOPPED

@@ -1,5 +1,5 @@
-from typing import Any, Optional
-from pydantic import BaseModel, UUID4, Json
+from typing import Dict, Optional
+from pydantic import BaseModel, UUID4
 from datetime import datetime
 from .utils import to_camel
 
@@ -12,8 +12,8 @@ class SyncRunBase(BaseModel):
 
 class SyncRunUpdate(SyncRunBase):
     status: Optional[str]
-    metrics: Optional[Json[Any]]
-    remarks: Optional[Json[Any]]
+    metrics: Optional[Dict]
+    remarks: Optional[Dict]
     dagster_run_id: Optional[str]
 
 
@@ -22,8 +22,8 @@ class SyncRunCreate(SyncRunBase):
     run_id: UUID4
     run_at: datetime
     status: str
-    metrics: Optional[Json[Any]]
-    remarks: Optional[Json[Any]]
+    metrics: Optional[Dict]
+    remarks: Optional[Dict]
 
 
 class SyncRun(SyncRunCreate):
