@@ -33,7 +33,10 @@ async def get_source_spec(connector_type: str, docker_item: DockerItem) -> str:
         stdout=subprocess.PIPE,
     )
     for line in io.TextIOWrapper(proc.stdout, encoding="utf-8"):  # or another encoding
-        lines.append(line)
+        if line.strip() == "":
+            continue
+        if json.loads(line)["type"] != "LOG":
+            lines.append(line)
     return Response(content="".join(lines))
 
 
@@ -59,7 +62,10 @@ async def source_check(connector_type: str, config: ConnectorConfig) -> str:
         stdout=subprocess.PIPE,
     )
     for line in io.TextIOWrapper(proc.stdout, encoding="utf-8"):  # or another encoding
-        lines.append(line)
+        if line.strip() == "":
+            continue
+        if json.loads(line.encode("utf-8"))["type"] != "LOG":
+            lines.append(line)
 
     # shutil.rmtree("/tmp/{0}".format(newid))
     os.unlink("/tmp/shared_dir/{0}".format(newid))
