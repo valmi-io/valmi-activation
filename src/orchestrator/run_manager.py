@@ -77,8 +77,10 @@ class SyncRunnerThread(threading.Thread):
                             dagster_run_id = self.dc.submit_job_execution(
                                 self.dc.su(sync.sync_id),
                                 tags={"sync_id": self.dc.su(sync.sync_id), "run_id": self.dc.su(sync.last_run_id)},
+                                # run_config={
+                                #    "ops": {"initialise": {"config": {"run_id": self.dc.su(sync.last_run_id)}}}
+                                # },
                             )
-
                             # TODO: saving dagster run id in the metastore, but if it crashes before this.
                             # we will have to handle it.
                             # Python dagster client has no api to obtain dagster run id from job name.
@@ -100,21 +102,19 @@ class SyncRunnerThread(threading.Thread):
                         # check dagster status
                         run = self.run_service.get(sync.last_run_id)
 
-                        dagster_run_status, queryresult = self.dc.get_run_status(run.dagster_run_id)
-
-                        logger.debug(queryresult)
+                        dagster_run_status = self.dc.get_run_status(run.dagster_run_id)
 
                         if dagster_run_status == DagsterRunStatus.SUCCESS:
                             sync.run_status = SyncStatus.STOPPED
                             run.status = SyncStatus.STOPPED
-                            run.remarks = {"status": str(DagsterRunStatus.SUCCESS)}
+                            run.remarks = {"status": "SUCCESS", "error": ""}
 
                         elif dagster_run_status == DagsterRunStatus.FAILURE:
                             sync.run_status = SyncStatus.FAILED
                             run.status = SyncStatus.FAILED
                             run.remarks = {
-                                "status": str(DagsterRunStatus.FAILURE),
-                                "error": queryresult,
+                                "status": "FAILURE",
+                                "error": "",
                             }
                         self.sync_service.update_sync_and_run(sync, run)
             except Exception:

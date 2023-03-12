@@ -1,6 +1,6 @@
 *
 !docker-entrypoint.sh
-!export_stdout_to_storage.py
+!source_container_wrapper.py
 !Dockerfile
 !main.py
 !source_postgres

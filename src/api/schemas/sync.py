@@ -22,3 +22,10 @@ class SyncSchedule(SyncScheduleCreate):
 
     class Config:
         orm_mode = True
+
+
+class SyncCurrentRunID(SyncScheduleBase):
+    last_run_id: UUID4
+
+    class Config:
+        orm_mode = True

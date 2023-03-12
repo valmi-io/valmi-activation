@@ -4,6 +4,10 @@ from dagster_docker import docker_container_op
 
 from dagster import DefaultScheduleStatus, ScheduleDefinition, graph, op
 
+@op
+def initialise():
+    pass
+
 source_op = docker_container_op.configured(
     {
         "image": "{{ sync['source']['credential']['docker_image'] }}:{{ sync['source']['credential']['docker_tag'] }}",
@@ -46,8 +50,9 @@ def finalizer(context, a, b) -> None:
 def job():
     @graph(name="graph_{{ sync['id'].replace('-','_') }}")
     def sync_graph():
-        a = source_op ()
-        b = destination_op()
+        i = initialise()
+        a = source_op (i)
+        b = destination_op(i)
         finalizer(a, b) 
 
     return sync_graph.to_job(name="{{ sync['id'].replace('-','_') }}")

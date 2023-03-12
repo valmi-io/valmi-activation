@@ -125,16 +125,16 @@ class JobCreatorThread(threading.Thread):
     # use jinja2 to generate dagster a single job
     def gen_job_file(self, dirs: dict[str, str], sync: Json[any]) -> None:
         with open(join(dirs[GENERATED_CONFIG_DIR], f"{sync['id']}-{sync['source']['id']}.json"), "w") as f:
-            f.write(json.dumps(sync["source"]["credential"]))
+            f.write(json.dumps(sync["source"]["credential"]["connector_config"]))
 
         with open(join(dirs[GENERATED_CATALOG_DIR], f"{sync['id']}-{sync['source']['id']}.json"), "w") as f:
-            f.write(json.dumps(sync["source"]["credential"]))
+            f.write(json.dumps(sync["source"]["catalog"]))
 
         with open(join(dirs[GENERATED_CONFIG_DIR], f"{sync['id']}-{sync['destination']['id']}.json"), "w") as f:
-            f.write(json.dumps(sync["destination"]["credential"]))
+            f.write(json.dumps(sync["destination"]["credential"]["connector_config"]))
 
         with open(join(dirs[GENERATED_CATALOG_DIR], f"{sync['id']}-{sync['destination']['id']}.json"), "w") as f:
-            f.write(json.dumps(sync["destination"]["credential"]))
+            f.write(json.dumps(sync["destination"]["catalog"]))
 
         file_loader = FileSystemLoader(join(dirname(__file__), "templates"))
         env = Environment(loader=file_loader)
