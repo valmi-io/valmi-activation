@@ -20,6 +20,7 @@ source_op = docker_container_op.configured(
         ],
         "container_kwargs": {  # keyword args to be passed to the container. example:
             "volumes": ["{{ prefix }}/intermediate_store:{{ prefix }}/intermediate_store","{{ prefix }}/{{ app }}/repo/config/{{ sync['id'] }}-{{ sync['source']['id'] }}.json:/tmp/config.json" , "{{prefix}}/{{app}}/repo/catalog/{{sync['id']}}-{{ sync['source']['id'] }}.json:/tmp/configured_catalog.json"],
+
         },
         "env_vars": list({**os.environ}.keys()),
     },
