@@ -1,11 +1,13 @@
 from datetime import datetime
 from pydantic import UUID4
-from sqlalchemy import and_
+from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session
 
 from metastore.models import SyncRun
 from api.schemas import SyncRunCreate
 from typing import Any, List
+
+from metastore.models import SyncStatus
 from .base import BaseService
 
 
@@ -22,5 +24,12 @@ class SyncRunsService(BaseService[SyncRun, SyncRunCreate, Any]):
             .filter(and_(SyncRun.run_at < before), SyncRun.sync_id == sync_id)
             .order_by(SyncRun.run_at.desc())
             .limit(limit)
+            .all()
+        )
+
+    def get_active_and_latest_runs(self, after: datetime) -> List[SyncRun]:
+        return (
+            self.db_session.query(self.model)
+            .filter(or_(SyncRun.run_at > after), SyncRun.status != SyncStatus.STOPPED)
             .all()
         )

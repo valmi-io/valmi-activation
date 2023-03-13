@@ -13,7 +13,7 @@ class ImageWarmupManager:
         return cls.instance
 
     def __init__(self) -> None:
-        self.image_warmup_thread = DockerImageWarmupThread(3, "DockerImageWarmupThread")
+        self.image_warmup_thread = DockerImageWarmupThread(64, "DockerImageWarmupThread")
         self.image_warmup_thread.start()
 
     def destroy(self) -> None:

@@ -15,11 +15,11 @@ class ContainerCleaner:
         return cls.instance
 
     def __init__(self) -> None:
-        self.image_warmup_thread = ContainerCleanerThread(3, "DockerImageWarmupThread")
-        self.image_warmup_thread.start()
+        self.cleaner_thread = ContainerCleanerThread(16, "ContainerCleanerThread")
+        self.cleaner_thread.start()
 
     def destroy(self) -> None:
-        self.image_warmup_thread.exitFlag = True
+        self.cleaner_thread.exitFlag = True
 
 
 class ContainerCleanerThread(threading.Thread):
@@ -34,9 +34,9 @@ class ContainerCleanerThread(threading.Thread):
             try:
                 logger.info("Cleaning all exited Docker Containers")
                 os.system(
-                    f'docker container prune --force --filter until={v.get("DOCKER_CONTAINER_CLEANER_UNTIL") or "1m"}'
+                    f'docker container prune --force --filter until={v.get("DOCKER_CONTAINER_CLEAN_UNTIL") or "1m"}'
                 )
-                time.sleep(v.get_int("DOCKER_CONTAINER_CLEANER_SLEEP_TIME") or 60)
+                time.sleep(v.get_int("DOCKER_CONTAINER_CLEAN_SLEEP_TIME") or 60)
             except Exception:
                 logger.exception("Error while cleaned docker containers")
             self.exitFlag = True
