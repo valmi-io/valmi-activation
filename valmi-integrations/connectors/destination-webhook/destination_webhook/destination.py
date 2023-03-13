@@ -54,7 +54,7 @@ class DestinationWebhook(ValmiDestination):
             # print(msg.json(exclude_none=True))
             if msg.type == Type.RECORD:
                 # construct props
-                print(msg)
+                # print(msg)
                 props = {}
                 for prop in msg.record.data:
                     props[prop] = msg.record.data[prop]
@@ -89,7 +89,7 @@ class DestinationWebhook(ValmiDestination):
         try:
             # TODO
 
-            print("checking")
+            # print("checking")
             return AirbyteConnectionStatus(status=Status.SUCCEEDED)
         except Exception as e:
             return AirbyteConnectionStatus(status=Status.FAILED, message=f"An exception occurred: {repr(e)}")

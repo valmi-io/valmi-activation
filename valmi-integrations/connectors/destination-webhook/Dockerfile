@@ -1,4 +1,4 @@
-FROM python:3.9.11-alpine3.15 as base
+FROM  python:3.10.0-alpine  as base
 
 # build and load all requirements
 FROM base as builder
@@ -31,10 +31,13 @@ RUN apk --no-cache add bash
 COPY main.py ./
 COPY destination_webhook ./destination_webhook
 COPY extensions ./extensions
-COPY import_storage_to_stdin.py ./
+COPY destination_container_wrapper.py ./
+COPY proc_stdout_handler.py ./
+COPY handlers.py ./
 COPY docker-entrypoint.sh ./
 RUN chmod +x ./docker-entrypoint.sh
 
+ENV PYTHONUNBUFFERED 1
 ENV VALMI_ENTRYPOINT "python /valmi/integration_code/main.py"
 ENV VALMI_INTERMEDIATE_STORE "{\"provider\": \"local\", \"local\": {\"directory\": \"/tmp/shared_dir/intermediate_store\"}}"
 ENTRYPOINT ["./docker-entrypoint.sh"]

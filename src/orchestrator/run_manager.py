@@ -104,19 +104,26 @@ class SyncRunnerThread(threading.Thread):
 
                         dagster_run_status = self.dc.get_run_status(run.dagster_run_id)
 
+                        update_db = False
                         if dagster_run_status == DagsterRunStatus.SUCCESS:
                             sync.run_status = SyncStatus.STOPPED
                             run.status = SyncStatus.STOPPED
                             run.remarks = {"status": "SUCCESS", "error": ""}
+                            update_db = True
 
-                        elif dagster_run_status == DagsterRunStatus.FAILURE:
+                        elif (
+                            dagster_run_status == DagsterRunStatus.FAILURE
+                            or dagster_run_status == DagsterRunStatus.CANCELED
+                        ):
                             sync.run_status = SyncStatus.FAILED
                             run.status = SyncStatus.FAILED
                             run.remarks = {
                                 "status": "FAILURE",
                                 "error": "",
                             }
-                        self.sync_service.update_sync_and_run(sync, run)
+                            update_db = True
+                        if update_db:
+                            self.sync_service.update_sync_and_run(sync, run)
             except Exception:
                 logger.exception("Error while handling syncs in run manager")
                 raise

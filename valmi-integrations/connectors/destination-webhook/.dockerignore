@@ -1,6 +1,8 @@
 *
 !docker-entrypoint.sh
-!import_storage_to_stdin.py
+!destination_container_wrapper.py
+!proc_stdout_handler.py
+!handlers.py
 !extensions
 !Dockerfile
 !main.py

@@ -35,7 +35,7 @@ class Engine:
         pass
 
     def current_run_id(self):
-        sync_id = du(os.environ.get("DAGSTER_RUN_JOB_NAME", "dummy"))
+        sync_id = du(os.environ.get("DAGSTER_RUN_JOB_NAME", "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"))
         r = requests.get(f"{ACTIVATION_ENGINE_URL}/syncs/{sync_id}/runs/current_run_id", timeout=HTTP_TIMEOUT)
         return r.json()["lastRunId"]
 
@@ -73,6 +73,7 @@ class StoreWriter:
         with open(join(self.path_name, f"{int(new_file_name[:-5])+1}.vald"), "w") as f:
             for record in self.records:
                 f.write(json.dumps(record))
+                f.write("\n")
 
     def finalize(self):
         self.flush(last=True)
@@ -145,10 +146,12 @@ def main():
     # if arg in read, write:
     # read checkpoint from the engine
 
-    # store writer
-    engine = Engine()
-    run_id = engine.current_run_id()
+    run_id = "dummy"
+    if airbyte_command not in ["spec", "check", "discover"]:
+        engine = Engine()
+        run_id = engine.current_run_id()
 
+    # store writer
     store_writer = StoreWriter(run_id=run_id)
     stdout_writer = StdoutWriter()
 

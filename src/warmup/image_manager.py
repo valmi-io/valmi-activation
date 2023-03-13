@@ -21,7 +21,7 @@ class ImageWarmupManager:
 
 
 class DockerImageWarmupThread(threading.Thread):
-    def __init__(self, threadID: int, name: SystemError) -> None:
+    def __init__(self, threadID: int, name: str) -> None:
         threading.Thread.__init__(self)
         self.threadID = threadID
         self.exitFlag = False
