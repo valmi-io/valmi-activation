@@ -57,7 +57,7 @@ class SourcePostgres(Source):
                 )
                 return AirbyteCatalog(streams=streams)
             else:
-                namespace = config["namespace"] or "public"
+                namespace = "public"
                 result = connection.execute(
                     text(
                         "SELECT table_name FROM information_schema.tables WHERE table_schema = '{0}';".format(
@@ -91,7 +91,10 @@ class SourcePostgres(Source):
                             supported_sync_modes=["full_refresh", "incremental"],
                         )
                     )
-                return AirbyteCatalog(streams=streams)
+                catalog = AirbyteCatalog(streams=streams)
+                catalog.__setattr__("namespace", "public")
+                catalog.__setattr__("end", False)
+                return catalog
 
     def read(
         self, logger: AirbyteLogger, config: json, catalog: ConfiguredAirbyteCatalog, state: Dict[str, any]

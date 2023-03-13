@@ -19,7 +19,7 @@ logger = logging.getLogger(v.get("LOGGER_NAME"))
 
 
 @router.post("/{connector_type}/spec", response_model=str)
-async def get_source_spec(connector_type: str, docker_item: DockerItem) -> str:
+async def spec(connector_type: str, docker_item: DockerItem) -> str:
     logger.debug("Getting spec for source: %s", connector_type)
     lines = []
     proc = subprocess.Popen(
@@ -41,7 +41,7 @@ async def get_source_spec(connector_type: str, docker_item: DockerItem) -> str:
 
 
 @router.post("/{connector_type}/check", response_model=str)
-async def source_check(connector_type: str, config: ConnectorConfig) -> str:
+async def check(connector_type: str, config: ConnectorConfig) -> str:
     logger.debug("Checking  config: %s", connector_type)
     newid: str = str(uuid.uuid4())
 
@@ -54,6 +54,38 @@ async def source_check(connector_type: str, config: ConnectorConfig) -> str:
         "docker run --network host \
             --rm -v /tmp/shared_dir/{0}:/secrets/config.json \
                 {1}:{2} check --config /secrets/config.json".format(
+            newid, config.docker_image, config.docker_tag
+        )
+    )
+    proc = subprocess.Popen(
+        args,
+        stdout=subprocess.PIPE,
+    )
+    for line in io.TextIOWrapper(proc.stdout, encoding="utf-8"):  # or another encoding
+        if line.strip() == "":
+            continue
+        if json.loads(line.encode("utf-8"))["type"] != "LOG":
+            lines.append(line)
+
+    # shutil.rmtree("/tmp/{0}".format(newid))
+    os.unlink("/tmp/shared_dir/{0}".format(newid))
+    return Response(content="".join(lines))
+
+
+@router.post("/{connector_type}/discover", response_model=str)
+async def discover(connector_type: str, config: ConnectorConfig) -> str:
+    logger.debug("Discovering connector: %s", connector_type)
+    newid: str = str(uuid.uuid4())
+
+    # filename: str = "/tmp/{0}/config.json".format(newid)
+    # os.makedirs(os.path.dirname(filename), exist_ok=True)
+    with open("/tmp/shared_dir/{0}".format(newid), "w") as f:
+        f.write(json.dumps(config.config))
+    lines = []
+    args = shlex.split(
+        "docker run --network host \
+            --rm -v /tmp/shared_dir/{0}:/secrets/config.json \
+                {1}:{2} discover --config /secrets/config.json".format(
             newid, config.docker_image, config.docker_tag
         )
     )

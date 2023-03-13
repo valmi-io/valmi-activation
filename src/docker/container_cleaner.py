@@ -37,6 +37,7 @@ class ContainerCleanerThread(threading.Thread):
                     f'docker container prune --force --filter "label=io.valmi.version" \
                         --filter until={v.get("DOCKER_CONTAINER_CLEAN_UNTIL") or "1m"}'
                 )
+                os.system("docker volume prune --force")
                 time.sleep(v.get_int("DOCKER_CONTAINER_CLEANER_SLEEP_TIME") or 60)
             except Exception:
                 logger.exception("Error while cleaning docker containers")

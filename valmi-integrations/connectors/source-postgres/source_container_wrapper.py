@@ -21,7 +21,7 @@ def du(uuid_str: str) -> UUID4:
     return uuid.UUID(uuid_str.replace("_", "-"))
 
 
-class Engine:
+class NullEngine:
     def __init__(self) -> None:
         pass
 
@@ -34,6 +34,11 @@ class Engine:
     def metric(self):
         pass
 
+    def current_run_id(self):
+        return "dummy"
+
+
+class Engine(NullEngine):
     def current_run_id(self):
         sync_id = du(os.environ.get("DAGSTER_RUN_JOB_NAME", "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"))
         r = requests.get(f"{ACTIVATION_ENGINE_URL}/syncs/{sync_id}/runs/current_run_id", timeout=HTTP_TIMEOUT)
@@ -147,6 +152,7 @@ def main():
     # read checkpoint from the engine
 
     run_id = "dummy"
+    engine = NullEngine()
     if airbyte_command not in ["spec", "check", "discover"]:
         engine = Engine()
         run_id = engine.current_run_id()
