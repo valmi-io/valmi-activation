@@ -13,9 +13,11 @@ from contextlib import asynccontextmanager
 async def lifespan(app: FastAPI):
     from orchestrator.repo import Repo
     from docker import ImageWarmupManager, ContainerCleaner
+    from datastore.datastore_cleaner import DatastoreCleaner
 
     img_manager = ImageWarmupManager()
     container_cleaner = ContainerCleaner()
+    datastore_cleaner = DatastoreCleaner()
     repo = Repo()
 
     yield
@@ -23,6 +25,7 @@ async def lifespan(app: FastAPI):
     repo.destroy()
     img_manager.destroy()
     container_cleaner.destroy()
+    datastore_cleaner.destroy()
 
 
 def create_app() -> FastAPI:
