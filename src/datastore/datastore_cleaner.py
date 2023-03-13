@@ -51,6 +51,7 @@ class DatastoreCleanerThread(threading.Thread):
                 dirlist = os.listdir(store_path)
 
                 pruneset = set(dirlist) - set([run.run_id for run in runs])
+                logger.debug("pruneset %s", pruneset)
                 for dir in pruneset:
                     dir_path = join(store_path, dir)
                     if os.path.exists(dir_path):
