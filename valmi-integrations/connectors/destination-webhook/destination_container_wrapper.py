@@ -79,33 +79,38 @@ def main():
 
         proc = subprocess.Popen(sys.argv[1:], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
-        proc_stdout_handler_thread = ProcStdoutHandlerThread(1, "ProcStdoutHandlerThread", engine, proc.stdout)
-        proc_stdout_handler_thread.start()
+        try:
+            proc_stdout_handler_thread = ProcStdoutHandlerThread(1, "ProcStdoutHandlerThread", engine, proc.stdout)
+            proc_stdout_handler_thread.start()
 
-        record_types = handlers.keys()
+            record_types = handlers.keys()
 
-        for line in store_reader.read():
-            if line.strip() == "":
-                continue
-            json_record = json.loads(line)
-            if json_record["type"] not in record_types:
-                if not handlers["default"].handle(json_record):
-                    break
-            else:
-                if not handlers[json_record["type"]].handle(json_record):
-                    break
-            proc.stdin.write(line.encode("utf-8"))
+            for line in store_reader.read():
+                if line.strip() == "":
+                    continue
+                json_record = json.loads(line)
+                if json_record["type"] not in record_types:
+                    if not handlers["default"].handle(json_record):
+                        break
+                else:
+                    if not handlers[json_record["type"]].handle(json_record):
+                        break
+                proc.stdin.write(line.encode("utf-8"))
 
-        proc.stdin.close()
-        return_code = proc.poll()
-        if return_code != 0:
+        except Exception:
             engine.error()
-            sys.exit(return_code)
+            raise
+        finally:
+            proc.stdin.close()
+            return_code = proc.poll()
+            if return_code != 0:
+                engine.error()
+                sys.exit(return_code)
 
-        proc_stdout_handler_thread.destroy()
-        proc_stdout_handler_thread.join()
+            proc_stdout_handler_thread.destroy()
+            proc_stdout_handler_thread.join()
 
-        sys.exit(0)
+            sys.exit(0)
 
 
 if __name__ == "__main__":
