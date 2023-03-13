@@ -91,6 +91,8 @@ services:
     build:
       context: ./dagster
       dockerfile: Dockerfile_user_code
+      labels:
+        - "io.valmi.name=valmi-repo"
     container_name: valmi-repo
     image: valmi-repo
     restart: always

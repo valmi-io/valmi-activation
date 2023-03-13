@@ -34,7 +34,8 @@ class ContainerCleanerThread(threading.Thread):
             try:
                 logger.info("Cleaning all exited Docker Containers")
                 os.system(
-                    f'docker container prune --force --filter until={v.get("DOCKER_CONTAINER_CLEAN_UNTIL") or "1m"}'
+                    f'docker container prune --force --filter "label=io.valmi.name" \
+                        --filter until={v.get("DOCKER_CONTAINER_CLEAN_UNTIL") or "1m"}'
                 )
                 time.sleep(v.get_int("DOCKER_CONTAINER_CLEAN_SLEEP_TIME") or 60)
             except Exception:
