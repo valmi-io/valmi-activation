@@ -46,11 +46,14 @@ class DatastoreCleanerThread(threading.Thread):
                 runs = self.run_service.get_active_and_latest_runs(
                     after=datetime.now() - timedelta(seconds=v.get("DATASTORE_CLEAN_UNTIL") or 60)
                 )
+                print("runs")
+                print([run.run_id for run in runs])
 
                 store_path = join(SHARED_DIR, "intermediate_storage")
                 dirlist = os.listdir(store_path)
 
                 pruneset = set(dirlist) - set([run.run_id for run in runs])
+                print("pruneset ", pruneset)
                 for dir in pruneset:
                     dir_path = join(store_path, dir)
                     if os.path.exists(dir_path):
