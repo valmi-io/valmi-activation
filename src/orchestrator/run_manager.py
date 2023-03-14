@@ -44,7 +44,7 @@ class SyncRunnerThread(threading.Thread):
 
                 for sync in syncs_to_handle:
                     if sync.status != SyncConfigStatus.ACTIVE:
-                        # terminate dagster runs
+                        # TODO: terminate dagster runs
                         pass
                     elif sync.run_status == SyncStatus.STOPPED:
                         logger.info("Sync is stopped %s", sync.sync_id)

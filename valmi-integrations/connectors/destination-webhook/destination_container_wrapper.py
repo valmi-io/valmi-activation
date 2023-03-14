@@ -110,8 +110,6 @@ def main():
             proc_stdout_handler_thread.destroy()
             proc_stdout_handler_thread.join()
 
-            sys.exit(0)
-
 
 if __name__ == "__main__":
     main()

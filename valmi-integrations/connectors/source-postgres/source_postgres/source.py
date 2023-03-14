@@ -1,5 +1,6 @@
 import json
 from datetime import datetime
+import os
 from typing import Any, Dict, Generator
 
 from airbyte_cdk.logger import AirbyteLogger
@@ -13,41 +14,75 @@ from airbyte_cdk.models import (
     Status,
     Type,
 )
+
 from airbyte_cdk.sources import Source
 from sqlalchemy import create_engine, text
+from .dbt_airbyte_adapter import DbtAirbyteAdpater
 
 
 class SourcePostgres(Source):
+    def initialize(self, logger: AirbyteLogger, config):
+        os.environ["DO_NOT_TRACK"] = "True"
+        os.environ["FAL_STATS_ENABLED"] = "False"
+
+        logger.debug("Generating dbt profiles.yml")
+        self.dbt_adapter = DbtAirbyteAdpater()
+        self.dbt_adapter.write_profiles_config_from_spec(logger, config, "profiles.yml")
+        logger.debug("dbt profiles.yml generated")
+
     def check(self, logger: AirbyteLogger, config: json) -> AirbyteConnectionStatus:
+        self.initialize(logger, config)
+
         try:
-            engine = create_engine(
-                "postgresql+psycopg2://{0}:{1}@{2}/{3}".format(
-                    config["user"], config["password"], config["host"], config["database"]
-                )
-            )
-            with engine.connect():
-                return AirbyteConnectionStatus(status=Status.SUCCEEDED)
+            self.dbt_adapter.check_connection()
+            logger.debug("connection success")
+            return AirbyteConnectionStatus(status=Status.SUCCEEDED)
         except Exception as e:
-            return AirbyteConnectionStatus(status=Status.FAILED, message=f"An exception occurred: {str(e)}")
+            logger.debug("connection failed")
+            return AirbyteConnectionStatus(status=Status.FAILED, message=f"{str(e)}")
 
     def discover(self, logger: AirbyteLogger, config: json) -> AirbyteCatalog:
-        engine = create_engine(
-            "postgresql+psycopg2://{0}:{1}@{2}/{3}".format(
-                config["user"], config["password"], config["host"], config["database"]
+        self.initialize(logger, config)
+
+        # TODO: using sequential discover methodology for now.
+        logger.debug("Discovering streams...")
+        more, result_streams = self.dbt_adapter.discover_streams(logger=logger, config=config)
+
+        if more:
+            streams = []
+            stream_name = "namespace"
+            json_schema = {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "type": "object",
+                "properties": {},
+            }
+            for row in result_streams:
+                json_schema["properties"][str(row)] = {"type": "string"}
+
+            streams.append(
+                AirbyteStream(
+                    name=stream_name,
+                    json_schema=json_schema,
+                    supported_sync_modes=["full_refresh", "incremental"],
+                )
             )
-        )
-        with engine.connect() as connection:
-            if "streamType" in config and config["streamType"] == "namespace":
-                result = connection.execute(text("SELECT schema_name FROM information_schema.schemata;")).fetchall()
-                streams = []
-                stream_name = "namespaces"
+            catalog = AirbyteCatalog(streams=streams)
+            catalog.__setattr__("type", "namespace")
+            catalog.__setattr__("more", more)
+            return catalog
+        else:
+            streams = []
+            for row in result_streams:
+                stream_name = str(row)
+
                 json_schema = {
                     "$schema": "http://json-schema.org/draft-07/schema#",
                     "type": "object",
                     "properties": {},
                 }
-                for row in result:
-                    json_schema["properties"][row[0]] = {"type": "string"}
+                for column in self.dbt_adapter.get_columns(self.dbt_adapter.adapter, row):
+                    json_schema["properties"][str(column)] = {"type": "{0}".format(str(column))}
+
                 streams.append(
                     AirbyteStream(
                         name=stream_name,
@@ -55,46 +90,10 @@ class SourcePostgres(Source):
                         supported_sync_modes=["full_refresh", "incremental"],
                     )
                 )
-                return AirbyteCatalog(streams=streams)
-            else:
-                namespace = "public"
-                result = connection.execute(
-                    text(
-                        "SELECT table_name FROM information_schema.tables WHERE table_schema = '{0}';".format(
-                            namespace
-                        )
-                    )
-                ).fetchall()
-
-                streams = []
-                for row in result:
-                    stream_name = row[0]
-                    result = connection.execute(
-                        text(
-                            "SELECT column_name, data_type FROM information_schema.columns \
-                                 WHERE table_name = '{0}';".format(
-                                stream_name
-                            )
-                        )
-                    ).fetchall()
-                    json_schema = {
-                        "$schema": "http://json-schema.org/draft-07/schema#",
-                        "type": "object",
-                        "properties": {},
-                    }
-                    for column in result:
-                        json_schema["properties"][column[0]] = {"type": "{0}".format(column[1])}
-                    streams.append(
-                        AirbyteStream(
-                            name=stream_name,
-                            json_schema=json_schema,
-                            supported_sync_modes=["full_refresh", "incremental"],
-                        )
-                    )
-                catalog = AirbyteCatalog(streams=streams)
-                catalog.__setattr__("namespace", "public")
-                catalog.__setattr__("end", False)
-                return catalog
+            catalog = AirbyteCatalog(streams=streams)
+            catalog.__setattr__("type", "table")
+            catalog.__setattr__("more", more)
+            return catalog
 
     def read(
         self, logger: AirbyteLogger, config: json, catalog: ConfiguredAirbyteCatalog, state: Dict[str, any]
