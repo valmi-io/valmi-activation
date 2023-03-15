@@ -31,6 +31,8 @@ RUN apt install bash
 # copy payload code only
 COPY main.py ./
 COPY source_postgres ./source_postgres
+COPY valmi_dbt ./valmi_dbt
+COPY valmi_protocol ./valmi_protocol
 COPY source_container_wrapper.py ./
 COPY docker-entrypoint.sh ./
 RUN chmod +x ./docker-entrypoint.sh

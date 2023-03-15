@@ -30,7 +30,7 @@ RUN apk --no-cache add bash
 # copy payload code only
 COPY main.py ./
 COPY destination_webhook ./destination_webhook
-COPY extensions ./extensions
+COPY valmi_protocol ./valmi_protocol
 COPY destination_container_wrapper.py ./
 COPY proc_stdout_handler.py ./
 COPY handlers.py ./

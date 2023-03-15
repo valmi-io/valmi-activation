@@ -5,11 +5,9 @@ from typing import Any, Dict, Generator
 
 from airbyte_cdk.logger import AirbyteLogger
 from airbyte_cdk.models import (
-    AirbyteCatalog,
     AirbyteConnectionStatus,
     AirbyteMessage,
     AirbyteRecordMessage,
-    AirbyteStream,
     ConfiguredAirbyteCatalog,
     Status,
     Type,
@@ -17,7 +15,8 @@ from airbyte_cdk.models import (
 
 from airbyte_cdk.sources import Source
 from sqlalchemy import create_engine, text
-from .dbt_airbyte_adapter import DbtAirbyteAdpater
+from valmi_dbt.dbt_airbyte_adapter import DbtAirbyteAdpater
+from valmi_protocol.valmi_protocol import ValmiCatalog, ValmiStream
 
 
 class SourcePostgres(Source):
@@ -41,7 +40,7 @@ class SourcePostgres(Source):
             logger.debug("connection failed")
             return AirbyteConnectionStatus(status=Status.FAILED, message=f"{str(e)}")
 
-    def discover(self, logger: AirbyteLogger, config: json) -> AirbyteCatalog:
+    def discover(self, logger: AirbyteLogger, config: json) -> ValmiCatalog:
         self.initialize(logger, config)
 
         # TODO: using sequential discover methodology for now.
@@ -50,23 +49,20 @@ class SourcePostgres(Source):
 
         if more:
             streams = []
-            stream_name = "namespace"
+
             json_schema = {
                 "$schema": "http://json-schema.org/draft-07/schema#",
                 "type": "object",
                 "properties": {},
             }
             for row in result_streams:
-                json_schema["properties"][str(row)] = {"type": "string"}
-
-            streams.append(
-                AirbyteStream(
-                    name=stream_name,
-                    json_schema=json_schema,
-                    supported_sync_modes=["full_refresh", "incremental"],
+                streams.append(
+                    ValmiStream(
+                        name=str(row),
+                        # json_schema=json_schema,
+                    )
                 )
-            )
-            catalog = AirbyteCatalog(streams=streams)
+            catalog = ValmiCatalog(streams=streams)
             catalog.__setattr__("type", "namespace")
             catalog.__setattr__("more", more)
             return catalog
@@ -84,13 +80,13 @@ class SourcePostgres(Source):
                     json_schema["properties"][str(column)] = {"type": "{0}".format(str(column))}
 
                 streams.append(
-                    AirbyteStream(
+                    ValmiStream(
                         name=stream_name,
-                        json_schema=json_schema,
                         supported_sync_modes=["full_refresh", "incremental"],
+                        json_schema=json_schema,
                     )
                 )
-            catalog = AirbyteCatalog(streams=streams)
+            catalog = ValmiCatalog(streams=streams)
             catalog.__setattr__("type", "table")
             catalog.__setattr__("more", more)
             return catalog

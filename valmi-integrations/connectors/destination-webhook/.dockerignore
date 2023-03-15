@@ -3,8 +3,9 @@
 !destination_container_wrapper.py
 !proc_stdout_handler.py
 !handlers.py
-!extensions
 !Dockerfile
 !main.py
 !destination_webhook
 !setup.py
+!valmi_protocol
+

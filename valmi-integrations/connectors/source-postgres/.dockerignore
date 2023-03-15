@@ -8,3 +8,5 @@
 !secrets
 !libs
 !profiles-template.jinja
+!valmi_dbt
+!valmi_protocol
