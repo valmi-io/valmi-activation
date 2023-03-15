@@ -3,7 +3,7 @@
     "$schema": "http://json-schema.org/draft-07/schema#",
     "title": "Destination Webhook",
     "type": "object",
-    "required": ["authorization"],
+    "required": ["authorization","url","method"],
     "additionalProperties": true,
     "properties": {
       "url": {
