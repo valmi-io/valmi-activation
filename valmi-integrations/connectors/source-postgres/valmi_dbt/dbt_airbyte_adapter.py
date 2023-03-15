@@ -44,14 +44,18 @@ class DbtAirbyteAdpater:
     def check_connection(self):
         CUR_DIR = os.path.dirname(os.path.abspath(__file__))
 
-        faldbt = CustomFalDbt(basic=True, profiles_dir=CUR_DIR, project_dir=os.path.join(CUR_DIR, "dbt_project"))
+        faldbt = CustomFalDbt(
+            basic=True, profiles_dir=CUR_DIR, project_dir=os.path.join(CUR_DIR, "valmi_dbt_source_transform")
+        )
         adapter: SQLAdapter = adapters_factory.get_adapter(faldbt._config)
         adapter.connections.open(adapter.acquire_connection("check_connection"))
 
     def discover_streams(self, logger: AirbyteLogger, config):
         CUR_DIR = os.path.dirname(os.path.abspath(__file__))
 
-        self.faldbt = CustomFalDbt(basic=True, profiles_dir=CUR_DIR, project_dir=os.path.join(CUR_DIR, "dbt_project"))
+        self.faldbt = CustomFalDbt(
+            basic=True, profiles_dir=CUR_DIR, project_dir=os.path.join(CUR_DIR, "valmi_dbt_source_transform")
+        )
         self.adapter: SQLAdapter = adapters_factory.get_adapter(self.faldbt._config)
 
         with self.adapter.connection_named("discover-connection"):

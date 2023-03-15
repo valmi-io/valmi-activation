@@ -162,3 +162,5 @@ cython_debug/
 valmi_metrics.db
 .python-version
 valmi_metrics.db.wal
+valmi-integrations/connectors/source-postgres/profiles.yml
+valmi-integrations/connectors/source-postgres/valmi_dbt/profiles.yml
