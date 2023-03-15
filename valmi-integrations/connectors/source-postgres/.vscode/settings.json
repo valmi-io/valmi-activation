@@ -15,5 +15,26 @@
       "source.organizeImports": true,
       "source.fixAll": true
     }
+  },
+
+  "files.exclude": {
+    "node_modules/": true,
+    "dist/": true,
+    "lib/": true,
+    "**/.venv/": true,
+    ".vscode/": false,
+    ".mypy_cache/": true,
+    "__pycache__/": true,
+    "venv/": true,
+    ".eggs/": true,
+    "**/build/": true,
+    ".git/": true,
+    ".tox/": true,
+    "**/.gitingore/**": true,
+    "**/__pycache__/**": true,
+    "**/*.egg-info/**": true,
+    "**/.mypy_cache":true,
+    "**/.pytest_cache":true,
+    ".python-version":true,
   }
 }
