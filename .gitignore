@@ -164,3 +164,14 @@ valmi_metrics.db
 valmi_metrics.db.wal
 valmi-integrations/connectors/source-postgres/profiles.yml
 valmi-integrations/connectors/source-postgres/valmi_dbt/profiles.yml
+valmi-integrations/connectors/source-postgres/valmi_dbt/valmi_dbt_source_transform/dbt_project.yml
+valmi-integrations/connectors/source-postgres/valmi_dbt/valmi_dbt_source_transform/README.md
+valmi-integrations/connectors/source-postgres/valmi_dbt/valmi_dbt_source_transform/models/customers.sql
+valmi-integrations/connectors/source-postgres/valmi_dbt/valmi_dbt_source_transform/models/docs.md
+valmi-integrations/connectors/source-postgres/valmi_dbt/valmi_dbt_source_transform/models/orders.sql
+valmi-integrations/connectors/source-postgres/valmi_dbt/valmi_dbt_source_transform/models/overview.md
+valmi-integrations/connectors/source-postgres/valmi_dbt/valmi_dbt_source_transform/models/schema.yml
+valmi-integrations/connectors/source-postgres/valmi_dbt/valmi_dbt_source_transform/models/staging/schema.yml
+valmi-integrations/connectors/source-postgres/valmi_dbt/valmi_dbt_source_transform/models/staging/stg_customers.sql
+valmi-integrations/connectors/source-postgres/valmi_dbt/valmi_dbt_source_transform/models/staging/stg_orders.sql
+valmi-integrations/connectors/source-postgres/valmi_dbt/valmi_dbt_source_transform/models/staging/stg_payments.sql

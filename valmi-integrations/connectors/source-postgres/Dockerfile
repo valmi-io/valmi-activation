@@ -32,9 +32,6 @@ RUN apt install bash
 COPY main.py ./
 COPY source_postgres ./source_postgres
 COPY valmi_dbt ./valmi_dbt
-
-#TODO: do the better better
-COPY ../../valmi_dbt_source_transform ./valmi_dbt/valmi_dbt_source_transform
 COPY valmi_protocol ./valmi_protocol
 COPY source_container_wrapper.py ./
 COPY docker-entrypoint.sh ./

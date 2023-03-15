@@ -5,7 +5,6 @@
 !main.py
 !source_postgres
 !setup.py
-!secrets
 !libs
 !profiles-template.jinja
 !valmi_dbt
