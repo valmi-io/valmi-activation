@@ -6,6 +6,6 @@
 !source_postgres
 !setup.py
 !libs
-!profiles-template.jinja
+!profiles_template.jinja
 !valmi_dbt
 !valmi_protocol

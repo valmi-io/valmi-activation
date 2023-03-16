@@ -2,20 +2,20 @@ import json
 from datetime import datetime
 import os
 from typing import Any, Dict, Generator
-
+import subprocess
 from airbyte_cdk.logger import AirbyteLogger
 from airbyte_cdk.models import (
     AirbyteConnectionStatus,
     AirbyteMessage,
     AirbyteRecordMessage,
+    AirbyteErrorTraceMessage,
     ConfiguredAirbyteCatalog,
     Status,
     Type,
 )
 
 from airbyte_cdk.sources import Source
-from sqlalchemy import create_engine, text
-from valmi_dbt.dbt_airbyte_adapter import DbtAirbyteAdpater
+from valmi_dbt.dbt_airbyte_adapter import DbtAirbyteAdpater, CustomFalDbt
 from valmi_protocol.valmi_protocol import ValmiCatalog, ValmiStream
 
 
@@ -91,25 +91,81 @@ class SourcePostgres(Source):
             catalog.__setattr__("more", more)
             return catalog
 
+    def execute_dbt(self, logger: AirbyteLogger):
+        logger.info("Initiating dbt run")
+
+        proc = subprocess.Popen("dbt --log-format json run".split(" "), stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+
+        while True:
+            try:
+                proc.wait(timeout=2)
+            except subprocess.TimeoutExpired:
+                logger.info("Waiting for dbt to finish...")
+                continue
+            break
+
+        logs = proc.stdout.readlines()
+        lastError = None
+        for log in logs:
+            j = json.loads(log.decode())
+            if j["info"]["level"].lower() == "error":
+                lastError = j
+
+        if proc.returncode is not None and proc.returncode != 0:
+            raise Exception(lastError["info"]["msg"])
+        else:
+            logger.info("Dbt run successful")
+
     def read(
         self, logger: AirbyteLogger, config: json, catalog: ConfiguredAirbyteCatalog, state: Dict[str, any]
     ) -> Generator[AirbyteMessage, None, None]:
-        engine = create_engine(
-            "postgresql+psycopg2://{0}:{1}@{2}/{3}".format(
-                config["user"], config["password"], config["host"], config["database"]
-            )
+        self.initialize(logger, config)
+
+        # extract sync_id from the run_time_args
+        if hasattr(catalog, "run_time_args") and "sync_id" in catalog.run_time_args:
+            sync_id = catalog.run_time_args["sync_id"]
+        else:
+            sync_id = "default_sync_id"
+
+        # finalise the dbt package
+        self.dbt_adapter.generate_project_yml(logger, catalog, sync_id, "dbt_project.yml")
+        self.dbt_adapter.generate_source_yml(logger, config, catalog, "models/staging/schema.yml")
+
+        try:
+            self.execute_dbt(logger=logger)
+        except Exception as e:
+            yield AirbyteErrorTraceMessage(message=str(e))
+            return
+
+        # initialise chunk_size
+        if hasattr(catalog, "run_time_args") and "chunk_size" in catalog.run_time_args:
+            chunk_size = catalog.run_time_args["chunk_size"]
+        else:
+            chunk_size = 10
+
+        # now read data from the dbt transit snapshot
+        faldbt = CustomFalDbt(
+            basic=True, profiles_dir=self.get_cur_dir(), project_dir=self.get_abs_path("valmi_dbt_source_transform")
         )
-        with engine.connect() as connection:
-            stream_name = catalog.streams[0].stream.name
+        while True:
             columns = catalog.streams[0].stream.json_schema["properties"].keys()
-            result = connection.execute(text("SELECT {1} FROM {0};".format(stream_name, ",".join(columns)))).fetchall()
-            for row in result:
+            results = self.dbt_adapter.execute_sql(
+                faldbt,
+                "SELECT {1} FROM {{ ref('transit_snapshot_{0}') }} LIMIT {2};".format(
+                    sync_id, ",".join(columns), chunk_size
+                ),
+            )
+            for row in results:
                 data: Dict[str, Any] = {}
                 for i in range(len(row)):
                     data[list(columns)[i]] = row[i]
                 yield AirbyteMessage(
                     type=Type.RECORD,
                     record=AirbyteRecordMessage(
-                        stream=stream_name, data=data, emitted_at=int(datetime.now().timestamp()) * 1000
+                        stream=catalog.streams[0].stream.name,
+                        data=data,
+                        emitted_at=int(datetime.now().timestamp()) * 1000,
                     ),
                 )
+            if len(results) <= 0:
+                return
