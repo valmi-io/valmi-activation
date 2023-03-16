@@ -122,23 +122,32 @@ class SourcePostgres(Source):
         if hasattr(catalog, "run_time_args") and "chunk_size" in catalog.run_time_args:
             chunk_size = catalog.run_time_args["chunk_size"]
         else:
-            chunk_size = 10
+            chunk_size = 300
 
         # now read data from the dbt transit snapshot
         faldbt = self.dbt_adapter.get_fal_dbt()
+
+        # set the below two value from checkpoint passed
+        last_row_num = -1
+        chunk_id = 0
         while True:
             columns = catalog.streams[0].stream.json_schema["properties"].keys()
-            results = self.dbt_adapter.execute_sql(
+            adapter_resp, agate_table = self.dbt_adapter.execute_sql(
                 faldbt,
-                "SELECT {1} FROM {{{{ ref('transit_snapshot_{0}') }}}} LIMIT {2};".format(
-                    sync_id, ",".join(columns), chunk_size
+                "SELECT _valmi_row_num, {1} \
+                    FROM {{{{ ref('transit_snapshot_{0}') }}}} \
+                    WHERE _valmi_row_num > {3} \
+                    LIMIT {2};".format(
+                    sync_id, ",".join(columns), chunk_size, last_row_num
                 ),
             )
-            for row in results:
+
+            for row in agate_table.rows:
                 data: Dict[str, Any] = {}
-                print(row)
-                # for i in range(len(row)):
-                #    data[list(columns)[i]] = row[i]
+                for i in range(len(row)):
+                    data[agate_table.column_names[i]] = row[i]
+                last_row_num = row[0]
+
                 yield AirbyteMessage(
                     type=Type.RECORD,
                     record=AirbyteRecordMessage(
@@ -147,5 +156,8 @@ class SourcePostgres(Source):
                         emitted_at=int(datetime.now().timestamp()) * 1000,
                     ),
                 )
-            if len(results) <= 0:
+            if len(agate_table.rows) <= 0:
                 return
+            else:
+                chunk_id += 1
+                # TODO: write check point
