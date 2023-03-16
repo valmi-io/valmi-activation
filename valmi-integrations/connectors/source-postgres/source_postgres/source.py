@@ -2,20 +2,21 @@ import json
 from datetime import datetime
 import os
 from typing import Any, Dict, Generator
-import subprocess
 from airbyte_cdk.logger import AirbyteLogger
 from airbyte_cdk.models import (
     AirbyteConnectionStatus,
     AirbyteMessage,
     AirbyteRecordMessage,
     AirbyteErrorTraceMessage,
+    AirbyteTraceMessage,
     ConfiguredAirbyteCatalog,
     Status,
     Type,
+    TraceType,
 )
 
 from airbyte_cdk.sources import Source
-from valmi_dbt.dbt_airbyte_adapter import DbtAirbyteAdpater, CustomFalDbt
+from valmi_dbt.dbt_airbyte_adapter import DbtAirbyteAdpater
 from valmi_protocol.valmi_protocol import ValmiCatalog, ValmiStream
 
 
@@ -26,7 +27,7 @@ class SourcePostgres(Source):
 
         logger.debug("Generating dbt profiles.yml")
         self.dbt_adapter = DbtAirbyteAdpater()
-        self.dbt_adapter.write_profiles_config_from_spec(logger, config, "profiles.yml")
+        self.dbt_adapter.write_profiles_config_from_spec(logger, config)
         logger.debug("dbt profiles.yml generated")
 
     def check(self, logger: AirbyteLogger, config: json) -> AirbyteConnectionStatus:
@@ -91,31 +92,6 @@ class SourcePostgres(Source):
             catalog.__setattr__("more", more)
             return catalog
 
-    def execute_dbt(self, logger: AirbyteLogger):
-        logger.info("Initiating dbt run")
-
-        proc = subprocess.Popen("dbt --log-format json run".split(" "), stderr=subprocess.PIPE, stdout=subprocess.PIPE)
-
-        while True:
-            try:
-                proc.wait(timeout=2)
-            except subprocess.TimeoutExpired:
-                logger.info("Waiting for dbt to finish...")
-                continue
-            break
-
-        logs = proc.stdout.readlines()
-        lastError = None
-        for log in logs:
-            j = json.loads(log.decode())
-            if j["info"]["level"].lower() == "error":
-                lastError = j
-
-        if proc.returncode is not None and proc.returncode != 0:
-            raise Exception(lastError["info"]["msg"])
-        else:
-            logger.info("Dbt run successful")
-
     def read(
         self, logger: AirbyteLogger, config: json, catalog: ConfiguredAirbyteCatalog, state: Dict[str, any]
     ) -> Generator[AirbyteMessage, None, None]:
@@ -128,13 +104,18 @@ class SourcePostgres(Source):
             sync_id = "default_sync_id"
 
         # finalise the dbt package
-        self.dbt_adapter.generate_project_yml(logger, catalog, sync_id, "dbt_project.yml")
-        self.dbt_adapter.generate_source_yml(logger, config, catalog, "models/staging/schema.yml")
+        self.dbt_adapter.generate_project_yml(logger, catalog, sync_id)
+        self.dbt_adapter.generate_source_yml(logger, config, catalog, sync_id)
+        self.dbt_adapter.append_sql_files_with_sync_id(sync_id)
 
         try:
-            self.execute_dbt(logger=logger)
+            self.dbt_adapter.execute_dbt(logger=logger)
         except Exception as e:
-            yield AirbyteErrorTraceMessage(message=str(e))
+            yield AirbyteTraceMessage(
+                type=TraceType.ERROR,
+                error=AirbyteErrorTraceMessage(message=str(e)),
+                emitted_at=int(datetime.now().timestamp()) * 1000,
+            )
             return
 
         # initialise chunk_size
@@ -144,21 +125,20 @@ class SourcePostgres(Source):
             chunk_size = 10
 
         # now read data from the dbt transit snapshot
-        faldbt = CustomFalDbt(
-            basic=True, profiles_dir=self.get_cur_dir(), project_dir=self.get_abs_path("valmi_dbt_source_transform")
-        )
+        faldbt = self.dbt_adapter.get_fal_dbt()
         while True:
             columns = catalog.streams[0].stream.json_schema["properties"].keys()
             results = self.dbt_adapter.execute_sql(
                 faldbt,
-                "SELECT {1} FROM {{ ref('transit_snapshot_{0}') }} LIMIT {2};".format(
+                "SELECT {1} FROM {{{{ ref('transit_snapshot_{0}') }}}} LIMIT {2};".format(
                     sync_id, ",".join(columns), chunk_size
                 ),
             )
             for row in results:
                 data: Dict[str, Any] = {}
-                for i in range(len(row)):
-                    data[list(columns)[i]] = row[i]
+                print(row)
+                # for i in range(len(row)):
+                #    data[list(columns)[i]] = row[i]
                 yield AirbyteMessage(
                     type=Type.RECORD,
                     record=AirbyteRecordMessage(

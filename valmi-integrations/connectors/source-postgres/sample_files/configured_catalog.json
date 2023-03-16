@@ -3,27 +3,46 @@
         {
             "sync_mode": "full_refresh",
             "destination_sync_mode":"append",
+            "id_key": "sync_id",
             "stream": {
-                "name": "actor",
-                "supported_sync_modes": [
-                    "full_refresh",
-                    "incremental"
-                ],
-                "source_defined_cursor": false,
+                "name": "sync_runs",
                 "json_schema": {
-                    "type": "object",
-                    "properties": {
-                        "first_name": {
-                            "type": "string"
-                        },
-                        "last_name": {
-                            "type": "string"
-                        },
-                        "actor_id": {
-                            "type": "string"
-                        }
+                  "$schema": "http://json-schema.org/draft-07/schema#",
+                  "type": "object",
+                  "properties": {
+                    "sync_id": {
+                      "type": "uuid"
+                    },
+                    "run_id": {
+                      "type": "uuid"
+                    },
+                    "run_at": {
+                      "type": "timestamp without time zone"
+                    },
+                    "created_at": {
+                      "type": "timestamp without time zone"
+                    },
+                    "updated_at": {
+                      "type": "timestamp without time zone"
+                    },
+                    "status": {
+                      "type": "text"
+                    },
+                    "metrics": {
+                      "type": "json"
+                    },
+                    "remarks": {
+                      "type": "json"
+                    },
+                    "dagster_run_id": {
+                      "type": "text"
                     }
-                }
+                  }
+                }, 
+                "supported_sync_modes": [
+                  "full_refresh",
+                  "incremental"
+                ]
             }
         }
     ]

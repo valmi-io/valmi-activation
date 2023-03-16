@@ -1,7 +1,7 @@
 version: 2
 
 sources:
-  - name: aliased_schema
+  - name: aliased_source
     database: {{source['database']}}
     schema: {{source['schema']}}
     tables:
@@ -10,7 +10,7 @@ sources:
     database:  {{source['database']}}
     schema: valmi_scratch_computed_
     tables:
-      - name: finalized_snapshot 
+      - name: finalized_snapshot_{{source['sync_id']}}
 
 models:
   - name: stg_snapshot

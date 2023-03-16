@@ -175,3 +175,12 @@ valmi-integrations/connectors/source-postgres/valmi_dbt/valmi_dbt_source_transfo
 valmi-integrations/connectors/source-postgres/valmi_dbt/valmi_dbt_source_transform/models/staging/stg_customers.sql
 valmi-integrations/connectors/source-postgres/valmi_dbt/valmi_dbt_source_transform/models/staging/stg_orders.sql
 valmi-integrations/connectors/source-postgres/valmi_dbt/valmi_dbt_source_transform/models/staging/stg_payments.sql
+valmi-integrations/connectors/source-postgres/valmi_dbt/valmi_dbt_source_transform/profiles.yml
+valmi-integrations/connectors/source-postgres/valmi_dbt/valmi_dbt_source_transform/models/ignored_snapshot_default_sync_id.sql
+valmi-integrations/connectors/source-postgres/valmi_dbt/valmi_dbt_source_transform/models/ignored_snapshot.sql
+valmi-integrations/connectors/source-postgres/valmi_dbt/valmi_dbt_source_transform/models/sync_metrics_default_sync_id.sql
+valmi-integrations/connectors/source-postgres/valmi_dbt/valmi_dbt_source_transform/models/sync_metrics.sql
+valmi-integrations/connectors/source-postgres/valmi_dbt/valmi_dbt_source_transform/models/transit_snapshot_default_sync_id.sql
+valmi-integrations/connectors/source-postgres/valmi_dbt/valmi_dbt_source_transform/models/transit_snapshot.sql
+valmi-integrations/connectors/source-postgres/valmi_dbt/valmi_dbt_source_transform/models/staging/stg_snapshot_default_sync_id.sql
+valmi-integrations/connectors/source-postgres/valmi_dbt/valmi_dbt_source_transform/models/staging/stg_snapshot.sql

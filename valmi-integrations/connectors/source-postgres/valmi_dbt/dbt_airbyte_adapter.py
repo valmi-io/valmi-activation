@@ -7,12 +7,16 @@ from dbt.adapters.sql import SQLAdapter
 from dbt.adapters.base.relation import BaseRelation
 from airbyte_cdk.logger import AirbyteLogger
 from faldbt import lib, parse
-
+from airbyte_protocol.models import SyncMode
 from dbt.events.functions import cleanup_event_logger
-
+import json
+import subprocess
 from airbyte_cdk.models import (
     ConfiguredAirbyteCatalog,
 )
+import glob
+import shlex
+from dbt.tracking import do_not_track
 
 
 class CustomFalDbt(FalDbt):
@@ -35,6 +39,15 @@ class CustomFalDbt(FalDbt):
 
 
 class DbtAirbyteAdpater:
+    def get_fal_dbt(self):
+        faldbt = CustomFalDbt(
+            basic=True,
+            profiles_dir=self.get_abs_path("valmi_dbt_source_transform"),
+            project_dir=self.get_abs_path("valmi_dbt_source_transform"),
+        )
+        do_not_track()
+        return faldbt
+
     def get_jinja_template(self, logger: AirbyteLogger, template_fname):
         file_loader = FileSystemLoader(self.get_cur_dir())
         env = Environment(loader=file_loader)
@@ -47,23 +60,20 @@ class DbtAirbyteAdpater:
     def get_abs_path(self, path):
         return os.path.join(os.path.dirname(os.path.abspath(__file__)), path)
 
-    def write_profiles_config_from_spec(self, logger: AirbyteLogger, config, filename):
+    def write_profiles_config_from_spec(self, logger: AirbyteLogger, config):
         template = self.get_jinja_template(logger, "profiles_template.jinja")
         output = template.render(config=config)
-        with open(self.get_abs_path(filename), "w") as f:
+        with open(self.get_abs_path("valmi_dbt_source_transform/profiles.yml"), "w") as f:
             f.write(output)
 
     def check_connection(self):
-        faldbt = CustomFalDbt(
-            basic=True, profiles_dir=self.get_cur_dir(), project_dir=self.get_abs_path("valmi_dbt_source_transform")
-        )
+        faldbt = self.get_fal_dbt()
         adapter: SQLAdapter = adapters_factory.get_adapter(faldbt._config)
         adapter.connections.open(adapter.acquire_connection("check_connection"))
 
     def discover_streams(self, logger: AirbyteLogger, config):
-        self.faldbt = CustomFalDbt(
-            basic=True, profiles_dir=self.get_cur_dir(), project_dir=self.get_abs_path("valmi_dbt_source_transform")
-        )
+        self.faldbt = self.get_fal_dbt()
+
         self.adapter: SQLAdapter = adapters_factory.get_adapter(self.faldbt._config)
 
         with self.adapter.connection_named("discover-connection"):
@@ -79,10 +89,11 @@ class DbtAirbyteAdpater:
         with self.adapter.connection_named("getcolumns-connection"):
             return adapter.get_columns_in_relation(relation)
 
-    def generate_project_yml(self, logger: AirbyteLogger, catalog: ConfiguredAirbyteCatalog, sync_id, filename):
-        template = self.get_jinja_template("dbt_project.jinja")
+    def generate_project_yml(self, logger: AirbyteLogger, catalog: ConfiguredAirbyteCatalog, sync_id):
+        template = self.get_jinja_template(logger, "dbt_project.jinja")
 
-        if catalog.streams[0].sync_mode == "full_refresh":
+        full_refresh = "false"
+        if catalog.streams[0].sync_mode == SyncMode.full_refresh:
             full_refresh = "true"
 
         # override full_refresh from run_time_args
@@ -99,23 +110,24 @@ class DbtAirbyteAdpater:
         }
 
         output = template.render(args=args)
-        with open(self.get_abs_path(filename), "w") as f:
+        with open(self.get_abs_path("valmi_dbt_source_transform/dbt_project.yml"), "w") as f:
             f.write(output)
 
-    def generate_source_yml(self, logger: AirbyteLogger, config, catalog, filename):
-        template = self.get_jinja_template("source_schema.jinja")
+    def generate_source_yml(self, logger: AirbyteLogger, config, catalog, sync_id):
+        template = self.get_jinja_template(logger, "source_schema.jinja")
 
         source = {
-            "stream": catalog["streams"][0]["stream"]["name"],
+            "stream": catalog.streams[0].stream.name,
             "schema": config["namespace"],
             "database": config["database"],
+            "sync_id": sync_id,
         }
 
         output = template.render(source=source)
-        with open(self.get_abs_path(filename), "w") as f:
+        with open(self.get_abs_path("valmi_dbt_source_transform/models/staging/schema.yml"), "w") as f:
             f.write(output)
 
-    def execute_sql(faldbt, sql: str):
+    def execute_sql(self, faldbt, sql: str):
         compiled_result = lib.compile_sql(
             faldbt.project_dir,
             faldbt.profiles_dir,
@@ -132,3 +144,42 @@ class DbtAirbyteAdpater:
         adapter: SQLAdapter = adapters_factory.get_adapter(faldbt._config)  # type: ignore
         with adapter.connection_named("faldbt"):
             return adapter.execute(sql, fetch=True)
+
+    def execute_dbt(self, logger: AirbyteLogger):
+        logger.info("Initiating dbt run")
+
+        cmd_arr = shlex.split(
+            f"dbt --log-format json run --profiles-dir {self.get_abs_path('valmi_dbt_source_transform')} \
+                --project-dir {self.get_abs_path('valmi_dbt_source_transform')}"
+        )
+        proc = subprocess.Popen(
+            cmd_arr,
+            stderr=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+        )
+
+        while True:
+            try:
+                proc.wait(timeout=2)
+            except subprocess.TimeoutExpired:
+                logger.info("Waiting for dbt to finish...")
+                continue
+            break
+
+        logs = proc.stdout.readlines()
+        lastError = None
+        for log in logs:
+            j = json.loads(log.decode())
+            if j["info"]["level"].lower() == "error":
+                lastError = j
+
+        if proc.returncode is not None and proc.returncode != 0:
+            raise Exception(lastError["info"]["msg"])
+        else:
+            logger.info("Dbt run successful")
+
+    def append_sql_files_with_sync_id(self, sync_id: str):
+        for filename in glob.iglob(self.get_abs_path("valmi_dbt_source_transform/**/*.sql"), recursive=True):
+            nosuffix = filename[:-4]
+            if not nosuffix.endswith(sync_id):
+                os.rename(filename, nosuffix + "_" + sync_id + ".sql")

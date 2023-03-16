@@ -27,12 +27,12 @@ models:
 
 
 vars:
-  source: "{{args['name']}}"
+  source_table: "{{args['name']}}"
   snapshot:  "finalized_snapshot_{{args['sync_id']}}"
   stg_snapshot: "stg_snapshot_{{args['sync_id']}}"
   ignored_snapshot: "ignored_snapshot_{{args['sync_id']}}"
   transit_snapshot: "transit_snapshot_{{args['sync_id']}}"
 
   full_refresh: "{{args['full_refresh']}}" 
-  columns: "{{args['columns']}}" 
+  columns: {{args['columns']}} 
   id_key: "{{args['id_key']}}" 
