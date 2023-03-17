@@ -60,3 +60,4 @@ class DatastoreCleanerThread(threading.Thread):
                 time.sleep(v.get_int("DATASTORE_CLEANER_SLEEP_TIME") or 60)
             except Exception:
                 logger.exception("Error while cleaned datastore")
+                time.sleep(v.get_int("DATASTORE_CLEANER_SLEEP_TIME") or 60)

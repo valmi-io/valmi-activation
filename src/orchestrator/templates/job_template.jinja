@@ -4,7 +4,7 @@ from dagster_docker import docker_container_op
 
 from dagster import DefaultScheduleStatus, ScheduleDefinition, graph, op
 
-@op
+@op(name="initialise_{{ sync['id'].replace('-','_') }}")
 def initialise():
     pass
 
