@@ -30,8 +30,8 @@ async def get_current_run_id(
     sync_service: SyncsService = Depends(get_syncs_service),
 ) -> SyncCurrentRunArgs:
     sync_schedule = sync_service.get(sync_id)
-    # TODO: get saved state of the run_id
-    SyncCurrentRunArgs(
+    # TODO: get saved checkpoint state of the run_id
+    return SyncCurrentRunArgs(
         sync_id=sync_id, run_id=sync_schedule.last_run_id, chunk_size=300, chunk_id=0, records_per_metric=10
     )
 

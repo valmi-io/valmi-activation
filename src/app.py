@@ -14,6 +14,7 @@ async def lifespan(app: FastAPI):
     from orchestrator.repo import Repo
     from docker import ImageWarmupManager, ContainerCleaner
     from datastore.datastore_cleaner import DatastoreCleaner
+    from api.services import get_metrics_service
 
     img_manager = ImageWarmupManager()
     container_cleaner = ContainerCleaner()
@@ -22,6 +23,7 @@ async def lifespan(app: FastAPI):
 
     yield
 
+    get_metrics_service().shutdown()
     repo.destroy()
     img_manager.destroy()
     container_cleaner.destroy()

@@ -11,7 +11,7 @@ from datetime import datetime
 METRICS_TABLE = "metrics"
 DB_NAME = "valmi_metrics.db"
 
-MAGIC_CHUNK_ID = 2**63 - 1
+MAGIC_CHUNK_ID = 2**31 - 1
 
 
 class Metrics:
@@ -47,19 +47,21 @@ class Metrics:
     def get_metrics(self, sync_id: UUID4, run_id: UUID4, ingore_chunk_id: int = None) -> dict[str, dict[str, int]]:
         # get the metrics of the run
         # deduplicate by chunk_id and return
-        ignore_clause = " AND m.chunk_id != '%s'" % ingore_chunk_id if ingore_chunk_id else ""
+        ignore_clause = " AND m.chunk_id != %s" % ingore_chunk_id if ingore_chunk_id is not None else ""
         aggregated_metrics = self.con.sql(
             f"SELECT connector_id, metric_type, SUM(count) as count \
-                FROM {METRICS_TABLE} m2 INNER JOIN \
+                FROM {METRICS_TABLE} m2 RIGHT JOIN \
                         ( SELECT m.chunk_id AS chunk_id, max(m.created_at) AS created_at \
                         FROM {METRICS_TABLE} m \
                         WHERE m.sync_id = '{sync_id}' AND m.run_id = '{run_id}' \
                             {ignore_clause} \
                         GROUP BY  m.chunk_id ) deduped_chunks \
                     ON m2.chunk_id = deduped_chunks.chunk_id AND \
-                        m2.created_at = deduped_chunks.created_at\
-            GROUP BY connector_id, metric_type"
+                        m2.created_at = deduped_chunks.created_at \
+                WHERE sync_id = '{sync_id}' AND run_id = '{run_id}' \
+                GROUP BY  connector_id, metric_type"
         ).fetchall()
+
         ret_map = {}
         for x, y, z in aggregated_metrics:
             metric_map = ret_map.get(x, {})
@@ -79,17 +81,20 @@ class Metrics:
         ).fetchone()
         if sync_info[0] > MAX:
             print("AGGREGATING")
-            # aggregate ignoring the last chunk
+            # aggregate ignoring the latest chunk
             old_metrics = self.get_metrics(sync_id=sync_id, run_id=run_id, ingore_chunk_id=chunk_id)
-
+            print("old metrics below")
+            print(old_metrics)
             for conn, old_metric in old_metrics.items():
                 if len(old_metric.keys()) > 0 and conn == connector_id:
                     self.con.begin()
                     self.con.sql(
                         f"DELETE FROM {METRICS_TABLE} WHERE sync_id = '{sync_id}' \
-                            AND run_id = '{run_id}' AND connector_id= '{connector_id}' AND chunk_id != '{chunk_id}'"
+                            AND run_id = '{run_id}' AND connector_id= '{connector_id}' AND chunk_id != {chunk_id}"
                     )
                     # generate CHUNK_ID
+                    print("inserting magical chunk")
+                    print(old_metric)
                     self._insert_metrics(sync_id, connector_id, run_id, MAGIC_CHUNK_ID, old_metric)
                     self.con.commit()
 
@@ -109,6 +114,7 @@ class Metrics:
                 f"('{sync_id}', '{connector_id}', '{run_id}', {chunk_id},'{metric_type}','{count}','{now}')"
             )
 
+        print(inserts)
         self.con.sql(f"INSERT INTO {METRICS_TABLE} VALUES {','.join(inserts)}")
 
     def get_samples(self, sync_id: UUID4, run_id: UUID4):
@@ -121,6 +127,9 @@ class Metrics:
 
     def size(self) -> int:
         return self.con.sql(f"SELECT COUNT(*) as count FROM {METRICS_TABLE}").fetchone()[0]
+
+    def shutdown(self) -> None:
+        self.con.close()
 
 
 if __name__ == "__main__":

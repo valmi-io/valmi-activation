@@ -1,5 +1,4 @@
 from pydantic import BaseModel, UUID4
-from .utils import to_camel
 
 
 class MetricBase(BaseModel):
@@ -7,13 +6,12 @@ class MetricBase(BaseModel):
     run_id: UUID4
 
     class Config:
-        alias_generator = to_camel
         allow_population_by_field_name = True
 
 
 class MetricCreate(MetricBase):
     chunk_id: int
-    connector_id: UUID4
+    connector_id: str
     metrics: dict[str, int]
 
 

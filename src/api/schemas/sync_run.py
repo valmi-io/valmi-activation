@@ -1,12 +1,10 @@
 from typing import Dict, Optional
 from pydantic import BaseModel, UUID4
 from datetime import datetime
-from .utils import to_camel
 
 
 class SyncRunBase(BaseModel):
     class Config:
-        alias_generator = to_camel
         allow_population_by_field_name = True
 
 

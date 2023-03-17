@@ -25,6 +25,7 @@ services:
       DAGSTER_POSTGRES_USER: "postgres"
       DAGSTER_POSTGRES_PASSWORD: "changeme"
       DAGSTER_POSTGRES_DB: "valmi_dagster"
+
     volumes: # Make docker client accessible so we can terminate containers from dagit
       - /var/run/docker.sock:/var/run/docker.sock
       - /tmp/io_manager_storage:/tmp/io_manager_storage
@@ -51,6 +52,8 @@ services:
       DAGSTER_POSTGRES_USER: "postgres"
       DAGSTER_POSTGRES_PASSWORD: "changeme"
       DAGSTER_POSTGRES_DB: "valmi_dagster"
+      ACTIVATION_ENGINE_URL: "http://valmi-activation:8000"
+
     volumes: # Make docker client accessible so we can launch containers using host docker
       - /var/run/docker.sock:/var/run/docker.sock
       - /tmp/io_manager_storage:/tmp/io_manager_storage
@@ -99,7 +102,6 @@ services:
       DAGSTER_POSTGRES_PASSWORD: "changeme"
       DAGSTER_POSTGRES_DB: "valmi_dagster"
       DAGSTER_CURRENT_IMAGE: "valmi-repo"
-      ACTIVATION_ENGINE_URL: "http://valmi-activation:8000"
     networks:
       - valmi-network
     volumes: # Make docker client accessible so we can terminate containers from dagit

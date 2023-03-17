@@ -8,11 +8,19 @@ import io
 import uuid
 from pydantic import UUID4
 import requests
+from requests.adapters import HTTPAdapter, Retry
 
-
+# TODO: Constants - need to become env vars
 MAGIC_NUM = 0x7FFFFFFF
+HTTP_TIMEOUT = 3  # seconds
+MAX_HTTP_RETRIES = 3
 
-HTTP_TIMEOUT = 3
+## initalise requests session with retries
+req_session = requests.Session()
+# retry on all errors except 400 and 401
+status_forcelist = tuple(x for x in requests.status_codes._codes if x > 400 and x not in [400, 401])
+retries = Retry(total=MAX_HTTP_RETRIES, backoff_factor=0.1, status_forcelist=status_forcelist)
+req_session.mount("http://", HTTPAdapter(max_retries=retries))
 
 
 # desanitise uuid
@@ -53,18 +61,74 @@ class NullEngine:
     def current_run_details(self):
         return {}
 
+    def abort_required(self):
+        return False
+
 
 class Engine(NullEngine):
     def __init__(self, *args, **kwargs):
         super(Engine, self).__init__(*args, **kwargs)
+        self.engine_url = os.environ["ACTIVATION_ENGINE_URL"]
         run_time_args = self.current_run_details()
         self.connector_state = ConnectorState(run_time_args=run_time_args)
 
     def current_run_details(self):
-        engine_url = os.environ["ACTIVATION_ENGINE_URL"]
         sync_id = du(os.environ.get("DAGSTER_RUN_JOB_NAME", "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"))
-        r = requests.get(f"{engine_url}/syncs/{sync_id}/runs/current_run_id", timeout=HTTP_TIMEOUT)
+        r = req_session.get(f"{self.engine_url}/syncs/{sync_id}/runs/current_run_details", timeout=HTTP_TIMEOUT)
         return r.json()
+
+    def metric(self):
+        print("Sending metric")
+        print(
+            {
+                "sync_id": self.connector_state.run_time_args["sync_id"],
+                "run_id": self.connector_state.run_time_args["run_id"],
+                "chunk_id": self.connector_state.num_chunks,
+                "connector_id": "src",
+                "metrics": {"success": self.connector_state.records_in_chunk},
+            }
+        )
+        r = req_session.post(
+            f"{self.engine_url}/metrics/",
+            timeout=HTTP_TIMEOUT,
+            json={
+                "sync_id": self.connector_state.run_time_args["sync_id"],
+                "run_id": self.connector_state.run_time_args["run_id"],
+                "chunk_id": self.connector_state.num_chunks,
+                "connector_id": "src",
+                "metrics": {"success": self.connector_state.records_in_chunk},
+            },
+        )
+        print(r.text)
+
+    def error(self, msg="error"):
+        # TODO: finish this
+        print("sending error")
+        sync_id = self.connector_state.run_time_args["sync_id"]
+        run_id = self.connector_state.run_time_args["run_id"]
+        r = req_session.post(
+            f"{self.engine_url}/syncs/{sync_id}/runs/{run_id}/error/", timeout=HTTP_TIMEOUT, json={"error": msg}
+        )
+        print(r.text)
+
+    def abort_required(self):
+        return False
+        # TODO: finish this
+        sync_id = self.connector_state.run_time_args["sync_id"]
+        run_id = self.connector_state.run_time_args["run_id"]
+        r = req_session.get(f"{self.engine_url}/syncs/{sync_id}/runs/{run_id}", timeout=HTTP_TIMEOUT)
+        return r.json()["abort_required"]
+
+    def checkpoint(self, state):
+        return
+        # TODO: finish this
+        print("sending checkpoint")
+        sync_id = self.connector_state.run_time_args["sync_id"]
+        run_id = self.connector_state.run_time_args["run_id"]
+        r = req_session.post(
+            f"{self.engine_url}/syncs/{sync_id}/runs/{run_id}/checkpoint/", timeout=HTTP_TIMEOUT, json=state
+        )
+        print(r.text)
 
 
 class StdoutWriter:
@@ -76,7 +140,7 @@ class StdoutWriter:
 
 
 class StoreWriter:
-    def __init__(self, engine) -> None:
+    def __init__(self, engine: NullEngine) -> None:
         self.engine = engine
         self.connector_state: ConnectorState = self.engine.connector_state
         store_config = json.loads(os.environ["VALMI_INTERMEDIATE_STORE"])
@@ -94,8 +158,8 @@ class StoreWriter:
         if self.connector_state.records_in_chunk >= self.connector_state.run_time_args["chunk_size"]:
             self.flush(last=False)
             self.records = []
-            self.connector_state.register_chunk()
             self.engine.metric()
+            self.connector_state.register_chunk()
         elif self.connector_state.records_in_chunk % self.connector_state.run_time_args["records_per_metric"] == 0:
             self.engine.metric()
 
@@ -109,6 +173,7 @@ class StoreWriter:
 
     def finalize(self):
         self.flush(last=True)
+        self.engine.metric()
 
 
 class DefaultHandler:
@@ -141,6 +206,7 @@ class CheckpointHandler(DefaultHandler):
 
     def handle(self, record):
         print(json.dumps(record))
+        self.engine.checkpoint(record["state"]["data"])
 
 
 class RecordHandler(DefaultHandler):
@@ -198,6 +264,12 @@ def populate_run_time_args(airbyte_command, engine, config_file_path):
             f.write(json.dumps(config))
 
 
+def sync_engine_for_error(proc: subprocess, engine: NullEngine):
+    if engine.abort_required():
+        proc.kill()
+        sys.exit(0)  # Not this connector's fault
+
+
 def main():
     airbyte_command = get_airbyte_command()
     config_file = get_config_file_path()
@@ -214,7 +286,7 @@ def main():
         engine = NullEngine()
 
     # populate run_time_args
-    populate_run_time_args(airbyte_command, engine)
+    populate_run_time_args(airbyte_command, engine, config_file_path=config_file)
 
     # store writer
     store_writer = StoreWriter(engine)
@@ -230,6 +302,7 @@ def main():
         stdout=subprocess.PIPE,
     )
 
+    # check engine errors every CHUNK_SIZE records
     record_types = handlers.keys()
     for line in io.TextIOWrapper(proc.stdout, encoding="utf-8"):  # or another encoding
         if line.strip() == "":
@@ -240,12 +313,17 @@ def main():
         else:
             handlers[json_record["type"]].handle(json_record)
 
+        # sync with engine for any errors - in the future -> to apply backpressure to the connector
+        if airbyte_command == "read":
+            if engine.connector_state.records_in_chunk % engine.connector_state.run_time_args["chunk_size"] == 0:
+                sync_engine_for_error(proc, engine=engine)
+
     return_code = proc.poll()
     if return_code != 0:
-        engine.error()
+        engine.error("Connector exited with non-zero return code")
         sys.exit(return_code)
     else:
-        if airbyte_command not in ["spec", "check", "discover"]:
+        if airbyte_command == "read":
             store_writer.finalize()
         engine.success()
 
