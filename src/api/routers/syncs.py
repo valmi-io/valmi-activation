@@ -9,7 +9,7 @@ from pydantic import UUID4, Json
 from vyper import v
 
 from metastore import models
-from api.schemas import SyncSchedule, SyncRun, SyncCurrentRunID
+from api.schemas import SyncSchedule, SyncRun, SyncCurrentRunArgs
 from api.services import SyncsService, get_syncs_service, SyncRunsService, get_sync_runs_service
 
 router = APIRouter(prefix="/syncs")
@@ -24,12 +24,16 @@ async def get_sync_schedules(
     return sync_service.list()
 
 
-@router.get("/{sync_id}/runs/current_run_id", response_model=SyncCurrentRunID)
+@router.get("/{sync_id}/runs/current_run_details", response_model=SyncCurrentRunArgs)
 async def get_current_run_id(
     sync_id: UUID4,
     sync_service: SyncsService = Depends(get_syncs_service),
-) -> models.SyncSchedule:
-    return sync_service.get(sync_id)
+) -> SyncCurrentRunArgs:
+    sync_schedule = sync_service.get(sync_id)
+    # TODO: get saved state of the run_id
+    SyncCurrentRunArgs(
+        sync_id=sync_id, run_id=sync_schedule.last_run_id, chunk_size=300, chunk_id=0, records_per_metric=10
+    )
 
 
 @router.get("/{sync_id}/runs/", response_model=List[SyncRun])

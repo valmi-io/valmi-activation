@@ -89,7 +89,7 @@ class DbtAirbyteAdpater:
         with self.adapter.connection_named("getcolumns-connection"):
             return adapter.get_columns_in_relation(relation)
 
-    def generate_project_yml(self, logger: AirbyteLogger, catalog: ConfiguredAirbyteCatalog, sync_id):
+    def generate_project_yml(self, logger: AirbyteLogger, config: json, catalog: ConfiguredAirbyteCatalog, sync_id):
         template = self.get_jinja_template(logger, "dbt_project.jinja")
 
         full_refresh = "false"
@@ -97,8 +97,8 @@ class DbtAirbyteAdpater:
             full_refresh = "true"
 
         # override full_refresh from run_time_args
-        if hasattr(catalog, "run_time_args") and "full_refresh" in catalog.run_time_args:
-            full_refresh = catalog.run_time_args["full_refresh"]
+        if "run_time_args" in config and "full_refresh" in config["run_time_args"]:
+            full_refresh = config["run_time_args"]["full_refresh"]
 
         col_arr_str = ",".join([f'"{col}"' for col in catalog.streams[0].stream.json_schema["properties"].keys()])
         args = {

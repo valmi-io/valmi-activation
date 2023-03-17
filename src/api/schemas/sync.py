@@ -24,8 +24,13 @@ class SyncSchedule(SyncScheduleCreate):
         orm_mode = True
 
 
-class SyncCurrentRunID(SyncScheduleBase):
-    last_run_id: UUID4
+class SyncCurrentRunArgs(BaseModel):
+    run_id: UUID4
+    sync_id: UUID4
+    chunk_size: int
+    chunk_id: int
+    records_per_metric: int
 
     class Config:
-        orm_mode = True
+        alias_generator = to_camel
+        allow_population_by_field_name = True

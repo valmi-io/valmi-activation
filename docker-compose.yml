@@ -99,6 +99,7 @@ services:
       DAGSTER_POSTGRES_PASSWORD: "changeme"
       DAGSTER_POSTGRES_DB: "valmi_dagster"
       DAGSTER_CURRENT_IMAGE: "valmi-repo"
+      ACTIVATION_ENGINE_URL: "http://valmi-activation:8000"
     networks:
       - valmi-network
     volumes: # Make docker client accessible so we can terminate containers from dagit
@@ -126,7 +127,7 @@ services:
       - dagit
     environment:
       DATABASE_URL: "postgresql://postgres:changeme@valmi-db:5432/valmi_activation"
-      APP_BACKEND: "host.docker.internal"
+      APP_BACKEND: "valmi-app-backend"
       DAGIT_HOST: "dagit"
       DAGIT_PORT: 3000
 

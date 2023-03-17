@@ -100,13 +100,13 @@ class SourcePostgres(Source):
         self.initialize(logger, config)
 
         # extract sync_id from the run_time_args
-        if hasattr(catalog, "run_time_args") and "sync_id" in catalog.run_time_args:
-            sync_id = catalog.run_time_args["sync_id"]
+        if "run_time_args" in config and "sync_id" in config["run_time_args"]:
+            sync_id = config["run_time_args"]["sync_id"]
         else:
             sync_id = "default_sync_id"
 
         # finalise the dbt package
-        self.dbt_adapter.generate_project_yml(logger, catalog, sync_id)
+        self.dbt_adapter.generate_project_yml(logger, config, catalog, sync_id)
         self.dbt_adapter.generate_source_yml(logger, config, catalog, sync_id)
         self.dbt_adapter.append_sql_files_with_sync_id(sync_id)
 
@@ -121,8 +121,8 @@ class SourcePostgres(Source):
             return
 
         # initialise chunk_size
-        if hasattr(catalog, "run_time_args") and "chunk_size" in catalog.run_time_args:
-            chunk_size = catalog.run_time_args["chunk_size"]
+        if "run_time_args" in config and "chunk_size" in config["run_time_args"]:
+            chunk_size = config["run_time_args"]["chunk_size"]
         else:
             chunk_size = 300
 
