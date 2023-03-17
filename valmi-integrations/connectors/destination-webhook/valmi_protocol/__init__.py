@@ -1,4 +1,3 @@
-from .valmi_destination import ValmiDestination
 from .valmi_protocol import (
     ValmiSink,
     ValmiStream,
@@ -8,7 +7,6 @@ from .valmi_protocol import (
 )
 
 __all__ = [
-    "ValmiDestination",
     "ValmiSink",
     "ValmiStream",
     "ValmiDestinationCatalog",

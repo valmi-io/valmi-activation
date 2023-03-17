@@ -46,7 +46,7 @@ class ConfiguredValmiSink(BaseModel):
     class Config:
         extra = Extra.allow
 
-    sink: ValmiSink
+    sink: ValmiSink = None
     destination_sync_mode: DestinationSyncMode
     mapping: Dict[str, Any] = Field(..., description="Create mapping from source to destination fields.")
 

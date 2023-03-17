@@ -4,7 +4,6 @@
     "title": "Destination Webhook",
     "type": "object",
     "required": [
-      "authorization",
       "url",
       "method"
     ],

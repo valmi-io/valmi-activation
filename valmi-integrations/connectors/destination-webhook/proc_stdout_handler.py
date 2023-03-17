@@ -3,12 +3,12 @@ import json
 import os
 import io
 import threading
-from write_handlers import LogHandler, CheckpointHandler, DefaultHandler, Engine, TraceHandler
+from proc_stdout_event_handlers import LogHandler, CheckpointHandler, DefaultHandler, Engine, TraceHandler
 import logging
 
 handlers = {
     "LOG": LogHandler,
-    "CHECKPOINT": CheckpointHandler,
+    "STATE": CheckpointHandler,
     "default": DefaultHandler,
     "TRACE": TraceHandler,
 }

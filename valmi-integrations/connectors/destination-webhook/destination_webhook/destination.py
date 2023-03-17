@@ -13,10 +13,10 @@ from airbyte_cdk.destinations import Destination
 from airbyte_cdk.models import (
     AirbyteConnectionStatus,
     AirbyteMessage,
-    AirbyteStateMessage,
 )
 from airbyte_cdk.models.airbyte_protocol import Status, Type
-from valmi_protocol import ValmiDestination, ValmiDestinationCatalog, ConfiguredValmiDestinationCatalog
+from valmi_protocol import ValmiDestinationCatalog, ConfiguredValmiDestinationCatalog
+from valmi_destination import ValmiDestination
 
 
 class DestinationWebhook(ValmiDestination):
@@ -46,23 +46,14 @@ class DestinationWebhook(ValmiDestination):
         :return: Iterable of AirbyteStateMessages wrapped in AirbyteMessage structs
         """
         for msg in input_messages:
-            # print(msg.json(exclude_none=True))
             if msg.type == Type.RECORD:
-                # construct props
-                # print(msg)
                 props = {}
                 for prop in msg.record.data:
                     props[prop] = msg.record.data[prop]
 
                 r = requests.get(f"{config['url']}/{msg.record.stream}?{ urlencode(props, quote_via=quote)}")
 
-                # print(r.json())
-
-            # print(msg.json(exclude_none=True))
-
-        out_record = AirbyteStateMessage(data={"checkpoint": "checkpoint"})
-        out_message = AirbyteMessage(type=Type.STATE, state=out_record)
-        yield out_message
+                # TODO: release periodic TRACE messages , CHECKPOINT messages, and LOG messages
 
     def discover(self, logger: AirbyteLogger, config: json) -> ValmiDestinationCatalog:
         sinks = []

@@ -5,7 +5,7 @@ import sys
 import subprocess
 import io
 from proc_stdout_handler import ProcStdoutHandlerThread
-from write_handlers import (
+from proc_stdout_event_handlers import (
     Engine,
     StoreReader,
     NullEngine,
@@ -15,7 +15,7 @@ from read_handlers import ReadCheckpointHandler, ReadDefaultHandler, ReadLogHand
 
 handlers = {
     "LOG": ReadLogHandler,
-    "CHECKPOINT": ReadCheckpointHandler,
+    "STATE": ReadCheckpointHandler,
     "RECORD": ReadRecordHandler,
     "default": ReadDefaultHandler,
 }
@@ -97,13 +97,12 @@ def main():
                 handlers[json_record["type"]].handle(json_record)
 
         return_code = proc.poll()
-        if return_code != 0:
-            engine.error()
+        if return_code is not None and return_code != 0:
+            engine.error("Process exited with non-zero return code. %s" % return_code)
             sys.exit(return_code)
 
     elif airbyte_command in ["write"]:
         # TODO: read checkpoint from the engine
-
         store_reader = StoreReader(engine=engine)
 
         proc = subprocess.Popen(sys.argv[1:], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
@@ -126,14 +125,18 @@ def main():
                         break
                 proc.stdin.write(line.encode("utf-8"))
 
-        except Exception:
-            engine.error()
+        except Exception as e:
+            engine.error(msg=str(e))
+            proc.stdin.close()
+            proc.kill()
+            proc_stdout_handler_thread.destroy()
+            proc_stdout_handler_thread.join()
             raise
-        finally:
+        else:
             proc.stdin.close()
             return_code = proc.poll()
-            if return_code != 0:
-                engine.error()
+            if return_code is not None and return_code != 0:
+                engine.error("Process exited with non-zero return code. %s" % return_code)
                 sys.exit(return_code)
 
             proc_stdout_handler_thread.destroy()

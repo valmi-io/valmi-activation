@@ -220,7 +220,7 @@ class RecordHandler(DefaultHandler):
 
 class TraceHandler(DefaultHandler):
     def __init__(self, *args, **kwargs):
-        super(CheckpointHandler, self).__init__(*args, **kwargs)
+        super(TraceHandler, self).__init__(*args, **kwargs)
 
     def handle(self, record):
         print(json.dumps(record))
@@ -230,7 +230,7 @@ class TraceHandler(DefaultHandler):
 
 handlers = {
     "LOG": LogHandler,
-    "CHECKPOINT": CheckpointHandler,
+    "STATE": CheckpointHandler,
     "RECORD": RecordHandler,
     "default": DefaultHandler,
     "TRACE": TraceHandler
