@@ -3,13 +3,14 @@ import json
 import os
 import io
 import threading
-from handlers import LogHandler, CheckpointHandler, DefaultHandler, Engine
+from write_handlers import LogHandler, CheckpointHandler, DefaultHandler, Engine, TraceHandler
 import logging
 
 handlers = {
     "LOG": LogHandler,
     "CHECKPOINT": CheckpointHandler,
     "default": DefaultHandler,
+    "TRACE": TraceHandler,
 }
 
 
@@ -46,7 +47,7 @@ class ProcStdoutHandlerThread(threading.Thread):
                 logging.exception(e)
                 # panic
                 print("Panicking ", str(e))
-                self.engine.error()
+                self.engine.error(msg=str(e))
                 os._exit(1)
 
     def destroy(self) -> None:

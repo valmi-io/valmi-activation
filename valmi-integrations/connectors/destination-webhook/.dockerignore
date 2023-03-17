@@ -2,7 +2,8 @@
 !docker-entrypoint.sh
 !destination_container_wrapper.py
 !proc_stdout_handler.py
-!handlers.py
+!read_handlers.py
+!write_handlers.py
 !Dockerfile
 !main.py
 !destination_webhook

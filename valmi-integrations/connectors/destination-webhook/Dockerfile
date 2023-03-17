@@ -33,7 +33,8 @@ COPY destination_webhook ./destination_webhook
 COPY valmi_protocol ./valmi_protocol
 COPY destination_container_wrapper.py ./
 COPY proc_stdout_handler.py ./
-COPY handlers.py ./
+COPY write_handlers.py ./
+COPY read_handlers.py ./
 COPY docker-entrypoint.sh ./
 RUN chmod +x ./docker-entrypoint.sh
 

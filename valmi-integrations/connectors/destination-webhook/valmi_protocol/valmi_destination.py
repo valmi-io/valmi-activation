@@ -1,9 +1,11 @@
 import argparse
+import io
 import logging
-from typing import Iterable, List
+from typing import Any, Iterable, List, Mapping
 
 from airbyte_cdk.destinations import Destination
 from airbyte_cdk.models import AirbyteMessage, Type
+from valmi_protocol import ConfiguredValmiDestinationCatalog
 
 logger = logging.getLogger("valmi")
 
@@ -90,3 +92,15 @@ class ValmiDestination(Destination):
         config = self.read_config(config_path=parsed_args.config)
         catalog = self.discover(logger, config)
         yield AirbyteMessage(type=Type.CATALOG, catalog=catalog)
+
+    def _run_write(
+        self,
+        config: Mapping[str, Any],
+        configured_catalog_path: str,
+        input_stream: io.TextIOWrapper,
+    ) -> Iterable[AirbyteMessage]:
+        catalog = ConfiguredValmiDestinationCatalog.parse_file(configured_catalog_path)
+        input_messages = self._parse_input_stream(input_stream)
+        logger.info("Begin writing to the destination...")
+        yield from self.write(config=config, configured_catalog=catalog, input_messages=input_messages)
+        logger.info("Writing complete.")

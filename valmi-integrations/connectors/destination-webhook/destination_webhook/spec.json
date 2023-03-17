@@ -3,7 +3,11 @@
     "$schema": "http://json-schema.org/draft-07/schema#",
     "title": "Destination Webhook",
     "type": "object",
-    "required": ["authorization","url","method"],
+    "required": [
+      "authorization",
+      "url",
+      "method"
+    ],
     "additionalProperties": true,
     "properties": {
       "url": {
@@ -11,14 +15,19 @@
         "title": "URL",
         "description": "Webhook URL"
       },
-      "authorization": {
-        "type": "string",
-        "title": "Authorization Header",
-        "description": "Authorization header including the Bearer|Basic|Token prefix"
+      "headers": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "Headers to be added to the http request. eg: Authorization: Bearer <token>"
       },
       "method": {
         "type": "string",
-        "enum": ["POST", "GET"]
+        "enum": [
+          "POST",
+          "GET"
+        ]
       }
     }
   }

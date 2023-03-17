@@ -54,9 +54,7 @@ class DestinationWebhook(ValmiDestination):
                 for prop in msg.record.data:
                     props[prop] = msg.record.data[prop]
 
-                r = requests.get(
-                    f"http://{config['host']}:{config['port']}/{msg.record.stream}?{ urlencode(props, quote_via=quote)}"
-                )
+                r = requests.get(f"{config['url']}/{msg.record.stream}?{ urlencode(props, quote_via=quote)}")
 
                 # print(r.json())
 
