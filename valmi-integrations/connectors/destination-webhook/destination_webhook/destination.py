@@ -14,10 +14,9 @@ from airbyte_cdk.models import (
     AirbyteConnectionStatus,
     AirbyteMessage,
     AirbyteStateMessage,
-    ConfiguredAirbyteCatalog,
 )
 from airbyte_cdk.models.airbyte_protocol import Status, Type
-from valmi_protocol import ValmiDestination, ValmiCatalog
+from valmi_protocol import ValmiDestination, ValmiDestinationCatalog, ConfiguredValmiDestinationCatalog
 
 
 class DestinationWebhook(ValmiDestination):
@@ -28,7 +27,7 @@ class DestinationWebhook(ValmiDestination):
     def write(
         self,
         config: Mapping[str, Any],
-        configured_catalog: ConfiguredAirbyteCatalog,
+        configured_catalog: ConfiguredValmiDestinationCatalog,
         input_messages: Iterable[AirbyteMessage],
     ) -> Iterable[AirbyteMessage]:
         """
@@ -67,9 +66,9 @@ class DestinationWebhook(ValmiDestination):
         out_message = AirbyteMessage(type=Type.STATE, state=out_record)
         yield out_message
 
-    def discover(self, logger: AirbyteLogger, config: json) -> ValmiCatalog:
+    def discover(self, logger: AirbyteLogger, config: json) -> ValmiDestinationCatalog:
         sinks = []
-        return ValmiCatalog(sinks=sinks)
+        return ValmiDestinationCatalog(sinks=sinks)
 
     def check(self, logger: AirbyteLogger, config: Mapping[str, Any]) -> AirbyteConnectionStatus:
         """

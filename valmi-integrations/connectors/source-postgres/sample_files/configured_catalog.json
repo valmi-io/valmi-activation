@@ -2,7 +2,7 @@
     "streams": [
         {
             "sync_mode": "full_refresh",
-            "destination_sync_mode":"append",
+            "destination_sync_mode":"upsert",
             "id_key": "sync_id",
             "stream": {
                 "name": "sync_runs",

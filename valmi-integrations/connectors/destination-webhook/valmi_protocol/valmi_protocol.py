@@ -42,6 +42,15 @@ class ValmiSink(BaseModel):
     json_schema: Optional[Dict[str, Any]] = Field(..., description="Sink schema using Json Schema specs.")
 
 
+class ConfiguredValmiSink(BaseModel):
+    class Config:
+        extra = Extra.allow
+
+    sink: ValmiSink
+    destination_sync_mode: DestinationSyncMode
+    mapping: Dict[str, Any] = Field(..., description="Create mapping from source to destination fields.")
+
+
 # TODO: Hack. Think of a nice way
 @optional
 class ValmiStream(AirbyteStream):
@@ -50,7 +59,7 @@ class ValmiStream(AirbyteStream):
 
 # TODO: Hack. Think of a nice way
 @optional
-class ValmiCatalog(AirbyteCatalog):
+class ValmiDestinationCatalog(AirbyteCatalog):
     class Config:
         extra = Extra.allow
 
@@ -61,6 +70,4 @@ class ConfiguredValmiDestinationCatalog(BaseModel):
     class Config:
         extra = Extra.allow
 
-    destination_sync_mode: DestinationSyncMode
-    sink: ValmiSink
-    mapping: Dict[str, Any] = Field(..., description="Create mapping from source to destination fields.")
+    sinks: List[ConfiguredValmiSink]
