@@ -10,8 +10,10 @@ from airbyte_cdk.models import (
     AirbyteErrorTraceMessage,
     AirbyteTraceMessage,
     ConfiguredAirbyteCatalog,
+    AirbyteStateMessage,
     Status,
     Type,
+    AirbyteStateType,
     TraceType,
 )
 
@@ -160,4 +162,8 @@ class SourcePostgres(Source):
                 return
             else:
                 chunk_id += 1
-                # TODO: write check point
+                yield AirbyteMessage(
+                    type=Type.STATE,
+                    state=AirbyteStateMessage(type=AirbyteStateType.STREAM, data={"chunk_id": chunk_id}),
+                    emitted_at=int(datetime.now().timestamp()) * 1000,
+                )
