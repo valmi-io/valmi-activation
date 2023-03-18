@@ -2,7 +2,7 @@ import os
 
 from dagster_docker import docker_container_op
 
-from dagster import DefaultScheduleStatus, ScheduleDefinition, graph, op
+from dagster import DefaultScheduleStatus, ScheduleDefinition, graph, op, RetryPolicy, Backoff, Jitter
 
 @op(name="initialise_{{ sync['id'].replace('-','_') }}")
 def initialise():
@@ -25,6 +25,7 @@ source_op = docker_container_op.configured(
         "env_vars": list({**os.environ}.keys()),
     },
     name="source_op_{{ sync['id'].replace('-','_') }}",
+    
 )
 destination_op = docker_container_op.configured(
         {
@@ -39,11 +40,16 @@ destination_op = docker_container_op.configured(
         },
         "env_vars": list({**os.environ}.keys()),
     },
-    name="destination_op_{{ sync['id'].replace('-','_') }}",
+    name="destination_op_{{ sync['id'].replace('-','_') }}"
 )
 
 
-@op(name="finalizer_{{ sync['id'].replace('-','_') }}")
+@op(name="finalizer_{{ sync['id'].replace('-','_') }}" , retry_policy=RetryPolicy(
+        max_retries=100,
+        delay=2,  # 2s
+        backoff=Backoff.EXPONENTIAL,
+        jitter=Jitter.PLUS_MINUS,
+    ))
 def finalizer(context, a, b) -> None:
     context.log.info("finalizer")
 
@@ -52,8 +58,19 @@ def job():
     @graph(name="graph_{{ sync['id'].replace('-','_') }}")
     def sync_graph():
         i = initialise()
-        a = source_op (i)
-        b = destination_op(i)
+        a = source_op.with_retry_policy(RetryPolicy(
+        max_retries=100,
+        delay=2,  # 2s
+        backoff=Backoff.EXPONENTIAL,
+        jitter=Jitter.PLUS_MINUS,
+    ))(i)
+
+        b = destination_op.with_retry_policy(RetryPolicy(
+        max_retries=100,
+        delay=2,  # 2s
+        backoff=Backoff.EXPONENTIAL,
+        jitter=Jitter.PLUS_MINUS,
+    ))(i)
         finalizer(a, b) 
 
     return sync_graph.to_job(name="{{ sync['id'].replace('-','_') }}")

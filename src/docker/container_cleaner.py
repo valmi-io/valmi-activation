@@ -9,12 +9,19 @@ logger = logging.getLogger(v.get("LOGGER_NAME"))
 
 
 class ContainerCleaner:
+    __initialized = False
+
     def __new__(cls) -> object:
         if not hasattr(cls, "instance"):
             cls.instance = super(ContainerCleaner, cls).__new__(cls)
         return cls.instance
 
     def __init__(self) -> None:
+        if ContainerCleaner.__initialized:
+            return
+
+        ContainerCleaner.__initialized = True
+
         self.cleaner_thread = ContainerCleanerThread(16, "ContainerCleanerThread")
         self.cleaner_thread.start()
 

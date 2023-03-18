@@ -15,12 +15,19 @@ logger = logging.getLogger(v.get("LOGGER_NAME"))
 
 
 class DatastoreCleaner:
+    __initialized = False
+
     def __new__(cls) -> object:
         if not hasattr(cls, "instance"):
             cls.instance = super(DatastoreCleaner, cls).__new__(cls)
         return cls.instance
 
     def __init__(self) -> None:
+        if DatastoreCleaner.__initialized:
+            return
+
+        DatastoreCleaner.__initialized = True
+        
         self.cleaner_thread = DatastoreCleanerThread(32, "DatastoreCleanerThread")
         self.cleaner_thread.start()
 
@@ -43,7 +50,7 @@ class DatastoreCleanerThread(threading.Thread):
             try:
                 logger.info("Cleaning all datastore ")
 
-                runs = self.run_service.get_active_and_latest_runs(
+                runs = self.run_service.get_active_or_latest_runs(
                     after=datetime.now() - timedelta(seconds=v.get("DATASTORE_CLEAN_UNTIL") or 60)
                 )
 
@@ -52,7 +59,7 @@ class DatastoreCleanerThread(threading.Thread):
 
                 logger.debug("runset %s", [run.run_id for run in runs])
                 logger.debug("dirlist %s", dirlist)
-                pruneset = set(dirlist) - set([run.run_id for run in runs])
+                pruneset = set(dirlist) - set([str(run.run_id) for run in runs])
                 logger.debug("pruneset %s", pruneset)
                 for dir in pruneset:
                     dir_path = join(store_path, dir)

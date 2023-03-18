@@ -1,6 +1,6 @@
 from vyper import v
 from api.schemas import MetricCreate, MetricBase
-from metrics import Metrics
+from metrics.metric_store import Metrics
 
 
 class MetricsService(object):

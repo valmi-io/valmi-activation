@@ -38,6 +38,12 @@ class SyncRunnerThread(threading.Thread):
     def _run(self):
         while not self.exitFlag:
             time.sleep(TICK_INTERVAL)
+
+            from orchestrator.job_generator import repo_ready
+
+            if not repo_ready:
+                continue
+
             try:
                 syncs_to_handle = self.sync_service.get_syncs_to_run()
                 print(syncs_to_handle)

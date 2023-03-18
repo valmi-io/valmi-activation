@@ -99,7 +99,7 @@ class CheckpointHandler(DefaultHandler):
         print(record)
         self.engine.connector_state.register_records(self.engine.connector_state.run_time_args["chunk_size"])
         self.engine.metric()
-        self.engine.register_chunk()
+        self.engine.connector_state.register_chunk()
         return True
 
 

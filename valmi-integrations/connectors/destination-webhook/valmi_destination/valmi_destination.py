@@ -9,7 +9,6 @@ from airbyte_cdk.models import AirbyteMessage, Type, AirbyteStateMessage
 from valmi_protocol import ConfiguredValmiDestinationCatalog
 from airbyte_cdk.sources.utils.schema_helpers import check_config_against_spec_or_exit
 from airbyte_cdk.utils.traced_exception import AirbyteTracedException
-
 logger = logging.getLogger("airbyte")
 
 

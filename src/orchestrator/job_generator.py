@@ -7,7 +7,6 @@ import time
 from os.path import dirname, join
 import requests
 from requests.auth import HTTPBasicAuth
-
 from dagster_graphql import ShutdownRepositoryLocationInfo, ShutdownRepositoryLocationStatus
 from jinja2 import Environment, FileSystemLoader
 from pydantic import Json
@@ -24,6 +23,9 @@ GENERATED_CONFIG_DIR = "config"
 GENERATED_CATALOG_DIR = "catalog"
 SHARED_DIR = "/tmp/shared_dir"
 
+# TODO: clean it up with a better location
+repo_ready = False
+
 
 class JobCreatorThread(threading.Thread):
     def __init__(self, threadID: int, name: str, dagster_client: ValmiDagsterClient) -> None:
@@ -34,6 +36,7 @@ class JobCreatorThread(threading.Thread):
         self.dagster_client = dagster_client
 
     def run(self) -> None:
+        global repo_ready
         while not self.exitFlag:
             try:
                 resp = requests.get(
@@ -57,6 +60,10 @@ class JobCreatorThread(threading.Thread):
                     logger.info("New syncs found")
 
                     # create directories for jobs, config and catalog
+                    appdir = join(SHARED_DIR, v.get("APP"))
+                    if not os.path.exists(appdir):
+                        os.makedirs(appdir)
+
                     dirs = {
                         GENERATED_DIR: join(SHARED_DIR, v.get("APP"), "gen", GENERATED_DIR),
                         GENERATED_CONFIG_DIR: join(SHARED_DIR, v.get("APP"), "gen", GENERATED_CONFIG_DIR),
@@ -79,8 +86,12 @@ class JobCreatorThread(threading.Thread):
                     # restart dagster repository
                     self.restart_dagster_repo()
 
+                    repo_ready = True
+
                     with open(join(SHARED_DIR, f'{v.get("APP")}-syncs.json'), "w") as replace_file:
                         replace_file.write(resp.text)
+                else:
+                    repo_ready = True
 
             except Exception:
                 logger.exception("Error while fetching sync jobs and creating dagster jobs")

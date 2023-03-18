@@ -27,9 +27,9 @@ class SyncRunsService(BaseService[SyncRun, SyncRunCreate, Any]):
             .all()
         )
 
-    def get_active_and_latest_runs(self, after: datetime) -> List[SyncRun]:
+    def get_active_or_latest_runs(self, after: datetime) -> List[SyncRun]:
         return (
             self.db_session.query(self.model)
-            .filter(or_(SyncRun.run_at > after), SyncRun.status != SyncStatus.STOPPED)
+            .filter(or_(SyncRun.run_at > after, SyncRun.status != SyncStatus.STOPPED.value))
             .all()
         )

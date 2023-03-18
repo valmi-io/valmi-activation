@@ -15,6 +15,8 @@ MAGIC_CHUNK_ID = 2**31 - 1
 
 
 class Metrics:
+    __initialized = False
+
     def __new__(cls, delete_db=False, *args, **kwargs) -> object:
         if not hasattr(cls, "instance"):
             cls.instance = super(
@@ -24,6 +26,10 @@ class Metrics:
         return cls.instance
 
     def __init__(self, delete_db=False, *args, **kwargs) -> None:
+        if Metrics.__initialized:
+            return
+
+        Metrics.__initialized = True
         self.con = duckdb.connect(DB_NAME)
 
         metric_table_found = False

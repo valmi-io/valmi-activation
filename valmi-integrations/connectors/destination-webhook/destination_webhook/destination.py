@@ -18,7 +18,7 @@ from airbyte_cdk.models import (
     AirbyteErrorTraceMessage,
 )
 from airbyte_cdk.models.airbyte_protocol import Status, Type, AirbyteStateType
-from .custom_http_handler import CustomHttpHandler
+from .custom_http_sink import CustomHttpSink
 from valmi_protocol import ValmiDestinationCatalog, ConfiguredValmiDestinationCatalog, ValmiSink
 from valmi_destination import ValmiDestination
 from .run_time_args import RunTimeArgs
@@ -42,15 +42,14 @@ class DestinationWebhook(ValmiDestination):
 
         run_time_args = RunTimeArgs.parse_obj(config["run_time_args"] if "run_time_args" in config else {})
 
-        http_handler = CustomHttpHandler(run_time_args)
+        http_handler = CustomHttpSink(run_time_args=run_time_args)
         for msg in input_messages:
             now = datetime.now()
             if msg.type == Type.RECORD:
                 try:
-                    r = http_handler.handle(
+                    http_handler.handle(
                         config, configured_catalog, msg.record.data, counter, run_time_args=run_time_args
                     )
-                    logger.debug(r.text)
                 except Exception as e:
                     yield AirbyteMessage(
                         type=Type.TRACE,
@@ -66,7 +65,13 @@ class DestinationWebhook(ValmiDestination):
                 if counter % run_time_args.records_per_metric == 0:
                     yield AirbyteMessage(
                         type=Type.STATE,
-                        state=AirbyteStateMessage(type=AirbyteStateType.STREAM, data={"records_delivered": counter}),
+                        state=AirbyteStateMessage(
+                            type=AirbyteStateType.STREAM,
+                            data={
+                                "records_delivered": counter,
+                                "commit": True if counter % run_time_args.chunk_size == 0 else False,
+                            },
+                        ),
                     )
 
                 if (datetime.now() - now).seconds > 5:

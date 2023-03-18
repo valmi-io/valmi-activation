@@ -9,12 +9,19 @@ logger = logging.getLogger(v.get("LOGGER_NAME"))
 
 
 class Repo:
+    __initialized = False
+
     def __new__(cls) -> object:
         if not hasattr(cls, "instance"):
             cls.instance = super(Repo, cls).__new__(cls)
         return cls.instance
 
     def __init__(self) -> None:
+        if Repo.__initialized:
+            return
+
+        Repo.__initialized = True
+
         self.client = ValmiDagsterClient(v.get("DAGIT_HOST"), port_number=v.get_int("DAGIT_PORT"))
 
         self.jobCreatorThread = JobCreatorThread(1, "JobCreatorThread", self.client)
