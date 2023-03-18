@@ -1,6 +1,6 @@
 from datetime import datetime
 import logging
-from typing import Any, List
+from typing import Any, Dict, List
 
 from fastapi import Depends
 
@@ -9,7 +9,7 @@ from pydantic import UUID4, Json
 from vyper import v
 
 from metastore import models
-from api.schemas import SyncSchedule, SyncRun, SyncCurrentRunArgs
+from api.schemas import SyncSchedule, SyncRun, SyncCurrentRunArgs, GenericResponse
 from api.services import SyncsService, get_syncs_service, SyncRunsService, get_sync_runs_service
 
 router = APIRouter(prefix="/syncs")
@@ -34,6 +34,18 @@ async def get_current_run_id(
     return SyncCurrentRunArgs(
         sync_id=sync_id, run_id=sync_schedule.last_run_id, chunk_size=300, chunk_id=0, records_per_metric=10
     )
+
+
+@router.post("/{sync_id}/runs/{run_id}/state/{connector_string}", response_model=GenericResponse)
+async def state(
+    sync_id: UUID4,
+    run_id: UUID4,
+    connector_string: str,
+    state: Dict,
+    sync_runs_service: SyncRunsService = Depends(get_sync_runs_service),
+) -> GenericResponse:
+    sync_runs_service.save_state(sync_id, run_id, connector_string, state)
+    return GenericResponse()
 
 
 @router.get("/{sync_id}/runs/", response_model=List[SyncRun])

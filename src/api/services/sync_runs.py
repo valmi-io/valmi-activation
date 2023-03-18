@@ -33,3 +33,10 @@ class SyncRunsService(BaseService[SyncRun, SyncRunCreate, Any]):
             .filter(or_(SyncRun.run_at > after, SyncRun.status != SyncStatus.STOPPED.value))
             .all()
         )
+
+    def save_state(self, sync_id, run_id, connector_string, state):
+        sync_run = self.get(run_id)
+        if not sync_run.remarks:
+            sync_run.remarks = {}
+        sync_run.remarks[connector_string] = {"state": state}
+        self.db_session.commit()

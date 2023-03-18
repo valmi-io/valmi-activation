@@ -2,17 +2,19 @@ import argparse
 import io
 import logging
 import sys
-from typing import Any, Dict, Iterable, List, Mapping, MutableMapping, Union
+from typing import Any, Iterable, List, Mapping
 
 from airbyte_cdk.destinations import Destination
-from airbyte_cdk.models import AirbyteMessage, Type, AirbyteStateMessage
+from airbyte_cdk.models import AirbyteMessage, Type
 from valmi_protocol import ConfiguredValmiDestinationCatalog
 from airbyte_cdk.sources.utils.schema_helpers import check_config_against_spec_or_exit
 from airbyte_cdk.utils.traced_exception import AirbyteTracedException
+
 logger = logging.getLogger("airbyte")
 
 
 class ValmiDestination(Destination):
+    '''
     def read_state(self, state_path: str) -> Union[List[AirbyteStateMessage], MutableMapping[str, Any]]:
         """
         Retrieves the input state of a sync by reading from the specified JSON file. Incoming state can be deserialized  as a list of AirbyteStateMessages for the per-stream state format. Regardless of the
@@ -32,6 +34,7 @@ class ValmiDestination(Destination):
                     parsed_state_messages.append(parsed_message)
                 return parsed_state_messages
         return None
+    '''
 
     def parse_args(self, args: List[str]) -> argparse.Namespace:
         parent_parser = argparse.ArgumentParser(add_help=False)
@@ -52,7 +55,7 @@ class ValmiDestination(Destination):
 
         # write
         write_parser = subparsers.add_parser("write", help="Writes data to the destination", parents=[parent_parser])
-        write_parser.add_argument("--state", type=str, required=False, help="path to the json-encoded state file")
+        # write_parser.add_argument("--state", type=str, required=False, help="path to the json-encoded state file")
         write_required = write_parser.add_argument_group("required named arguments")
         write_required.add_argument("--config", type=str, required=True, help="path to the JSON configuration file")
         write_required.add_argument(
@@ -82,7 +85,8 @@ class ValmiDestination(Destination):
     def run_cmd(self, parsed_args: argparse.Namespace) -> Iterable[AirbyteMessage]:
         cmd = parsed_args.command
 
-        if cmd not in ["discover", "write"]:
+        # if cmd not in ["discover", "write"]:
+        if cmd not in ["discover"]:
             for msg in super().run_cmd(parsed_args):
                 yield msg
             return
@@ -100,13 +104,17 @@ class ValmiDestination(Destination):
             for msg in self.discover_handler(config, parsed_args):
                 yield msg
             return
+
         elif cmd == "write":
-            state = self.read_state(parsed_args.state)
+            # state = self.read_state(parsed_args.state)
 
             # Wrap in UTF-8 to override any other input encodings
             wrapped_stdin = io.TextIOWrapper(sys.stdin.buffer, encoding="utf-8")
             yield from self._run_write(
-                config=config, configured_catalog_path=parsed_args.catalog, input_stream=wrapped_stdin, state=state
+                # config=config, configured_catalog_path=parsed_args.catalog, input_stream=wrapped_stdin, state=state
+                config=config,
+                configured_catalog_path=parsed_args.catalog,
+                input_stream=wrapped_stdin,
             )
             return
 
@@ -119,12 +127,16 @@ class ValmiDestination(Destination):
         config: Mapping[str, Any],
         configured_catalog_path: str,
         input_stream: io.TextIOWrapper,
-        state: Dict[str, any],
+        # state: Dict[str, any],
     ) -> Iterable[AirbyteMessage]:
         catalog = ConfiguredValmiDestinationCatalog.parse_file(configured_catalog_path)
         input_messages = self._parse_input_stream(input_stream)
         logger.info("Begin writing to the destination...")
         yield from self.write(
-            config=config, configured_catalog=catalog, input_messages=input_messages, state=state, logger=logger
+            # config=config, configured_catalog=catalog, input_messages=input_messages, state=state, logger=logger
+            config=config,
+            configured_catalog=catalog,
+            input_messages=input_messages,
+            logger=logger,
         )
         logger.info("Writing complete.")

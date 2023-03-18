@@ -94,12 +94,21 @@ class CheckpointHandler(DefaultHandler):
         super(CheckpointHandler, self).__init__(*args, **kwargs)
 
     def handle(self, record) -> bool:
-        # TODO: Hack - use trace messages
         print("Checkpoint seen")
         print(record)
-        self.engine.connector_state.register_records(self.engine.connector_state.run_time_args["chunk_size"])
-        self.engine.metric()
-        self.engine.connector_state.register_chunk()
+
+        records_delivered = record["state"]["data"]["records_delivered"]
+        self.engine.connector_state.register_records(records_delivered)
+
+        if records_delivered % self.engine.connector_state.run_time_args["chunk_size"] == 0:
+            commit = True
+        if commit:
+            self.engine.metric(commit=True)
+            self.engine.connector_state.register_chunk()
+            self.engine.checkpoint(record)
+        else:
+            self.engine.metric(commit=False)
+
         return True
 
 

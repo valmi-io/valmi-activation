@@ -5,7 +5,7 @@
 
 from datetime import datetime
 import json
-from typing import Any, Dict, Iterable, Mapping
+from typing import Any, Iterable, Mapping
 
 from airbyte_cdk import AirbyteLogger
 from airbyte_cdk.destinations import Destination
@@ -35,9 +35,8 @@ class DestinationWebhook(ValmiDestination):
         config: Mapping[str, Any],
         configured_catalog: ConfiguredValmiDestinationCatalog,
         input_messages: Iterable[AirbyteMessage],
-        state: Dict[str, any],
+        # state: Dict[str, any],
     ) -> Iterable[AirbyteMessage]:
-        # TODO: initialise counters from state
         counter = 0
 
         run_time_args = RunTimeArgs.parse_obj(config["run_time_args"] if "run_time_args" in config else {})
@@ -67,10 +66,7 @@ class DestinationWebhook(ValmiDestination):
                         type=Type.STATE,
                         state=AirbyteStateMessage(
                             type=AirbyteStateType.STREAM,
-                            data={
-                                "records_delivered": counter,
-                                "commit": True if counter % run_time_args.chunk_size == 0 else False,
-                            },
+                            data={"records_delivered": counter},
                         ),
                     )
 
