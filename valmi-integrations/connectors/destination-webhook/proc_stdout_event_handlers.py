@@ -85,6 +85,7 @@ class LogHandler(DefaultHandler):
         super(LogHandler, self).__init__(*args, **kwargs)
 
     def handle(self, record) -> bool:
+        print(json.dumps(record))
         return
 
 

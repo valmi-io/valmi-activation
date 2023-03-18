@@ -1,4 +1,3 @@
-import json
 from proc_stdout_event_handlers import (
     Engine,
     StoreWriter,
@@ -30,7 +29,6 @@ class ReadLogHandler(ReadDefaultHandler):
         super(ReadLogHandler, self).__init__(*args, **kwargs)
 
     def handle(self, record) -> bool:
-        print(json.dumps(record))
         return True
 
 

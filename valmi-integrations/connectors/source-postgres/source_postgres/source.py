@@ -113,10 +113,13 @@ class SourcePostgres(Source):
         try:
             self.dbt_adapter.execute_dbt(logger=logger)
         except Exception as e:
-            yield AirbyteTraceMessage(
-                type=TraceType.ERROR,
-                error=AirbyteErrorTraceMessage(message=str(e)),
-                emitted_at=int(datetime.now().timestamp()) * 1000,
+            yield AirbyteMessage(
+                type=Type.TRACE,
+                trace=AirbyteTraceMessage(
+                    type=TraceType.ERROR,
+                    error=AirbyteErrorTraceMessage(message=str(e)),
+                    emitted_at=int(datetime.now().timestamp()) * 1000,
+                ),
             )
             return
 

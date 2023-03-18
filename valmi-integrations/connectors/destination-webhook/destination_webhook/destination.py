@@ -3,20 +3,25 @@
 #
 
 
+from datetime import datetime
 import json
-from typing import Any, Iterable, Mapping
-from urllib.parse import quote, urlencode
+from typing import Any, Dict, Iterable, Mapping
 
-import requests
 from airbyte_cdk import AirbyteLogger
 from airbyte_cdk.destinations import Destination
 from airbyte_cdk.models import (
     AirbyteConnectionStatus,
     AirbyteMessage,
+    AirbyteTraceMessage,
+    AirbyteStateMessage,
+    TraceType,
+    AirbyteErrorTraceMessage,
 )
-from airbyte_cdk.models.airbyte_protocol import Status, Type
-from valmi_protocol import ValmiDestinationCatalog, ConfiguredValmiDestinationCatalog
+from airbyte_cdk.models.airbyte_protocol import Status, Type, AirbyteStateType
+from .custom_http_handler import CustomHttpHandler
+from valmi_protocol import ValmiDestinationCatalog, ConfiguredValmiDestinationCatalog, ValmiSink
 from valmi_destination import ValmiDestination
+from .run_time_args import RunTimeArgs
 
 
 class DestinationWebhook(ValmiDestination):
@@ -26,55 +31,63 @@ class DestinationWebhook(ValmiDestination):
 
     def write(
         self,
+        logger: AirbyteLogger,
         config: Mapping[str, Any],
         configured_catalog: ConfiguredValmiDestinationCatalog,
         input_messages: Iterable[AirbyteMessage],
+        state: Dict[str, any],
     ) -> Iterable[AirbyteMessage]:
-        """
-        TODO
-        Reads the input stream of messages, config, and catalog to write data to the destination.
+        # TODO: initialise counters from state
+        counter = 0
 
-        This method returns an iterable (typically a generator of AirbyteMessages via yield) containing state messages received
-        in the input message stream. Outputting a state message means that every AirbyteRecordMessage which came before it has been
-        successfully persisted to the destination. This is used to ensure fault tolerance in the case that a sync fails before fully completing,
-        then the source is given the last state message output from this method as the starting point of the next sync.
+        run_time_args = RunTimeArgs.parse_obj(config["run_time_args"] if "run_time_args" in config else {})
 
-        :param config: dict of JSON configuration matching the configuration declared in spec.json
-        :param configured_catalog: The Configured Catalog describing the schema of the data being received and how it should be persisted in the
-                                    destination
-        :param input_messages: The stream of input messages received from the source
-        :return: Iterable of AirbyteStateMessages wrapped in AirbyteMessage structs
-        """
+        http_handler = CustomHttpHandler(run_time_args)
         for msg in input_messages:
+            now = datetime.now()
             if msg.type == Type.RECORD:
-                props = {}
-                for prop in msg.record.data:
-                    props[prop] = msg.record.data[prop]
+                try:
+                    r = http_handler.handle(
+                        config, configured_catalog, msg.record.data, counter, run_time_args=run_time_args
+                    )
+                    logger.debug(r.text)
+                except Exception as e:
+                    yield AirbyteMessage(
+                        type=Type.TRACE,
+                        trace=AirbyteTraceMessage(
+                            type=TraceType.ERROR,
+                            error=AirbyteErrorTraceMessage(message=str(e)),
+                            emitted_at=int(datetime.now().timestamp()) * 1000,
+                        ),
+                    )
+                    return
 
-                r = requests.get(f"{config['url']}/{msg.record.stream}?{ urlencode(props, quote_via=quote)}")
+                counter = counter + 1
+                if counter % run_time_args.records_per_metric == 0:
+                    yield AirbyteMessage(
+                        type=Type.STATE,
+                        state=AirbyteStateMessage(type=AirbyteStateType.STREAM, data={"records_delivered": counter}),
+                    )
 
-                # TODO: release periodic TRACE messages , CHECKPOINT messages, and LOG messages
+                if (datetime.now() - now).seconds > 5:
+                    logger.info("A log every 5 seconds - is this required??")
 
     def discover(self, logger: AirbyteLogger, config: json) -> ValmiDestinationCatalog:
-        sinks = []
+        sinks = [ValmiSink(name="Webhook", supported_sync_modes=["upsert"], json_schema={})]
         return ValmiDestinationCatalog(sinks=sinks)
 
     def check(self, logger: AirbyteLogger, config: Mapping[str, Any]) -> AirbyteConnectionStatus:
-        """
-        Tests if the input configuration can be used to successfully connect to the destination with the needed permissions
-            e.g: if a provided API token or password can be used to connect and write to the destination.
-
-        :param logger: Logging object to display debug/info/error to the logs
-            (logs will not be accessible via airbyte UI if they are not passed to this logger)
-        :param config: Json object containing the configuration of this destination, content of this json is as specified in
-        the properties of the spec.json file
-
-        :return: AirbyteConnectionStatus indicating a Success or Failure
-        """
         try:
-            # TODO
+            # TODO: What checks make sense for a webhook?
+            if not (config["url"].startswith("http://") or config["url"].startswith("https://")):
+                raise Exception("invalid url")
+            if "headers" in config:
+                for header in config["headers"]:
+                    kvpair = header.split(":")
+                    if len(kvpair) < 2 or len(kvpair[0].strip()) == 0 or len(kvpair[1].strip()) == 0:
+                        raise Exception("invalid header - should be of form <key>: <val>")
 
-            # print("checking")
+            # config['method'] validity check already happens in spec verification
             return AirbyteConnectionStatus(status=Status.SUCCEEDED)
         except Exception as e:
             return AirbyteConnectionStatus(status=Status.FAILED, message=f"An exception occurred: {repr(e)}")

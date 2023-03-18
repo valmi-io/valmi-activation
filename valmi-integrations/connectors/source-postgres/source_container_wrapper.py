@@ -218,14 +218,15 @@ class RecordHandler(DefaultHandler):
     def finalize(self):
         self.store_writer.finalize()
 
+
 class TraceHandler(DefaultHandler):
     def __init__(self, *args, **kwargs):
         super(TraceHandler, self).__init__(*args, **kwargs)
 
     def handle(self, record):
         print(json.dumps(record))
-        #TODO: send engine error & kill proc
-        #sys.exit(0)
+        # TODO: send engine error & kill proc
+        # sys.exit(0)
 
 
 handlers = {
@@ -233,7 +234,7 @@ handlers = {
     "STATE": CheckpointHandler,
     "RECORD": RecordHandler,
     "default": DefaultHandler,
-    "TRACE": TraceHandler
+    "TRACE": TraceHandler,
 }
 
 
