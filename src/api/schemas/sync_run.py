@@ -11,7 +11,7 @@ class SyncRunBase(BaseModel):
 class SyncRunUpdate(SyncRunBase):
     status: Optional[str]
     metrics: Optional[Dict]
-    remarks: Optional[Dict]
+    extra: Optional[Dict]
     dagster_run_id: Optional[str]
 
 
@@ -21,7 +21,7 @@ class SyncRunCreate(SyncRunBase):
     run_at: datetime
     status: str
     metrics: Optional[Dict]
-    remarks: Optional[Dict]
+    extra: Optional[Dict]
 
 
 class SyncRun(SyncRunCreate):
