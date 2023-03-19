@@ -10,7 +10,15 @@ from vyper import v
 
 from metastore import models
 from api.schemas import SyncSchedule, SyncRun, SyncCurrentRunArgs, GenericResponse
-from api.services import SyncsService, get_syncs_service, SyncRunsService, get_sync_runs_service
+from api.services import (
+    SyncsService,
+    MetricsService,
+    get_metrics_service,
+    get_syncs_service,
+    SyncRunsService,
+    get_sync_runs_service,
+)
+from api.schemas.utils import assign_metrics_to_run
 
 router = APIRouter(prefix="/syncs")
 
@@ -66,8 +74,24 @@ async def get_sync_runs(
     before: datetime = datetime.now(),
     limit: int = 25,
     sync_runs_service: SyncRunsService = Depends(get_sync_runs_service),
+    metric_service: MetricsService = Depends(get_metrics_service),
 ) -> List[models.SyncRun]:
-    return sync_runs_service.get_runs(sync_id=sync_id, before=before, limit=limit)
+    runs = sync_runs_service.get_runs(sync_id=sync_id, before=before, limit=limit)
+    for run in runs:
+        if run.status == "running" or True:  # TODO: remove True check after finalisation of metrics
+            assign_metrics_to_run(run, metric_service)
+    return runs
+
+
+@router.get("/{sync_id}/runs/{run_id}", response_model=SyncRun)
+async def get_run(
+    sync_id: UUID4,
+    run_id: UUID4,
+    metric_service: MetricsService = Depends(get_metrics_service),
+    sync_runs_service: SyncRunsService = Depends(get_sync_runs_service),
+) -> models.SyncRun:
+    sync_run = sync_runs_service.get(run_id)
+    return assign_metrics_to_run(sync_run, metric_service)
 
 
 @router.get("/{sync_id}/runs/{run_id}/samples/{connector_id}", response_model=Json[Any])
