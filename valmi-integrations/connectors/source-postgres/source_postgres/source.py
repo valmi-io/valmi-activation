@@ -9,7 +9,6 @@ from airbyte_cdk.models import (
     AirbyteRecordMessage,
     AirbyteErrorTraceMessage,
     AirbyteTraceMessage,
-    ConfiguredAirbyteCatalog,
     AirbyteStateMessage,
     Status,
     Type,
@@ -19,7 +18,7 @@ from airbyte_cdk.models import (
 
 from airbyte_cdk.sources import Source
 from valmi_dbt.dbt_airbyte_adapter import DbtAirbyteAdpater
-from valmi_protocol.valmi_protocol import ValmiCatalog, ValmiStream
+from valmi_protocol.valmi_protocol import ValmiCatalog, ValmiStream, ConfiguredValmiCatalog
 
 
 class SourcePostgres(Source):
@@ -95,7 +94,7 @@ class SourcePostgres(Source):
             return catalog
 
     def read(
-        self, logger: AirbyteLogger, config: json, catalog: ConfiguredAirbyteCatalog, state: Dict[str, any]
+        self, logger: AirbyteLogger, config: json, catalog: ConfiguredValmiCatalog, state: Dict[str, any]
     ) -> Generator[AirbyteMessage, None, None]:
         self.initialize(logger, config)
 
@@ -170,3 +169,6 @@ class SourcePostgres(Source):
                     state=AirbyteStateMessage(type=AirbyteStateType.STREAM, data={"chunk_id": chunk_id}),
                     emitted_at=int(datetime.now().timestamp()) * 1000,
                 )
+
+    def read_catalog(self, catalog_path: str) -> ConfiguredValmiCatalog:
+        return ConfiguredValmiCatalog.parse_obj(self._read_json_file(catalog_path))

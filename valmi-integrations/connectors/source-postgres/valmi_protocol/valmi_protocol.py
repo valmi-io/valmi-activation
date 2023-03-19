@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Extra, Field
-from airbyte_cdk.models import AirbyteCatalog, AirbyteStream
+from airbyte_cdk.models import AirbyteCatalog, AirbyteStream, ConfiguredAirbyteStream, ConfiguredAirbyteCatalog
 import inspect
 
 
@@ -42,15 +42,18 @@ class ValmiSink(BaseModel):
     json_schema: Optional[Dict[str, Any]] = Field(..., description="Sink schema using Json Schema specs.")
 
 
-# TODO: Hack. Think of a nice way
-@optional
-class ValmiStream(AirbyteStream):
-    pass
+class ConfiguredValmiSink(BaseModel):
+    class Config:
+        extra = Extra.allow
+
+    sink: ValmiSink = None
+    destination_sync_mode: DestinationSyncMode
+    mapping: Dict[str, Any] = Field(..., description="Create mapping from source to destination fields.")
 
 
 # TODO: Hack. Think of a nice way
 @optional
-class ValmiCatalog(AirbyteCatalog):
+class ValmiDestinationCatalog(AirbyteCatalog):
     class Config:
         extra = Extra.allow
 
@@ -61,6 +64,34 @@ class ConfiguredValmiDestinationCatalog(BaseModel):
     class Config:
         extra = Extra.allow
 
+    sinks: List[ConfiguredValmiSink]
+
+
+# TODO: Hack. Think of a nice way
+@optional
+class ValmiStream(AirbyteStream):
+    pass
+
+
+class ConfiguredValmiStream(ConfiguredAirbyteStream):
+    class Config:
+        extra = Extra.allow
+
+    stream: ValmiStream
     destination_sync_mode: DestinationSyncMode
-    sink: ValmiSink
-    mapping: Dict[str, Any] = Field(..., description="Create mapping from source to destination fields.")
+
+
+# TODO: Hack. Think of a nice way
+@optional
+class ValmiCatalog(AirbyteCatalog):
+    class Config:
+        extra = Extra.allow
+
+    streams: Optional[List[ValmiStream]]
+
+
+class ConfiguredValmiCatalog(ConfiguredAirbyteCatalog):
+    class Config:
+        extra = Extra.allow
+
+    streams: List[ConfiguredValmiStream]
