@@ -9,6 +9,7 @@ from typing import Any, List
 
 from metastore.models import SyncStatus
 from .base import BaseService
+from sqlalchemy.orm.attributes import flag_modified
 
 
 class SyncRunsService(BaseService[SyncRun, SyncRunCreate, Any]):
@@ -36,19 +37,26 @@ class SyncRunsService(BaseService[SyncRun, SyncRunCreate, Any]):
 
     def save_status(self, sync_id, run_id, connector_string, status):
         sync_run = self.get(run_id)
+        self.db_session.refresh(sync_run)
         if not sync_run.extra:
             sync_run.extra = {}
         if connector_string not in sync_run.extra:
             sync_run.extra[connector_string] = {}
 
         sync_run.extra[connector_string]["status"] = status
+        flag_modified(sync_run, "extra")
+
         self.db_session.commit()
 
     def save_state(self, sync_id, run_id, connector_string, state):
         sync_run = self.get(run_id)
+        self.db_session.refresh(sync_run)
+
         if not sync_run.extra:
             sync_run.extra = {}
         if connector_string not in sync_run.extra:
             sync_run.extra[connector_string] = {}
         sync_run.extra[connector_string]["state"] = {"state": state}
+        flag_modified(sync_run, "extra")
+
         self.db_session.commit()

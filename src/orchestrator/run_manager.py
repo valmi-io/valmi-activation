@@ -17,6 +17,7 @@ from datetime import datetime
 from dagster import DagsterRunStatus
 from utils.retry_decorators import exception_to_sys_exit
 from .dagster_client import ValmiDagsterClient
+from sqlalchemy.orm.attributes import flag_modified
 
 logger = logging.getLogger(v.get("LOGGER_NAME"))
 TICK_INTERVAL = 5
@@ -112,6 +113,9 @@ class SyncRunnerThread(threading.Thread):
 
                         update_db = False
                         if dagster_run_status == DagsterRunStatus.SUCCESS:
+                            # TODO: move the following code to run service
+                            self.sync_service.db_session.refresh(run)
+
                             sync.run_status = SyncStatus.STOPPED
                             run.status = SyncStatus.STOPPED
                             if not run.extra:
@@ -119,12 +123,17 @@ class SyncRunnerThread(threading.Thread):
                             if "run_manager" not in run.extra:
                                 run.extra["run_manager"] = {}
                             run.extra["run_manager"]["status"] = {"status": "success"}
+                            flag_modified(run, "extra")
+
                             update_db = True
 
                         elif (
                             dagster_run_status == DagsterRunStatus.FAILURE
                             or dagster_run_status == DagsterRunStatus.CANCELED
                         ):
+                            # TODO: move the following code to run service
+                            self.sync_service.db_session.refresh(run)
+
                             sync.run_status = SyncStatus.FAILED
                             run.status = SyncStatus.FAILED
                             if not run.extra:
@@ -132,6 +141,8 @@ class SyncRunnerThread(threading.Thread):
                             if "run_manager" not in run.extra:
                                 run.extra["run_manager"] = {}
                             run.extra["run_manager"]["status"] = {"status": "failed", "error": "FILL THIS IN!"}
+                            flag_modified(run, "extra")
+
                             update_db = True
                         if update_db:
                             self.sync_service.update_sync_and_run(sync, run)
