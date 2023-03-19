@@ -98,9 +98,11 @@ class CheckpointHandler(DefaultHandler):
         print(record)
 
         records_delivered = record["state"]["data"]["records_delivered"]
+        finished = record["state"]["data"]["finished"]
         self.engine.connector_state.register_records(records_delivered)
 
-        if records_delivered % self.engine.connector_state.run_time_args["chunk_size"] == 0:
+        commit = False
+        if finished or records_delivered % self.engine.connector_state.run_time_args["chunk_size"] == 0:
             commit = True
         if commit:
             self.engine.metric(commit=True)

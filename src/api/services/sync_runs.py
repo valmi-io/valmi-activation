@@ -34,9 +34,16 @@ class SyncRunsService(BaseService[SyncRun, SyncRunCreate, Any]):
             .all()
         )
 
+    def save_error(self, sync_id, run_id, connector_string, error):
+        sync_run = self.get(run_id)
+        if not sync_run.extra:
+            sync_run.extra = {}
+        sync_run.extra[connector_string] = {"status": "failed", "error": error}
+        self.db_session.commit()
+
     def save_state(self, sync_id, run_id, connector_string, state):
         sync_run = self.get(run_id)
-        if not sync_run.remarks:
-            sync_run.remarks = {}
-        sync_run.remarks[connector_string] = {"state": state}
+        if not sync_run.extra:
+            sync_run.extra = {}
+        sync_run.extra[connector_string] = {"state": state}
         self.db_session.commit()

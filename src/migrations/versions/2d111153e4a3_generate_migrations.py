@@ -1,8 +1,8 @@
-"""sync schedules and sync runs models
+"""generate migrations
 
-Revision ID: 1fb208c0104d
-Revises: 9d3ca3122d43
-Create Date: 2023-03-09 07:48:25.243115
+Revision ID: 2d111153e4a3
+Revises: 
+Create Date: 2023-03-19 06:19:14.624559
 
 """
 from alembic import op
@@ -12,8 +12,8 @@ import sqlalchemy_utils
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = '1fb208c0104d'
-down_revision = '9d3ca3122d43'
+revision = '2d111153e4a3'
+down_revision = None
 branch_labels = None
 depends_on = None
 
@@ -23,7 +23,10 @@ def upgrade() -> None:
     op.create_table('sync_schedules',
     sa.Column('sync_id', postgresql.UUID(as_uuid=True), nullable=False),
     sa.Column('last_run_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
+    sa.Column('last_run_id', postgresql.UUID(as_uuid=True), nullable=True),
     sa.Column('run_interval', sa.Integer(), nullable=False),
+    sa.Column('status', sa.Text(), nullable=False),
+    sa.Column('run_status', sa.Text(), nullable=False),
     sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
     sa.PrimaryKeyConstraint('sync_id')
@@ -32,9 +35,10 @@ def upgrade() -> None:
     sa.Column('sync_id', postgresql.UUID(as_uuid=True), nullable=False),
     sa.Column('run_id', postgresql.UUID(as_uuid=True), nullable=False),
     sa.Column('run_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
-    sa.Column('run_status', sa.Text(), nullable=False),
-    sa.Column('run_metrics', sa.JSON(), nullable=True),
-    sa.Column('run_remarks', sa.JSON(), nullable=True),
+    sa.Column('status', sa.Text(), nullable=False),
+    sa.Column('metrics', sa.JSON(), nullable=True),
+    sa.Column('extra', sa.JSON(), nullable=True),
+    sa.Column('dagster_run_id', sa.Text(), nullable=True),
     sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
     sa.ForeignKeyConstraint(['sync_id'], ['sync_schedules.sync_id'], ),

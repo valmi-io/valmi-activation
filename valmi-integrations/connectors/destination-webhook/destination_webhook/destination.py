@@ -66,12 +66,21 @@ class DestinationWebhook(ValmiDestination):
                         type=Type.STATE,
                         state=AirbyteStateMessage(
                             type=AirbyteStateType.STREAM,
-                            data={"records_delivered": counter},
+                            data={"records_delivered": counter, "finished": False},
                         ),
                     )
 
                 if (datetime.now() - now).seconds > 5:
                     logger.info("A log every 5 seconds - is this required??")
+
+        # Sync completed - final state message
+        yield AirbyteMessage(
+            type=Type.STATE,
+            state=AirbyteStateMessage(
+                type=AirbyteStateType.STREAM,
+                data={"records_delivered": counter, "finished": True},
+            ),
+        )
 
     def discover(self, logger: AirbyteLogger, config: json) -> ValmiDestinationCatalog:
         sinks = [ValmiSink(name="Webhook", supported_sync_modes=["upsert"], json_schema={})]

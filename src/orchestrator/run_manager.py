@@ -114,7 +114,7 @@ class SyncRunnerThread(threading.Thread):
                         if dagster_run_status == DagsterRunStatus.SUCCESS:
                             sync.run_status = SyncStatus.STOPPED
                             run.status = SyncStatus.STOPPED
-                            run.remarks = {"status": "SUCCESS", "error": ""}
+                            run.extra = {"status": "success", "error": ""}
                             update_db = True
 
                         elif (
@@ -123,8 +123,8 @@ class SyncRunnerThread(threading.Thread):
                         ):
                             sync.run_status = SyncStatus.FAILED
                             run.status = SyncStatus.FAILED
-                            run.remarks = {
-                                "status": "FAILURE",
+                            run.extra = {
+                                "status": "failed",
                                 "error": "",
                             }
                             update_db = True

@@ -18,17 +18,21 @@ def du(uuid_str: str) -> UUID4:
 class ConnectorState:
     def __init__(self, run_time_args=[]) -> None:
         self.num_chunks = run_time_args["chunk_id"]
-        self.total_records = self.num_chunks * run_time_args["chunk_size"]
+        self.begin_records = self.num_chunks * run_time_args["chunk_size"]
+        self.records_in_chunk = 0
+        self.records_in_this_connector_intance = 0
+
         self.run_time_args = run_time_args
 
     def register_chunk(self):
         self.num_chunks = self.num_chunks + 1
 
-    def register_record(self):
-        self.total_records = self.total_records + 1
+    def total_records(self):
+        return self.begin_records + self.records_in_this_connector_intance
 
     def register_records(self, num_records):
-        self.total_records = self.total_records + num_records
+        self.records_in_this_connector_intance = num_records
+        self.records_in_chunk = self.total_records() - (self.num_chunks * self.run_time_args["chunk_size"])
 
 
 class NullEngine:
@@ -62,11 +66,13 @@ class Engine(NullEngine):
         status_forcelist = tuple(x for x in requests.status_codes._codes if x > 400 and x not in [400, 401])
         retries = Retry(total=MAX_HTTP_RETRIES, backoff_factor=5, status_forcelist=status_forcelist)
         self.session_with_retries.mount("http://", HTTPAdapter(max_retries=retries))
+        self.session_with_retries.mount("https://", HTTPAdapter(max_retries=retries))
 
         self.session_without_retries = requests.Session()
         status_forcelist = []
         retries = Retry(total=0, backoff_factor=5, status_forcelist=status_forcelist)
         self.session_without_retries.mount("http://", HTTPAdapter(max_retries=retries))
+        self.session_without_retries.mount("https://", HTTPAdapter(max_retries=retries))
 
         run_time_args = self.current_run_details()
         self.connector_state = ConnectorState(run_time_args=run_time_args)
@@ -109,7 +115,9 @@ class Engine(NullEngine):
         sync_id = self.connector_state.run_time_args["sync_id"]
         run_id = self.connector_state.run_time_args["run_id"]
         r = self.session_with_retries.post(
-            f"{self.engine_url}/syncs/{sync_id}/runs/{run_id}/error/", timeout=HTTP_TIMEOUT, json={"error": msg}
+            f"{self.engine_url}/syncs/{sync_id}/runs/{run_id}/error/{CONNECTOR_STRING}/",
+            timeout=HTTP_TIMEOUT,
+            json={"message": msg},
         )
         r.raise_for_status()
 
@@ -127,7 +135,7 @@ class Engine(NullEngine):
         sync_id = self.connector_state.run_time_args["sync_id"]
         run_id = self.connector_state.run_time_args["run_id"]
         r = self.session_with_retries.post(
-            f"{self.engine_url}/syncs/{sync_id}/runs/{run_id}/state/{CONNECTOR_STRING}",
+            f"{self.engine_url}/syncs/{sync_id}/runs/{run_id}/state/{CONNECTOR_STRING}/",
             timeout=HTTP_TIMEOUT,
             json=state,
         )
