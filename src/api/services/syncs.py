@@ -12,7 +12,6 @@ from typing import Any, Dict, List
 
 from metastore.models import SyncConfigStatus, SyncStatus
 from .base import BaseService
-from datetime import datetime
 from sqlalchemy import or_, and_
 
 
