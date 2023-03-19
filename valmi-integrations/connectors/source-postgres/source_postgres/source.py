@@ -131,7 +131,7 @@ class SourcePostgres(Source):
         # now read data from the dbt transit snapshot
         faldbt = self.dbt_adapter.get_fal_dbt()
 
-        # set the below two value from checkpoint passed
+        # set the below two values from the checkpoint state
         last_row_num = -1
         chunk_id = 0
         while True:

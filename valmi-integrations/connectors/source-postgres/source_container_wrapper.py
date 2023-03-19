@@ -143,15 +143,14 @@ class Engine(NullEngine):
         return r.json()["abort_required"]
 
     def checkpoint(self, state):
-        return
-        # TODO: finish this
-        print("sending checkpoint")
         sync_id = self.connector_state.run_time_args["sync_id"]
         run_id = self.connector_state.run_time_args["run_id"]
-        r = req_session.post(
-            f"{self.engine_url}/syncs/{sync_id}/runs/{run_id}/checkpoint/", timeout=HTTP_TIMEOUT, json=state
+        r = self.session_with_retries.post(
+            f"{self.engine_url}/syncs/{sync_id}/runs/{run_id}/state/{CONNECTOR_STRING}/",
+            timeout=HTTP_TIMEOUT,
+            json=state,
         )
-        print(r.text)
+        r.raise_for_status()
 
 
 class StdoutWriter:
@@ -228,7 +227,7 @@ class CheckpointHandler(DefaultHandler):
 
     def handle(self, record):
         print(json.dumps(record))
-        self.engine.checkpoint(record["state"]["data"])
+        self.engine.checkpoint(record)
 
 
 class RecordHandler(DefaultHandler):
@@ -248,8 +247,8 @@ class TraceHandler(DefaultHandler):
 
     def handle(self, record):
         print(json.dumps(record))
-        # TODO: send engine error & kill proc
-        # sys.exit(0)
+        self.engine.error(record["trace"]["error"]["message"])
+        sys.exit(0)
 
 
 handlers = {
