@@ -116,13 +116,35 @@ class SyncRunnerThread(threading.Thread):
                             # TODO: move the following code to run service
                             self.sync_service.db_session.refresh(run)
 
-                            sync.run_status = SyncStatus.STOPPED
-                            run.status = SyncStatus.STOPPED
+                            # if either of the source or destination failed, then the sync should be failed.
+                            src_status = run.extra["src"]["status"]["status"]
+                            dest_status = run.extra["dest"]["status"]["status"]
+
+                            error_msg = None
+                            status = "success"
+                            if src_status == "failed":
+                                error_msg = run.extra["src"]["status"]["message"]
+                                status = "failed"
+
+                                sync.run_status = SyncStatus.FAILED
+                                run.status = SyncStatus.FAILED
+                            elif dest_status == "failed":
+                                error_msg = run.extra["dest"]["status"]["message"]
+                                status = "failed"
+
+                                sync.run_status = SyncStatus.FAILED
+                                run.status = SyncStatus.FAILED
+                            else:
+                                sync.run_status = SyncStatus.STOPPED
+                                run.status = SyncStatus.STOPPED
+
+                            run_status = {"status": status, "message": error_msg}
+
                             if not run.extra:
                                 run.extra = {}
                             if "run_manager" not in run.extra:
                                 run.extra["run_manager"] = {}
-                            run.extra["run_manager"]["status"] = {"status": "success"}
+                            run.extra["run_manager"]["status"] = run_status
                             flag_modified(run, "extra")
 
                             update_db = True
@@ -140,7 +162,7 @@ class SyncRunnerThread(threading.Thread):
                                 run.extra = {}
                             if "run_manager" not in run.extra:
                                 run.extra["run_manager"] = {}
-                            run.extra["run_manager"]["status"] = {"status": "failed", "error": "FILL THIS IN!"}
+                            run.extra["run_manager"]["status"] = {"status": "failed", "message": "FILL THIS IN!"}
                             flag_modified(run, "extra")
 
                             update_db = True

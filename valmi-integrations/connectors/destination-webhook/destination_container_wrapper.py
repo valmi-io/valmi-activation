@@ -108,7 +108,9 @@ def main():
         proc = subprocess.Popen(sys.argv[1:], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
         try:
-            proc_stdout_handler_thread = ProcStdoutHandlerThread(1, "ProcStdoutHandlerThread", engine, proc.stdout)
+            proc_stdout_handler_thread = ProcStdoutHandlerThread(
+                1, "ProcStdoutHandlerThread", engine, proc, proc.stdout
+            )
             proc_stdout_handler_thread.start()
 
             record_types = handlers.keys()
@@ -141,6 +143,7 @@ def main():
 
             proc_stdout_handler_thread.destroy()
             proc_stdout_handler_thread.join()
+            engine.success()
 
 
 if __name__ == "__main__":

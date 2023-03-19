@@ -128,5 +128,5 @@ class TraceHandler(DefaultHandler):
 
     def handle(self, record):
         print(json.dumps(record))
-        # TODO: send engine error & kill proc
-        # sys.exit(0)
+        self.engine.error(record["trace"]["error"]["message"])
+        return False

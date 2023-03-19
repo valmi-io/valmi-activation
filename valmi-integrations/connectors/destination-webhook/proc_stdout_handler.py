@@ -15,13 +15,14 @@ handlers = {
 
 
 class ProcStdoutHandlerThread(threading.Thread):
-    def __init__(self, threadID: int, name: str, engine: Engine, proc_stdout) -> None:
+    def __init__(self, threadID: int, name: str, engine: Engine, proc, proc_stdout) -> None:
         threading.Thread.__init__(self)
         self.threadID = threadID
         self.exitFlag = False
         self.name = name
         self.proc_stdout = proc_stdout
         self.engine = engine
+        self.proc = proc
 
     def run(self) -> None:
         # initialise handlers
@@ -39,7 +40,10 @@ class ProcStdoutHandlerThread(threading.Thread):
                     if json_record["type"] not in record_types:
                         handlers["default"].handle(json_record)
                     else:
-                        handlers[json_record["type"]].handle(json_record)
+                        ret_val = handlers[json_record["type"]].handle(json_record)
+                        if ret_val is False:  # TODO: comes from ERROR Trace, should be handled cleanly
+                            self.proc.kill()
+                            os._exit(0)  # error is logged with engine
 
                 # stdout finished. clean close
                 self.exitFlag = True
