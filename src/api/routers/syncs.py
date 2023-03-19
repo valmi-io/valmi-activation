@@ -48,15 +48,15 @@ async def state(
     return GenericResponse()
 
 
-@router.post("/{sync_id}/runs/{run_id}/error/{connector_string}/", response_model=GenericResponse)
-async def error(
+@router.post("/{sync_id}/runs/{run_id}/status/{connector_string}/", response_model=GenericResponse)
+async def status(
     sync_id: UUID4,
     run_id: UUID4,
     connector_string: str,
-    error: Dict,
+    status: Dict,
     sync_runs_service: SyncRunsService = Depends(get_sync_runs_service),
 ) -> GenericResponse:
-    sync_runs_service.save_error(sync_id, run_id, connector_string, error)
+    sync_runs_service.save_status(sync_id, run_id, connector_string, status)
     return GenericResponse()
 
 

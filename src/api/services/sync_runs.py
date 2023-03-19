@@ -34,16 +34,21 @@ class SyncRunsService(BaseService[SyncRun, SyncRunCreate, Any]):
             .all()
         )
 
-    def save_error(self, sync_id, run_id, connector_string, error):
+    def save_status(self, sync_id, run_id, connector_string, status):
         sync_run = self.get(run_id)
         if not sync_run.extra:
             sync_run.extra = {}
-        sync_run.extra[connector_string] = {"status": "failed", "error": error}
+        if connector_string not in sync_run.extra:
+            sync_run.extra[connector_string] = {}
+
+        sync_run.extra[connector_string]["status"] = status
         self.db_session.commit()
 
     def save_state(self, sync_id, run_id, connector_string, state):
         sync_run = self.get(run_id)
         if not sync_run.extra:
             sync_run.extra = {}
-        sync_run.extra[connector_string] = {"state": state}
+        if connector_string not in sync_run.extra:
+            sync_run.extra[connector_string] = {}
+        sync_run.extra[connector_string]["state"] = {"state": state}
         self.db_session.commit()

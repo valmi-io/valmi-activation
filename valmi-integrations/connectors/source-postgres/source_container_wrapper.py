@@ -14,13 +14,7 @@ from requests.adapters import HTTPAdapter, Retry
 MAGIC_NUM = 0x7FFFFFFF
 HTTP_TIMEOUT = 3  # seconds
 MAX_HTTP_RETRIES = 3
-
-## initalise requests session with retries
-req_session = requests.Session()
-# retry on all errors except 400 and 401
-status_forcelist = tuple(x for x in requests.status_codes._codes if x > 400 and x not in [400, 401])
-retries = Retry(total=MAX_HTTP_RETRIES, backoff_factor=0.1, status_forcelist=status_forcelist)
-req_session.mount("http://", HTTPAdapter(max_retries=retries))
+CONNECTOR_STRING = "src"
 
 
 # desanitise uuid
@@ -69,47 +63,76 @@ class Engine(NullEngine):
     def __init__(self, *args, **kwargs):
         super(Engine, self).__init__(*args, **kwargs)
         self.engine_url = os.environ["ACTIVATION_ENGINE_URL"]
+
+        self.session_with_retries = requests.Session()
+        # retry on all errors except 400 and 401
+        status_forcelist = tuple(x for x in requests.status_codes._codes if x > 400 and x not in [400, 401])
+        retries = Retry(total=MAX_HTTP_RETRIES, backoff_factor=5, status_forcelist=status_forcelist)
+        self.session_with_retries.mount("http://", HTTPAdapter(max_retries=retries))
+        self.session_with_retries.mount("https://", HTTPAdapter(max_retries=retries))
+
+        self.session_without_retries = requests.Session()
+        status_forcelist = []
+        retries = Retry(total=0, backoff_factor=5, status_forcelist=status_forcelist)
+        self.session_without_retries.mount("http://", HTTPAdapter(max_retries=retries))
+        self.session_without_retries.mount("https://", HTTPAdapter(max_retries=retries))
+
         run_time_args = self.current_run_details()
         self.connector_state = ConnectorState(run_time_args=run_time_args)
 
     def current_run_details(self):
         sync_id = du(os.environ.get("DAGSTER_RUN_JOB_NAME", "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"))
-        r = req_session.get(f"{self.engine_url}/syncs/{sync_id}/runs/current_run_details", timeout=HTTP_TIMEOUT)
+        r = self.session_with_retries.get(
+            f"{self.engine_url}/syncs/{sync_id}/runs/current_run_details", timeout=HTTP_TIMEOUT
+        )
         return r.json()
 
-    def metric(self):
+    def metric(self, commit=False):
         print("Sending metric")
-        print(
-            {
-                "sync_id": self.connector_state.run_time_args["sync_id"],
-                "run_id": self.connector_state.run_time_args["run_id"],
-                "chunk_id": self.connector_state.num_chunks,
-                "connector_id": "src",
-                "metrics": {"success": self.connector_state.records_in_chunk},
-            }
-        )
-        r = req_session.post(
-            f"{self.engine_url}/metrics/",
-            timeout=HTTP_TIMEOUT,
-            json={
-                "sync_id": self.connector_state.run_time_args["sync_id"],
-                "run_id": self.connector_state.run_time_args["run_id"],
-                "chunk_id": self.connector_state.num_chunks,
-                "connector_id": "src",
-                "metrics": {"success": self.connector_state.records_in_chunk},
-            },
-        )
-        print(r.text)
+        payload = {
+            "sync_id": self.connector_state.run_time_args["sync_id"],
+            "run_id": self.connector_state.run_time_args["run_id"],
+            "chunk_id": self.connector_state.num_chunks,
+            "connector_id": CONNECTOR_STRING,
+            "metrics": {"success": self.connector_state.records_in_chunk},
+        }
+
+        print("payload ", payload)
+        if commit:
+            r = self.session_with_retries.post(
+                f"{self.engine_url}/metrics/",
+                timeout=HTTP_TIMEOUT,
+                json=payload,
+            )
+            r.raise_for_status()
+        else:
+            r = self.session_without_retries.post(
+                f"{self.engine_url}/metrics/",
+                timeout=HTTP_TIMEOUT,
+                json=payload,
+            )
 
     def error(self, msg="error"):
-        # TODO: finish this
-        print("sending error")
+        print("sending error ", msg)
         sync_id = self.connector_state.run_time_args["sync_id"]
         run_id = self.connector_state.run_time_args["run_id"]
-        r = req_session.post(
-            f"{self.engine_url}/syncs/{sync_id}/runs/{run_id}/error/", timeout=HTTP_TIMEOUT, json={"error": msg}
+        r = self.session_with_retries.post(
+            f"{self.engine_url}/syncs/{sync_id}/runs/{run_id}/status/{CONNECTOR_STRING}/",
+            timeout=HTTP_TIMEOUT,
+            json={"status": "failed", "message": msg},
         )
-        print(r.text)
+        r.raise_for_status()
+
+    def success(self):
+        print("sending success ")
+        sync_id = self.connector_state.run_time_args["sync_id"]
+        run_id = self.connector_state.run_time_args["run_id"]
+        r = self.session_with_retries.post(
+            f"{self.engine_url}/syncs/{sync_id}/runs/{run_id}/status/{CONNECTOR_STRING}/",
+            timeout=HTTP_TIMEOUT,
+            json={"status": "success"},
+        )
+        r.raise_for_status()
 
     def abort_required(self):
         return False
@@ -157,10 +180,10 @@ class StoreWriter:
         if self.connector_state.records_in_chunk >= self.connector_state.run_time_args["chunk_size"]:
             self.flush(last=False)
             self.records = []
-            self.engine.metric()
+            self.engine.metric(commit=True)
             self.connector_state.register_chunk()
         elif self.connector_state.records_in_chunk % self.connector_state.run_time_args["records_per_metric"] == 0:
-            self.engine.metric()
+            self.engine.metric(commit=False)
 
     def flush(self, last=False):
         list_dir = sorted([f.lower() for f in os.listdir(self.path_name)], key=lambda x: int(x[:-5]))
@@ -172,7 +195,7 @@ class StoreWriter:
 
     def finalize(self):
         self.flush(last=True)
-        self.engine.metric()
+        self.engine.metric(commit=True)
 
 
 class DefaultHandler:

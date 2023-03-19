@@ -90,7 +90,7 @@ class Engine(NullEngine):
             "sync_id": self.connector_state.run_time_args["sync_id"],
             "run_id": self.connector_state.run_time_args["run_id"],
             "chunk_id": self.connector_state.num_chunks,
-            "connector_id": "dest",
+            "connector_id": CONNECTOR_STRING,
             "metrics": {"success": self.connector_state.records_in_chunk},
         }
 
@@ -110,14 +110,24 @@ class Engine(NullEngine):
             )
 
     def error(self, msg="error"):
-        # TODO: finish this
         print("sending error ", msg)
         sync_id = self.connector_state.run_time_args["sync_id"]
         run_id = self.connector_state.run_time_args["run_id"]
         r = self.session_with_retries.post(
-            f"{self.engine_url}/syncs/{sync_id}/runs/{run_id}/error/{CONNECTOR_STRING}/",
+            f"{self.engine_url}/syncs/{sync_id}/runs/{run_id}/status/{CONNECTOR_STRING}/",
             timeout=HTTP_TIMEOUT,
-            json={"message": msg},
+            json={"status": "failed", "message": msg},
+        )
+        r.raise_for_status()
+
+    def success(self):
+        print("sending success ")
+        sync_id = self.connector_state.run_time_args["sync_id"]
+        run_id = self.connector_state.run_time_args["run_id"]
+        r = self.session_with_retries.post(
+            f"{self.engine_url}/syncs/{sync_id}/runs/{run_id}/status/{CONNECTOR_STRING}/",
+            timeout=HTTP_TIMEOUT,
+            json={"status": "success"},
         )
         r.raise_for_status()
 

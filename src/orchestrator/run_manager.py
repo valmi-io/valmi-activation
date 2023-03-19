@@ -114,7 +114,11 @@ class SyncRunnerThread(threading.Thread):
                         if dagster_run_status == DagsterRunStatus.SUCCESS:
                             sync.run_status = SyncStatus.STOPPED
                             run.status = SyncStatus.STOPPED
-                            run.extra = {"status": "success", "error": ""}
+                            if not run.extra:
+                                run.extra = {}
+                            if "run_manager" not in run.extra:
+                                run.extra["run_manager"] = {}
+                            run.extra["run_manager"]["status"] = {"status": "success"}
                             update_db = True
 
                         elif (
@@ -123,10 +127,11 @@ class SyncRunnerThread(threading.Thread):
                         ):
                             sync.run_status = SyncStatus.FAILED
                             run.status = SyncStatus.FAILED
-                            run.extra = {
-                                "status": "failed",
-                                "error": "",
-                            }
+                            if not run.extra:
+                                run.extra = {}
+                            if "run_manager" not in run.extra:
+                                run.extra["run_manager"] = {}
+                            run.extra["run_manager"]["status"] = {"status": "failed", "error": "FILL THIS IN!"}
                             update_db = True
                         if update_db:
                             self.sync_service.update_sync_and_run(sync, run)
