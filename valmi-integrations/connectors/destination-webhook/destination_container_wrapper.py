@@ -11,7 +11,7 @@ from proc_stdout_event_handlers import (
     NullEngine,
 )
 from read_handlers import ReadCheckpointHandler, ReadDefaultHandler, ReadLogHandler, ReadRecordHandler
-
+from proc_stdout_handler import handlers as stdout_handlers
 
 handlers = {
     "LOG": ReadLogHandler,
@@ -61,7 +61,7 @@ def main():
     airbyte_command = get_airbyte_command()
     config_file = get_config_file_path()
 
-    if airbyte_command is None or config_file is None:
+    if airbyte_command is None or (airbyte_command != "spec" and config_file is None):
         sys.exit(5)
 
     # if arg in read, write:
@@ -75,11 +75,11 @@ def main():
     # populate run_time_args
     populate_run_time_args(airbyte_command, engine, config_file_path=config_file)
 
-    # initialize handlers
-    for key in handlers.keys():
-        handlers[key] = handlers[key](engine=engine, store_writer=None, stdout_writer=None)
-
     if airbyte_command in ["spec", "check", "discover"]:
+        # initialize handlers
+        for key in stdout_handlers.keys():
+            stdout_handlers[key] = stdout_handlers[key](engine=engine, store_writer=None, stdout_writer=None)
+
         # create the subprocess
         proc = subprocess.Popen(
             sys.argv[1:],
@@ -92,9 +92,9 @@ def main():
                 continue
             json_record = json.loads(line)
             if json_record["type"] not in record_types:
-                handlers["default"].handle(json_record)
+                stdout_handlers["default"].handle(json_record)
             else:
-                handlers[json_record["type"]].handle(json_record)
+                stdout_handlers[json_record["type"]].handle(json_record)
 
         return_code = proc.poll()
         if return_code is not None and return_code != 0:
@@ -102,6 +102,10 @@ def main():
             sys.exit(return_code)
 
     elif airbyte_command in ["write"]:
+        # initialize handlers
+        for key in handlers.keys():
+            handlers[key] = handlers[key](engine=engine, store_writer=None, stdout_writer=None)
+
         # TODO: read checkpoint from the engine
         store_reader = StoreReader(engine=engine)
 

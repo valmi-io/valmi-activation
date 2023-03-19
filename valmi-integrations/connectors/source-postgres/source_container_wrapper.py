@@ -153,15 +153,25 @@ class Engine(NullEngine):
         r.raise_for_status()
 
 
-class StdoutWriter:
-    def __init__(self) -> None:
+class NullWriter:
+    def __init__(self, engine: NullEngine) -> None:
         pass
 
-    def store(self, record):
-        print(record)
+    def write(self, record, last=False):
+        pass
+
+    def flush(self, last=False):
+        pass
+
+    def finalize(self):
+        pass
 
 
-class StoreWriter:
+class StdoutWriter(NullWriter):
+    pass
+
+
+class StoreWriter(NullWriter):
     def __init__(self, engine: NullEngine) -> None:
         self.engine = engine
         self.connector_state: ConnectorState = self.engine.connector_state
@@ -306,7 +316,7 @@ def main():
     airbyte_command = get_airbyte_command()
     config_file = get_config_file_path()
 
-    if airbyte_command is None or config_file is None:
+    if airbyte_command is None or (airbyte_command != "spec" and config_file is None):
         sys.exit(5)
 
     # if arg in read, write:
@@ -314,15 +324,15 @@ def main():
 
     if airbyte_command == "read":
         engine = Engine()
+        store_writer = StoreWriter(engine)
     else:
         engine = NullEngine()
+        store_writer = NullWriter(engine)
 
     # populate run_time_args
     populate_run_time_args(airbyte_command, engine, config_file_path=config_file)
 
-    # store writer
-    store_writer = StoreWriter(engine)
-    stdout_writer = StdoutWriter()
+    stdout_writer = StdoutWriter(engine)
 
     # initialize handlers
     for key in handlers.keys():
