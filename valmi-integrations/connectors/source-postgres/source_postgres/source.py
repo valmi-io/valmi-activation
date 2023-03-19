@@ -1,7 +1,7 @@
 import json
 from datetime import datetime
 import os
-from typing import Any, Dict, Generator
+from typing import Any, Dict, Generator, Sequence
 from airbyte_cdk.logger import AirbyteLogger
 from airbyte_cdk.models import (
     AirbyteConnectionStatus,
@@ -19,6 +19,8 @@ from airbyte_cdk.models import (
 from airbyte_cdk.sources import Source
 from valmi_dbt.dbt_airbyte_adapter import DbtAirbyteAdpater
 from valmi_protocol.valmi_protocol import ValmiCatalog, ValmiStream, ConfiguredValmiCatalog
+from fal import FalDbt
+from dbt.contracts.results import RunResultOutput, RunStatus
 
 
 class SourcePostgres(Source):
@@ -112,11 +114,19 @@ class SourcePostgres(Source):
         try:
             self.dbt_adapter.execute_dbt(logger=logger)
         except Exception as e:
+            error_msg = str(e)
+            faldbt: FalDbt = self.dbt_adapter.get_fal_dbt(_basic=False)
+            # Accessing hidden variable _run_results
+            results: Sequence[RunResultOutput] = faldbt._run_results.results
+            for result in results:
+                if result.status == RunStatus.Error:
+                    error_msg = result.message
+                    break
             yield AirbyteMessage(
                 type=Type.TRACE,
                 trace=AirbyteTraceMessage(
                     type=TraceType.ERROR,
-                    error=AirbyteErrorTraceMessage(message=str(e)),
+                    error=AirbyteErrorTraceMessage(message=error_msg),
                     emitted_at=int(datetime.now().timestamp()) * 1000,
                 ),
             )

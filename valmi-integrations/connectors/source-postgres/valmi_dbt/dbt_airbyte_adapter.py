@@ -21,27 +21,37 @@ from dbt.tracking import do_not_track
 
 class CustomFalDbt(FalDbt):
     def __init__(self, *args, **kwargs) -> None:
-        if "basic" not in kwargs:
+        """
+        if "_basic" in kwargs and kwargs["_basic"] is False:
+            del kwargs["_basic"]
             super(CustomFalDbt, self).__init__(*args, **kwargs)
-        else:
-            self.project_dir = os.path.realpath(os.path.expanduser(kwargs["project_dir"]))
-            self.profiles_dir = os.path.realpath(os.path.expanduser(kwargs["profiles_dir"]))
-
-            lib.initialize_dbt_flags(profiles_dir=self.profiles_dir)
-
-            self._config = parse.get_dbt_config(
-                project_dir=self.project_dir,
-                profiles_dir=self.profiles_dir,
-            )
-
-            lib.register_adapters(self._config)
             cleanup_event_logger()
+
+        else:
+        """
+
+        self.project_dir = os.path.realpath(os.path.expanduser(kwargs["project_dir"]))
+        self.profiles_dir = os.path.realpath(os.path.expanduser(kwargs["profiles_dir"]))
+
+        lib.initialize_dbt_flags(profiles_dir=self.profiles_dir)
+
+        self._config = parse.get_dbt_config(
+            project_dir=self.project_dir,
+            profiles_dir=self.profiles_dir,
+        )
+
+        lib.register_adapters(self._config)
+
+        if "_basic" in kwargs and kwargs["_basic"] is False:
+            self._run_results = parse.get_dbt_results(self.project_dir, self._config)
+
+        cleanup_event_logger()
 
 
 class DbtAirbyteAdpater:
-    def get_fal_dbt(self):
+    def get_fal_dbt(self, _basic=True):
         faldbt = CustomFalDbt(
-            basic=True,
+            _basic=_basic,
             profiles_dir=self.get_abs_path("valmi_dbt_source_transform"),
             project_dir=self.get_abs_path("valmi_dbt_source_transform"),
         )
