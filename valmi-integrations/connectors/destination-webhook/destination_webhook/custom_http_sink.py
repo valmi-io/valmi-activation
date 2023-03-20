@@ -53,7 +53,7 @@ class CustomHttpSink(HttpStream):
             }
 
             s = Session()
-            req = Request("POST", config["url"], data=payload, headers=headers)
+            req = Request("POST", config["url"], json=payload, headers=headers)
             prepped = s.prepare_request(req)
             self._send_request(prepped, request_kwargs={"timeout": run_time_args.http_timeout})
         else:
