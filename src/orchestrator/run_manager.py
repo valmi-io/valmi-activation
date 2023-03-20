@@ -79,7 +79,7 @@ class SyncRunnerThread(threading.Thread):
 
                     elif sync.run_status == SyncStatus.SCHEDULED:
                         # submit job to dagster,
-                        # TODO: if already submitted, but failed to set metastore status, check below TODO
+                        # TODO: if jobs is already submitted, but failed to set metastore status, check below TODO
                         try:
                             dagster_run_id = self.dc.submit_job_execution(
                                 self.dc.su(sync.sync_id),
@@ -146,6 +146,7 @@ class SyncRunnerThread(threading.Thread):
                                 run.extra["run_manager"] = {}
                             run.extra["run_manager"]["status"] = run_status
                             flag_modified(run, "extra")
+                            flag_modified(run, "status")
 
                             update_db = True
 
@@ -164,6 +165,7 @@ class SyncRunnerThread(threading.Thread):
                                 run.extra["run_manager"] = {}
                             run.extra["run_manager"]["status"] = {"status": "failed", "message": "FILL THIS IN!"}
                             flag_modified(run, "extra")
+                            flag_modified(run, "status")
 
                             update_db = True
                         if update_db:

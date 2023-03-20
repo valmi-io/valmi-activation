@@ -75,12 +75,8 @@ class SyncsService(BaseService[SyncSchedule, SyncScheduleCreate, Any]):
     def update_sync_and_run(self, sync: SyncSchedule, run: SyncRun) -> None:
         try:
             self.db_session.commit()
-        except sqlalchemy.exc.IntegrityError as e:
-            self.db_session.rollback()
-            if "duplicate key" in str(e):
-                raise HTTPException(status_code=409, detail="Conflict Error")
-            else:
-                raise e
+        except Exception as e:
+            raise e
 
     def get_syncs_to_run(self) -> List[SyncSchedule]:
         return (

@@ -12,7 +12,8 @@ def to_camel(string: str) -> str:
 
 
 def assign_metrics_to_run(sync_run: SyncRun, metric_service: MetricsService) -> SyncRun:
-    metrics = metric_service.get_metrics(MetricBase(run_id=sync_run.run_id, sync_id=sync_run.sync_id))
-    if metrics:
-        sync_run.metrics = metrics
+    if not sync_run.metrics:
+        metrics = metric_service.get_metrics(MetricBase(run_id=sync_run.run_id, sync_id=sync_run.sync_id))
+        if metrics:
+            sync_run.metrics = metrics
     return sync_run

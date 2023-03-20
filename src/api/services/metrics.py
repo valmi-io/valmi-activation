@@ -13,5 +13,8 @@ class MetricsService(object):
     def get_metrics(self, obj: MetricBase) -> dict[str, dict[str | int]]:
         return self.metrics.get_metrics(**obj.dict())
 
+    def clear_metrics(self, obj: MetricBase) -> None:
+        return self.metrics.clear_metrics(**obj.dict())
+
     def shutdown(self):
         self.metrics.shutdown()

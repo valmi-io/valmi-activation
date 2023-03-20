@@ -39,11 +39,12 @@ class SyncSchedule(Base):
 
 class SyncRun(Base):
     __tablename__ = "sync_runs"
-
+    __table_args__ = (sa.UniqueConstraint("sync_id", "run_id"),)
     sync_id = sa.Column(ForeignKey("sync_schedules.sync_id"), nullable=False)
     run_id = sa.Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     run_at = sa.Column(sa.DateTime, server_default=sa.func.now(), nullable=False)
     status = sa.Column(sa.Text, nullable=False)
+    run_time_args = sa.Column(sa.JSON, nullable=True)
     metrics = sa.Column(sa.JSON, nullable=True)
     extra = sa.Column(sa.JSON, nullable=True)  # store error messages or anything else
     dagster_run_id = sa.Column(sa.Text, nullable=True)

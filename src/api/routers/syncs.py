@@ -3,7 +3,6 @@ import logging
 from typing import Any, Dict, List
 
 from fastapi import Depends
-from fastapi import HTTPException
 
 from fastapi.routing import APIRouter
 from pydantic import UUID4, Json
@@ -20,6 +19,10 @@ from api.services import (
     get_sync_runs_service,
 )
 from api.schemas.utils import assign_metrics_to_run
+from sqlalchemy.orm.attributes import flag_modified
+
+from api.schemas.metric import MetricBase
+
 
 router = APIRouter(prefix="/syncs")
 
@@ -34,14 +37,25 @@ async def get_sync_schedules(
 
 
 @router.get("/{sync_id}/runs/current_run_details", response_model=SyncCurrentRunArgs)
-async def get_current_run_id(
+async def get_current_run_details(
     sync_id: UUID4,
     sync_service: SyncsService = Depends(get_syncs_service),
+    sync_runs_service: SyncRunsService = Depends(get_sync_runs_service),
 ) -> SyncCurrentRunArgs:
     sync_schedule = sync_service.get(sync_id)
-    # TODO: get saved checkpoint state of the run_id
+    runs = sync_runs_service.get_runs(sync_id, datetime.now(), 2)
+    previous_run = runs[1] if len(runs) > 1 else None
+
+    # TODO: get saved checkpoint state of the run_id & create column run_time_args in the sync_runs table to get repeatable runs
     return SyncCurrentRunArgs(
-        sync_id=sync_id, run_id=sync_schedule.last_run_id, chunk_size=300, chunk_id=0, records_per_metric=10
+        sync_id=sync_id,
+        run_id=sync_schedule.last_run_id,
+        chunk_size=300,
+        chunk_id=0,
+        records_per_metric=10,
+        previous_run_status="success"
+        if previous_run is None or previous_run.extra["run_manager"]["status"] == "success"
+        else "failure",  # For first run also, previous_run_status will be success
     )
 
 
@@ -79,7 +93,7 @@ async def get_sync_runs(
 ) -> List[models.SyncRun]:
     runs = sync_runs_service.get_runs(sync_id=sync_id, before=before, limit=limit)
     for run in runs:
-        if run.status == "running" or True:  # TODO: remove True check after finalisation of metrics
+        if run.status == "running":
             assign_metrics_to_run(run, metric_service)
     return runs
 
@@ -89,13 +103,22 @@ async def finalise_last_run(
     sync_id: UUID4,
     metric_service: MetricsService = Depends(get_metrics_service),
     sync_runs_service: SyncRunsService = Depends(get_sync_runs_service),
+    sync_service: SyncsService = Depends(get_syncs_service),
 ) -> GenericResponse:
-    import random
+    sync_schedule = sync_service.get(sync_id)
 
-    if random.randint(0, 1) == 0:
-        return GenericResponse(success=True, message="success")
-    else:
-        raise HTTPException(status_code=500, status="failed")
+    # get metrics from Metric service
+    sync_schedule = sync_service.get(sync_id)
+    metrics = metric_service.get_metrics(MetricBase(run_id=sync_schedule.last_run_id, sync_id=sync_id))
+    if metrics:
+        sync_run = sync_runs_service.get(sync_schedule.last_run_id)
+        sync_runs_service.db_session.refresh(sync_run)
+        sync_run.metrics = metrics
+        flag_modified(sync_run, "metrics")
+        sync_runs_service.commit()
+        metric_service.clear_metrics(MetricBase(run_id=sync_id, sync_id=sync_run.run_id))
+
+    return GenericResponse(success=True, message="success")
 
 
 @router.get("/{sync_id}/runs/{run_id}", response_model=SyncRun)

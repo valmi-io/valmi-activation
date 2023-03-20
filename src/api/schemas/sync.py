@@ -28,3 +28,4 @@ class SyncCurrentRunArgs(BaseModel):
     chunk_size: int
     chunk_id: int
     records_per_metric: int
+    previous_run_status: str

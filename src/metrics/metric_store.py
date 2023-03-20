@@ -50,6 +50,9 @@ class Metrics:
                     count BIGINT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)"
             )
 
+    def clear_metrics(self, sync_id: UUID4, run_id: UUID4) -> None:
+        self.con.sql(f"DELETE FROM {METRICS_TABLE} WHERE sync_id = '{sync_id}' AND run_id = '{run_id}'")
+
     def get_metrics(self, sync_id: UUID4, run_id: UUID4, ingore_chunk_id: int = None) -> dict[str, dict[str, int]]:
         # get the metrics of the run
         # deduplicate by chunk_id and return
