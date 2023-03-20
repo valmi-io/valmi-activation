@@ -116,7 +116,7 @@ class DbtAirbyteAdpater:
             "full_refresh": full_refresh,
             "columns": f"[{col_arr_str}]",
             "id_key": catalog.streams[0].id_key,
-            "name": catalog.streams[0].stream.name,
+            "name": self.get_table_name(catalog.streams[0].stream.name),
         }
 
         output = template.render(args=args)
@@ -128,7 +128,7 @@ class DbtAirbyteAdpater:
 
         source = {
             "stream": catalog.streams[0].stream.name,
-            "schema": config["namespace"],
+            "schema": self.get_namespace(catalog.streams[0].stream.name),
             "database": config["database"],
             "sync_id": sync_id,
         }
@@ -193,3 +193,9 @@ class DbtAirbyteAdpater:
             nosuffix = filename[:-4]
             if not nosuffix.endswith(sync_id):
                 os.rename(filename, nosuffix + "_" + sync_id + ".sql")
+
+    def get_table_name(self, full_path):
+        return full_path.split(".")[-1].strip('"')
+
+    def get_namespace(self, full_path):
+        return full_path.split(".")[-2].strip('"')
