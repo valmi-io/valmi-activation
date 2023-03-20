@@ -27,26 +27,26 @@ class DatastoreCleaner:
             return
 
         DatastoreCleaner.__initialized = True
-        
+
         self.cleaner_thread = DatastoreCleanerThread(32, "DatastoreCleanerThread")
         self.cleaner_thread.start()
 
     def destroy(self) -> None:
-        self.cleaner_thread.exitFlag = True
+        self.cleaner_thread.exit_flag = True
 
 
 class DatastoreCleanerThread(threading.Thread):
-    def __init__(self, threadID: int, name: str) -> None:
+    def __init__(self, thread_id: int, name: str) -> None:
         threading.Thread.__init__(self)
-        self.threadID = threadID
-        self.exitFlag = False
+        self.thread_id = thread_id
+        self.exit_flag = False
         self.name = name
 
-        dbSession = next(get_session())
-        self.run_service = get_sync_runs_service(dbSession)
+        db_session = next(get_session())
+        self.run_service = get_sync_runs_service(db_session)
 
     def run(self) -> None:
-        while not self.exitFlag:
+        while not self.exit_flag:
             try:
                 logger.info("Cleaning all datastore ")
 

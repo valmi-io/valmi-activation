@@ -27,18 +27,18 @@ class ImageWarmupManager:
         self.image_warmup_thread.start()
 
     def destroy(self) -> None:
-        self.image_warmup_thread.exitFlag = True
+        self.image_warmup_thread.exit_flag = True
 
 
 class DockerImageWarmupThread(threading.Thread):
-    def __init__(self, threadID: int, name: str) -> None:
+    def __init__(self, thread_id: int, name: str) -> None:
         threading.Thread.__init__(self)
-        self.threadID = threadID
-        self.exitFlag = False
+        self.thread_id = thread_id
+        self.exit_flag = False
         self.name = name
 
     def run(self) -> None:
-        while not self.exitFlag:
+        while not self.exit_flag:
             try:
                 logger.info("Pulling all Docker Container images")
                 resp = requests.get(

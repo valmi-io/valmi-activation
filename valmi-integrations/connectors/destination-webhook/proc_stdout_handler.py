@@ -15,10 +15,10 @@ handlers = {
 
 
 class ProcStdoutHandlerThread(threading.Thread):
-    def __init__(self, threadID: int, name: str, engine: Engine, proc, proc_stdout) -> None:
+    def __init__(self, thread_id: int, name: str, engine: Engine, proc, proc_stdout) -> None:
         threading.Thread.__init__(self)
-        self.threadID = threadID
-        self.exitFlag = False
+        self.thread_id = thread_id
+        self.exit_flag = False
         self.name = name
         self.proc_stdout = proc_stdout
         self.engine = engine
@@ -29,7 +29,7 @@ class ProcStdoutHandlerThread(threading.Thread):
         for key in handlers.keys():
             handlers[key] = handlers[key](engine=self.engine, store_writer=None, stdout_writer=None)
 
-        while not self.exitFlag:
+        while not self.exit_flag:
             try:
                 record_types = handlers.keys()
                 for line in io.TextIOWrapper(self.proc_stdout, encoding="utf-8"):
@@ -46,7 +46,7 @@ class ProcStdoutHandlerThread(threading.Thread):
                             os._exit(0)  # error is logged with engine
 
                 # stdout finished. clean close
-                self.exitFlag = True
+                self.exit_flag = True
             except Exception as e:
                 logging.exception(e)
                 # panic
@@ -55,7 +55,7 @@ class ProcStdoutHandlerThread(threading.Thread):
                 os._exit(1)
 
     def destroy(self) -> None:
-        self.exitFlag = True
+        self.exit_flag = True
 
     """
     def read_with_timeout(self, fd, timeout__s):

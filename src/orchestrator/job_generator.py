@@ -28,16 +28,16 @@ repo_ready = False
 
 
 class JobCreatorThread(threading.Thread):
-    def __init__(self, threadID: int, name: str, dagster_client: ValmiDagsterClient) -> None:
+    def __init__(self, thread_id: int, name: str, dagster_client: ValmiDagsterClient) -> None:
         threading.Thread.__init__(self)
-        self.threadID = threadID
-        self.exitFlag = False
+        self.thread_id = thread_id
+        self.exit_flag = False
         self.name = name
         self.dagster_client = dagster_client
 
     def run(self) -> None:
         global repo_ready
-        while not self.exitFlag:
+        while not self.exit_flag:
             try:
                 resp = requests.get(
                     f"http://{v.get('APP_BACKEND')}:{v.get('APP_BACKEND_PORT')}/api/v1/superuser/syncs",

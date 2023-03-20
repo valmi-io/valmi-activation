@@ -24,20 +24,20 @@ TICK_INTERVAL = 5
 
 
 class SyncRunnerThread(threading.Thread):
-    def __init__(self, threadID: int, name: str, dagster_client: ValmiDagsterClient) -> None:
+    def __init__(self, thread_id: int, name: str, dagster_client: ValmiDagsterClient) -> None:
         threading.Thread.__init__(self)
-        self.threadID = threadID
-        self.exitFlag = False
+        self.thread_id = thread_id
+        self.exit_flag = False
         self.name = name
         self.dc = dagster_client
 
-        dbSession = next(get_session())
-        self.sync_service = get_syncs_service(dbSession)
-        self.run_service = get_sync_runs_service(dbSession)
+        db_session = next(get_session())
+        self.sync_service = get_syncs_service(db_session)
+        self.run_service = get_sync_runs_service(db_session)
 
     @exception_to_sys_exit
     def _run(self):
-        while not self.exitFlag:
+        while not self.exit_flag:
             time.sleep(TICK_INTERVAL)
 
             from orchestrator.job_generator import repo_ready

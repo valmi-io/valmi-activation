@@ -31,5 +31,5 @@ class Repo:
         self.syncRunnerThread.start()
 
     def destroy(self) -> None:
-        self.jobCreatorThread.exitFlag = True
-        self.syncRunnerThread.exitFlag = True
+        self.jobCreatorThread.exit_flag = True
+        self.syncRunnerThread.exit_flag = True
