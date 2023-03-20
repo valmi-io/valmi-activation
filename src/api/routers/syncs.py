@@ -3,6 +3,7 @@ import logging
 from typing import Any, Dict, List
 
 from fastapi import Depends
+from fastapi import HTTPException
 
 from fastapi.routing import APIRouter
 from pydantic import UUID4, Json
@@ -81,6 +82,20 @@ async def get_sync_runs(
         if run.status == "running" or True:  # TODO: remove True check after finalisation of metrics
             assign_metrics_to_run(run, metric_service)
     return runs
+
+
+@router.get("/{sync_id}/runs/finalise_last_run", response_model=GenericResponse)
+async def finalise_last_run(
+    sync_id: UUID4,
+    metric_service: MetricsService = Depends(get_metrics_service),
+    sync_runs_service: SyncRunsService = Depends(get_sync_runs_service),
+) -> GenericResponse:
+    import random
+
+    if random.randint(0, 1) == 0:
+        return GenericResponse(success=True, message="success")
+    else:
+        raise HTTPException(status_code=500, status="failed")
 
 
 @router.get("/{sync_id}/runs/{run_id}", response_model=SyncRun)

@@ -43,7 +43,7 @@ class NullEngine:
         self.connector_state = None
         pass
 
-    def error(self):
+    def error(self, msg="error"):
         pass
 
     def success(self):
