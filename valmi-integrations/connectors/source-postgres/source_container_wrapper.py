@@ -349,6 +349,7 @@ def main():
     for line in io.TextIOWrapper(proc.stdout, encoding="utf-8"):  # or another encoding
         if line.strip() == "":
             continue
+        # print(line)
         json_record = json.loads(line)
         if json_record["type"] not in record_types:
             handlers["default"].handle(json_record)

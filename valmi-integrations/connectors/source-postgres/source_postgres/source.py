@@ -117,11 +117,12 @@ class SourcePostgres(Source):
             error_msg = str(e)
             faldbt: FalDbt = self.dbt_adapter.get_fal_dbt(_basic=False)
             # Accessing hidden variable _run_results
-            results: Sequence[RunResultOutput] = faldbt._run_results.results
-            for result in results:
-                if result.status == RunStatus.Error:
-                    error_msg = result.message
-                    break
+            if faldbt._run_results is not None:
+                results: Sequence[RunResultOutput] = faldbt._run_results.results
+                for result in results:
+                    if result.status == RunStatus.Error:
+                        error_msg = result.message
+                        break
             yield AirbyteMessage(
                 type=Type.TRACE,
                 trace=AirbyteTraceMessage(

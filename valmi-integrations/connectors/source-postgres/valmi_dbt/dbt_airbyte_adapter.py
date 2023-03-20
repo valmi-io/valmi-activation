@@ -17,6 +17,8 @@ from airbyte_cdk.models import (
 import glob
 import shlex
 from dbt.tracking import do_not_track
+from faldbt.logger import LOGGER
+import logging
 
 
 class CustomFalDbt(FalDbt):
@@ -29,6 +31,9 @@ class CustomFalDbt(FalDbt):
 
         else:
         """
+
+        # UGLIEST Hack
+        LOGGER._logger = logging.getLogger("airbyte")
 
         self.project_dir = os.path.realpath(os.path.expanduser(kwargs["project_dir"]))
         self.profiles_dir = os.path.realpath(os.path.expanduser(kwargs["profiles_dir"]))
@@ -127,7 +132,7 @@ class DbtAirbyteAdpater:
         template = self.get_jinja_template(logger, "source_schema.jinja")
 
         source = {
-            "stream": catalog.streams[0].stream.name,
+            "stream": self.get_table_name(catalog.streams[0].stream.name),
             "schema": self.get_namespace(catalog.streams[0].stream.name),
             "database": config["database"],
             "sync_id": sync_id,
