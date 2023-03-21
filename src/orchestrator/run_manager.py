@@ -134,6 +134,7 @@ class SyncRunnerThread(threading.Thread):
                                     if run.extra[key]["status"]["status"] == "failed":
                                         sync.run_status = SyncStatus.FAILED
                                         run.status = SyncStatus.FAILED
+                                        status = "failed"
                                         error_msg = run.extra[key]["status"]["message"]
                                         break
 
