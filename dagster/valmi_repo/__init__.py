@@ -4,6 +4,7 @@ import shutil
 from os.path import basename, isfile, join
 
 from dagster import repository
+import glob
 
 GENERATED_DIR = "generated"
 CONFIG_DIR = "config"
@@ -22,6 +23,9 @@ def get_dagster_jobs():
         join(SHARED_DIR, f"{APP}-valmi-jobs.zip"),
         repo_dir,
     )
+    for f in glob.iglob(f"{repo_dir}/**/*.json", recursive=True):
+        os.chmod(f, 0o755)
+
     # shutil.move(join(SHARED_DIR, APP, "repo", GENERATED_DIR), join(dirname(__file__), GENERATED_DIR))
 
 
