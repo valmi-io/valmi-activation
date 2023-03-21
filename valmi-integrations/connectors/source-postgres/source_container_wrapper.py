@@ -366,7 +366,7 @@ def main():
                 sync_engine_for_error(proc, engine=engine)
 
     return_code = proc.poll()
-    if return_code != 0:
+    if return_code is not None and return_code != 0:
         engine.error("Connector exited with non-zero return code")
         sys.exit(return_code)
     else:
