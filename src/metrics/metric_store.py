@@ -81,7 +81,9 @@ class Metrics:
             metric_map[y] = z
         return ret_map
 
-    def put_metrics(self, sync_id: UUID4, connector_id: UUID4, run_id: UUID4, chunk_id: int, metrics: dict[str, int]):
+    def put_metrics(
+        self, sync_id: UUID4, connector_id: UUID4, run_id: UUID4, chunk_id: int, metrics: dict[str, int], **kwargs
+    ) -> None:
         """
         DISABLE AGGREGATION IF IT IS SLOW
         """
