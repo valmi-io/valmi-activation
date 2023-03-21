@@ -147,6 +147,8 @@ async def get_run(
     sync_runs_service: SyncRunsService = Depends(get_sync_runs_service),
 ) -> models.SyncRun:
     sync_run = sync_runs_service.get(run_id)
+    sync_runs_service.db_session.refresh(sync_run)
+
     return assign_metrics_to_run(sync_run, metric_service)
 
 

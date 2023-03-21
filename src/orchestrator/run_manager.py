@@ -105,6 +105,8 @@ class SyncRunnerThread(threading.Thread):
                         except DagsterGraphQLClientError as e:
                             if "JobNotFoundError" in str(e):
                                 logger.warning("Job not found for sync %s", sync.sync_id)
+                            else:
+                                raise
 
                         except Exception:
                             logger.exception("Error while submitting job to dagster and saving state to metastore")
