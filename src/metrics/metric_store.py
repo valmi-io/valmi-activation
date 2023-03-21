@@ -52,6 +52,7 @@ class Metrics:
 
     def clear_metrics(self, sync_id: UUID4, run_id: UUID4) -> None:
         self.con.sql(f"DELETE FROM {METRICS_TABLE} WHERE sync_id = '{sync_id}' AND run_id = '{run_id}'")
+        # pass
 
     def get_metrics(self, sync_id: UUID4, run_id: UUID4, ingore_chunk_id: int = None) -> dict[str, dict[str, int]]:
         # get the metrics of the run
@@ -90,7 +91,9 @@ class Metrics:
             f"SELECT COUNT(*) FROM {METRICS_TABLE} WHERE sync_id = '{sync_id}' \
                         AND run_id = '{run_id}' AND connector_id= '{connector_id}'"
         ).fetchone()
-        if sync_info[0] > MAX:
+        if (
+            False and sync_info[0] > MAX
+        ):  # TODO: Disabling aggregation until we inject state into connectors, otherwise metrics are counted multiple times when connectors are retried
             print("AGGREGATING")
             # aggregate ignoring the latest chunk
             old_metrics = self.get_metrics(sync_id=sync_id, run_id=run_id, ingore_chunk_id=chunk_id)

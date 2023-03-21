@@ -6,7 +6,7 @@ from requests.adapters import HTTPAdapter, Retry
 
 # TODO: Constants - need to come from current_run_details
 HTTP_TIMEOUT = 3  # seconds
-MAX_HTTP_RETRIES = 7
+MAX_HTTP_RETRIES = 5
 CONNECTOR_STRING = "dest"
 
 
@@ -103,11 +103,14 @@ class Engine(NullEngine):
             )
             r.raise_for_status()
         else:
-            r = self.session_without_retries.post(
-                f"{self.engine_url}/metrics/",
-                timeout=HTTP_TIMEOUT,
-                json=payload,
-            )
+            try:
+                r = self.session_without_retries.post(
+                    f"{self.engine_url}/metrics/",
+                    timeout=HTTP_TIMEOUT,
+                    json=payload,
+                )
+            except Exception:
+                pass
 
     def error(self, msg="error"):
         print("sending error ", msg)
