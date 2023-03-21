@@ -112,6 +112,7 @@ async def get_sync_runs(
     runs = sync_runs_service.get_runs(sync_id=sync_id, before=before, limit=limit)
     for run in runs:
         if run.status == "running":
+            sync_runs_service.db_session.refresh(run)
             assign_metrics_to_run(run, metric_service)
     return runs
 

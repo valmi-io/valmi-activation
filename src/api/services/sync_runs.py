@@ -20,7 +20,6 @@ class SyncRunsService(BaseService[SyncRun, SyncRunCreate, Any]):
         return super().create(obj)
 
     def get_runs(self, sync_id: UUID4, before: datetime, limit: int) -> List[SyncRun]:
-        self.db_session.refresh(self.model)
         return (
             self.db_session.query(self.model)
             .filter(and_(SyncRun.run_at < before), SyncRun.sync_id == sync_id)
