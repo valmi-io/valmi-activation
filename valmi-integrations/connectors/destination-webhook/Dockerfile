@@ -40,6 +40,17 @@ COPY read_handlers.py ./
 COPY docker-entrypoint.sh ./
 RUN chmod +x ./docker-entrypoint.sh
 
+
+
+RUN groupadd -r valmi_group && useradd -r -g user valmi_user
+RUN chown  -R valmi_user:valmi_group /valmi/integration_code
+USER valmi_user 
+
+## ALPINE BELOW
+#RUN addgroup -S valmi_group && adduser -S valmi_user -G valmi_group
+#RUN chown  -R valmi_user:valmi_group /valmi/integration_code
+#USER valmi_user
+
 ENV PYTHONUNBUFFERED 1
 ENV VALMI_ENTRYPOINT "python /valmi/integration_code/main.py"
 ENV VALMI_INTERMEDIATE_STORE "{\"provider\": \"local\", \"local\": {\"directory\": \"/tmp/shared_dir/intermediate_store\"}}"
