@@ -32,5 +32,5 @@ async def get_metrics(
     sync_id: UUID4, run_id: UUID4, metric_service: MetricsService = Depends(get_metrics_service)
 ) -> dict[str, Any]:
     x = metric_service.get_metrics(MetricBase(run_id=run_id, sync_id=sync_id))
-    print(x)
+    # print(x)
     return x

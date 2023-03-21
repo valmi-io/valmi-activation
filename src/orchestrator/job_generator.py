@@ -40,7 +40,7 @@ class JobCreatorThread(threading.Thread):
         while not self.exit_flag:
             try:
                 resp = requests.get(
-                    f"http://{v.get('APP_BACKEND')}:{v.get('APP_BACKEND_PORT')}/api/v1/superuser/syncs",
+                    f"http://{v.get('APP_BACKEND')}:{v.get('APP_BACKEND_PORT')}/api/v1/superuser/syncs/",
                     timeout=v.get("HTTP_REQ_TIMEOUT"),
                     auth=HTTPBasicAuth(v.get("ADMIN_EMAIL"), v.get("ADMIN_PASSWORD")),
                 )

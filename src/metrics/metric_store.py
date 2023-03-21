@@ -75,7 +75,7 @@ class Metrics:
 
         ret_map = {}
         for x, y, z in aggregated_metrics:
-            print(x, y, z)
+            # print(x, y, z)
             metric_map = ret_map.get(x, {})
             ret_map[x] = metric_map
             metric_map[y] = z

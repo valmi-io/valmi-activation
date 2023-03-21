@@ -48,7 +48,7 @@ class SyncRunnerThread(threading.Thread):
 
             try:
                 syncs_to_handle = self.sync_service.get_syncs_to_run()
-                print(syncs_to_handle)
+                # print(syncs_to_handle)
 
                 for sync in syncs_to_handle:
                     if sync.status != SyncConfigStatus.ACTIVE:
