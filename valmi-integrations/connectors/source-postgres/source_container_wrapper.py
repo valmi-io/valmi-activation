@@ -13,7 +13,7 @@ from requests.adapters import HTTPAdapter, Retry
 # TODO: Constants - need to become env vars
 MAGIC_NUM = 0x7FFFFFFF
 HTTP_TIMEOUT = 3  # seconds
-MAX_HTTP_RETRIES = 3
+MAX_HTTP_RETRIES = 7
 CONNECTOR_STRING = "src"
 
 
@@ -135,11 +135,11 @@ class Engine(NullEngine):
         r.raise_for_status()
 
     def abort_required(self):
-        return False
-        # TODO: finish this
         sync_id = self.connector_state.run_time_args["sync_id"]
         run_id = self.connector_state.run_time_args["run_id"]
-        r = req_session.get(f"{self.engine_url}/syncs/{sync_id}/runs/{run_id}", timeout=HTTP_TIMEOUT)
+        r = self.session_with_retries.get(
+            f"{self.engine_url}/syncs/{sync_id}/runs/{run_id}/synchronize_connector_engine", timeout=HTTP_TIMEOUT
+        )
         return r.json()["abort_required"]
 
     def checkpoint(self, state):
@@ -195,8 +195,8 @@ class StoreWriter(NullWriter):
             self.engine.metric(commit=False)
 
     def flush(self, last=False):
-        list_dir = sorted([f.lower() for f in os.listdir(self.path_name)], key=lambda x: int(x[:-5]))
-        new_file_name = f"{MAGIC_NUM}.vald" if last else (list_dir[-1] if len(list_dir) > 0 else "0.vald")
+        # list_dir = sorted([f.lower() for f in os.listdir(self.path_name)], key=lambda x: int(x[:-5]))
+        new_file_name = f"{MAGIC_NUM}.vald" if last else f"{self.engine.connector_state.num_chunks}.vald"
         with open(join(self.path_name, f"{int(new_file_name[:-5])+1}.vald"), "w") as f:
             for record in self.records:
                 f.write(json.dumps(record))

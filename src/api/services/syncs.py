@@ -48,6 +48,7 @@ class SyncsService(BaseService[SyncSchedule, SyncScheduleCreate, Any]):
 
         # insert new schedules
         for new_schedule in sync_schedules.values():
+            new_schedule.last_run_at = datetime(1970, 1, 1)
             db_obj: SyncSchedule = self.model(**new_schedule.dict())
             self.db_session.add(db_obj)
 

@@ -6,7 +6,7 @@ from requests.adapters import HTTPAdapter, Retry
 
 # TODO: Constants - need to come from current_run_details
 HTTP_TIMEOUT = 3  # seconds
-MAX_HTTP_RETRIES = 3
+MAX_HTTP_RETRIES = 7
 CONNECTOR_STRING = "dest"
 
 
@@ -132,12 +132,11 @@ class Engine(NullEngine):
         r.raise_for_status()
 
     def abort_required(self):
-        return False
-        # TODO: finish this
         sync_id = self.connector_state.run_time_args["sync_id"]
         run_id = self.connector_state.run_time_args["run_id"]
-        r = self.session_with_retries.get(f"{self.engine_url}/syncs/{sync_id}/runs/{run_id}", timeout=HTTP_TIMEOUT)
-        r.raise_for_status()
+        r = self.session_with_retries.get(
+            f"{self.engine_url}/syncs/{sync_id}/runs/{run_id}/synchronize_connector_engine", timeout=HTTP_TIMEOUT
+        )
         return r.json()["abort_required"]
 
     def checkpoint(self, state):

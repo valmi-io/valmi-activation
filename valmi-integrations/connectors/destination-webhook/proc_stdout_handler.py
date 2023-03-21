@@ -43,7 +43,7 @@ class ProcStdoutHandlerThread(threading.Thread):
                         ret_val = handlers[json_record["type"]].handle(json_record)
                         if ret_val is False:  # TODO: comes from ERROR Trace, should be handled cleanly
                             self.proc.kill()
-                            os._exit(0)  # error is logged with engine
+                            os._exit(0)  # error is already logged with engine in the handler
 
                 # stdout finished. clean close
                 self.exit_flag = True

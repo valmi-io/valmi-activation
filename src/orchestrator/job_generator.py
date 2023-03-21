@@ -95,7 +95,7 @@ class JobCreatorThread(threading.Thread):
 
             except Exception:
                 logger.exception("Error while fetching sync jobs and creating dagster jobs")
-            time.sleep(5)
+            time.sleep(1)
 
     def insert_syncs_into_metastore(self, syncs: Json[any]):
         sync_service = get_syncs_service(next(get_session()))

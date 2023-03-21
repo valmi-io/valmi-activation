@@ -22,6 +22,7 @@ from api.schemas.utils import assign_metrics_to_run
 from sqlalchemy.orm.attributes import flag_modified
 
 from api.schemas.metric import MetricBase
+from api.schemas.sync_run import ConnectorSynchronization
 
 
 router = APIRouter(prefix="/syncs")
@@ -57,6 +58,23 @@ async def get_current_run_details(
         if previous_run is None or previous_run.extra["run_manager"]["status"] == "success"
         else "failure",  # For first run also, previous_run_status will be success
     )
+
+
+@router.get("/{sync_id}/runs/{run_id}/synchronize_connector_engine", response_model=ConnectorSynchronization)
+async def synchronize_connector(
+    sync_id: UUID4,
+    run_id: UUID4,
+    sync_runs_service: SyncRunsService = Depends(get_sync_runs_service),
+) -> ConnectorSynchronization:
+    run = sync_runs_service.get(run_id)
+    abort_required = False
+    keys_to_check = ["src", "dest"]
+    for key in keys_to_check:
+        if run.extra is not None and key in run.extra.keys() and "status" in run.extra[key].keys():
+            if run.extra[key]["status"]["status"] == "failed":
+                abort_required = True
+                break
+    return ConnectorSynchronization(abort_required=abort_required)
 
 
 @router.post("/{sync_id}/runs/{run_id}/state/{connector_string}/", response_model=GenericResponse)

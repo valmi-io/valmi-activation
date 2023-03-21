@@ -29,3 +29,7 @@ class SyncRun(SyncRunCreate):
 
     class Config:
         orm_mode = True
+
+
+class ConnectorSynchronization(BaseModel):
+    abort_required: bool

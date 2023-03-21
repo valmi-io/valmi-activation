@@ -17,10 +17,11 @@ from datetime import datetime
 from dagster import DagsterRunStatus
 from utils.retry_decorators import exception_to_sys_exit
 from .dagster_client import ValmiDagsterClient
+from dagster_graphql import DagsterGraphQLClientError
 from sqlalchemy.orm.attributes import flag_modified
 
 logger = logging.getLogger(v.get("LOGGER_NAME"))
-TICK_INTERVAL = 5
+TICK_INTERVAL = 1
 
 
 class SyncRunnerThread(threading.Thread):
@@ -101,6 +102,10 @@ class SyncRunnerThread(threading.Thread):
 
                             self.sync_service.update_sync_and_run(sync, run)
 
+                        except DagsterGraphQLClientError as e:
+                            if "JobNotFoundError" in str(e):
+                                logger.warning("Job not found for sync %s", sync.sync_id)
+
                         except Exception:
                             logger.exception("Error while submitting job to dagster and saving state to metastore")
                             raise
@@ -117,24 +122,22 @@ class SyncRunnerThread(threading.Thread):
                             self.sync_service.db_session.refresh(run)
 
                             # if either of the source or destination failed, then the sync should be failed.
-                            src_status = run.extra["src"]["status"]["status"]
-                            dest_status = run.extra["dest"]["status"]["status"]
-
                             error_msg = None
                             status = "success"
-                            if src_status == "failed":
-                                error_msg = run.extra["src"]["status"]["message"]
-                                status = "failed"
+                            keys_to_check = ["src", "dest"]
+                            for key in keys_to_check:
+                                if (
+                                    run.extra is not None
+                                    and key in run.extra.keys()
+                                    and "status" in run.extra[key].keys()
+                                ):
+                                    if run.extra[key]["status"]["status"] == "failed":
+                                        sync.run_status = SyncStatus.FAILED
+                                        run.status = SyncStatus.FAILED
+                                        error_msg = run.extra[key]["status"]["message"]
+                                        break
 
-                                sync.run_status = SyncStatus.FAILED
-                                run.status = SyncStatus.FAILED
-                            elif dest_status == "failed":
-                                error_msg = run.extra["dest"]["status"]["message"]
-                                status = "failed"
-
-                                sync.run_status = SyncStatus.FAILED
-                                run.status = SyncStatus.FAILED
-                            else:
+                            if error_msg is None:
                                 sync.run_status = SyncStatus.STOPPED
                                 run.status = SyncStatus.STOPPED
 
