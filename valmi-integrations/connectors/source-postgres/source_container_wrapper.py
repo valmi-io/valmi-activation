@@ -95,6 +95,7 @@ class Engine(NullEngine):
             "chunk_id": self.connector_state.num_chunks,
             "connector_id": CONNECTOR_STRING,
             "metrics": {"success": self.connector_state.records_in_chunk},
+            "commit": commit,
         }
 
         print("payload ", payload)

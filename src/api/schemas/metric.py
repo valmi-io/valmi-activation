@@ -1,4 +1,4 @@
-from pydantic import BaseModel, UUID4
+from pydantic import BaseModel, UUID4, Extra
 
 
 class MetricBase(BaseModel):
@@ -13,6 +13,9 @@ class MetricCreate(MetricBase):
     chunk_id: int
     connector_id: str
     metrics: dict[str, int]
+
+    class Config:
+        extra = Extra.allow
 
 
 class Metric(MetricCreate):
