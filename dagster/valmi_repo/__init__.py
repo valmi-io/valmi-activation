@@ -24,7 +24,7 @@ def get_dagster_jobs():
         repo_dir,
     )
     for f in glob.iglob(f"{repo_dir}/**/*.json", recursive=True):
-        os.chmod(f, 0o755)
+        os.chmod(f, 0o766)
 
     # shutil.move(join(SHARED_DIR, APP, "repo", GENERATED_DIR), join(dirname(__file__), GENERATED_DIR))
 
