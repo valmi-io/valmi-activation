@@ -52,6 +52,9 @@ class NullEngine:
     def metric(self):
         pass
 
+    def metric_ext(self, metric_json, commit=False):
+        pass
+
     def current_run_details(self):
         return {}
 
@@ -88,13 +91,16 @@ class Engine(NullEngine):
         return r.json()
 
     def metric(self, commit=False):
+        self.metric_ext({"success": self.connector_state.records_in_chunk}, commit=commit)
+
+    def metric_ext(self, metric_json, commit=False):
         print("Sending metric")
         payload = {
             "sync_id": self.connector_state.run_time_args["sync_id"],
             "run_id": self.connector_state.run_time_args["run_id"],
             "chunk_id": self.connector_state.num_chunks,
             "connector_id": CONNECTOR_STRING,
-            "metrics": {"success": self.connector_state.records_in_chunk},
+            "metrics": metric_json,
             "commit": commit,
         }
 
@@ -261,8 +267,13 @@ class TraceHandler(DefaultHandler):
 
     def handle(self, record):
         print(json.dumps(record))
-        self.engine.error(record["trace"]["error"]["message"])
-        sys.exit(0)
+        if record["trace"]["type"] == "ERROR":
+            self.engine.error(record["trace"]["error"]["message"])
+            sys.exit(0)
+        elif record["trace"]["type"] == "ESTIMATE":
+            self.engine.metric_ext(
+                {record["trace"]["estimate"]["row_kind"]: record["trace"]["estimate"]["row_estimate"]}, commit=True
+            )
 
 
 handlers = {

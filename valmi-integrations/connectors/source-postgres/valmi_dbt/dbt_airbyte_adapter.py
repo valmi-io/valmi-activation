@@ -115,6 +115,11 @@ class DbtAirbyteAdpater:
         if "run_time_args" in config and "full_refresh" in config["run_time_args"]:
             full_refresh = config["run_time_args"]["full_refresh"]
 
+        previous_run_status = "success"
+        # override full_refresh from run_time_args
+        if "run_time_args" in config and "previous_run_status" in config["run_time_args"]:
+            previous_run_status = config["run_time_args"]["previous_run_status"]
+
         col_arr_str = ",".join([f'"{col}"' for col in catalog.streams[0].stream.json_schema["properties"].keys()])
         args = {
             "sync_id": sync_id,
@@ -122,6 +127,7 @@ class DbtAirbyteAdpater:
             "columns": f"[{col_arr_str}]",
             "id_key": catalog.streams[0].id_key,
             "name": self.get_table_name(catalog.streams[0].stream.name),
+            "previous_run_status": previous_run_status,
         }
 
         output = template.render(args=args)

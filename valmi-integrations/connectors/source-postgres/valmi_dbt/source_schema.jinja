@@ -11,6 +11,8 @@ sources:
     schema: valmi_scratch_computed_
     tables:
       - name: finalized_snapshot_{{source['sync_id']}}
+      - name: transit_snapshot_{{source['sync_id']}}
+
 
 models:
   - name: stg_snapshot

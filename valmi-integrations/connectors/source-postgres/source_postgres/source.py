@@ -10,8 +10,10 @@ from airbyte_cdk.models import (
     AirbyteErrorTraceMessage,
     AirbyteTraceMessage,
     AirbyteStateMessage,
+    AirbyteEstimateTraceMessage,
     Status,
     Type,
+    EstimateType,
     AirbyteStateType,
     TraceType,
 )
@@ -142,6 +144,10 @@ class SourcePostgres(Source):
         # now read data from the dbt transit snapshot
         faldbt = self.dbt_adapter.get_fal_dbt()
 
+        # release metrics
+        for metric_msg in self.generate_sync_metrics(faldbt, logger=logger, sync_id=sync_id, catalog=catalog):
+            yield metric_msg
+
         # set the below two values from the checkpoint state
         last_row_num = -1
         chunk_id = 0
@@ -183,3 +189,24 @@ class SourcePostgres(Source):
 
     def read_catalog(self, catalog_path: str) -> ConfiguredValmiCatalog:
         return ConfiguredValmiCatalog.parse_obj(self._read_json_file(catalog_path))
+
+    def generate_sync_metrics(self, faldbt, logger, sync_id, catalog) -> Generator[AirbyteMessage, None, None]:
+        adapter_resp, agate_table = self.dbt_adapter.execute_sql(
+            faldbt,
+            "SELECT * FROM {{{{ ref('sync_metrics_{0}') }}}}".format(sync_id),
+        )
+
+        for row in agate_table.rows.values():
+            yield AirbyteMessage(
+                type=Type.TRACE,
+                trace=AirbyteTraceMessage(
+                    type=TraceType.ESTIMATE,
+                    estimate=AirbyteEstimateTraceMessage(
+                        name=catalog.streams[0].stream.name,
+                        type=EstimateType.STREAM,
+                        row_estimate=row["count"],
+                        row_kind=f'{row["kind"]}$${row["error_code"]}',
+                    ),
+                    emitted_at=int(datetime.now().timestamp()) * 1000,
+                ),
+            )
