@@ -59,18 +59,19 @@ class Metrics:
         # deduplicate by chunk_id and return
         ignore_clause = " AND m.chunk_id != %s" % ingore_chunk_id if ingore_chunk_id is not None else ""
         aggregated_metrics = self.con.sql(
-            f"SELECT deduped_chunks.connector_id AS connector_id, metric_type, SUM(count) as count \
+            f"SELECT deduped_chunks.connector_id AS connector_id,  deduped_chunks.metric_type AS metric_type, SUM(count) as count \
                 FROM {METRICS_TABLE} m2 RIGHT JOIN \
-                        ( SELECT m.connector_id AS connector_id, m.chunk_id AS chunk_id, max(m.created_at) AS created_at \
+                        ( SELECT m.connector_id AS connector_id, m.chunk_id AS chunk_id, m.metric_type as metric_type, max(m.created_at) AS created_at \
                         FROM {METRICS_TABLE} m \
                         WHERE m.sync_id = '{sync_id}' AND m.run_id = '{run_id}' \
                             {ignore_clause} \
-                        GROUP BY  m.connector_id, m.chunk_id ) deduped_chunks \
+                        GROUP BY  m.connector_id, m.chunk_id, m.metric_type ) deduped_chunks \
                     ON m2.chunk_id = deduped_chunks.chunk_id AND \
                         m2.created_at = deduped_chunks.created_at AND \
-                        m2.connector_id = deduped_chunks.connector_id \
+                        m2.connector_id = deduped_chunks.connector_id AND \
+                        m2.metric_type = deduped_chunks.metric_type \
                 WHERE sync_id = '{sync_id}' AND run_id = '{run_id}' \
-                GROUP BY  deduped_chunks.connector_id, metric_type"
+                GROUP BY  deduped_chunks.connector_id, deduped_chunks.metric_type"
         ).fetchall()
 
         ret_map = {}
@@ -126,9 +127,7 @@ class Metrics:
         inserts = []
 
         for metric_type, count in metrics.items():
-            inserts.append(
-                f"('{sync_id}', '{connector_id}', '{run_id}', {chunk_id},'{metric_type}','{count}','{now}')"
-            )
+            inserts.append(f"('{sync_id}', '{connector_id}', '{run_id}', {chunk_id},'{metric_type}',{count},'{now}')")
 
         print(inserts)
         self.con.sql(f"INSERT INTO {METRICS_TABLE} VALUES {','.join(inserts)}")
