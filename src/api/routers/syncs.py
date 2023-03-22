@@ -46,6 +46,7 @@ async def get_current_run_details(
     sync_schedule = sync_service.get(sync_id)
     runs = sync_runs_service.get_runs(sync_id, datetime.now(), 2)
     previous_run = runs[1] if len(runs) > 1 else None
+    sync_runs_service.db_session.refresh(previous_run)  # TODO: Have to find a better way instead of so many refreshes
 
     # TODO: get saved checkpoint state of the run_id & create column run_time_args in the sync_runs table to get repeatable runs
     return SyncCurrentRunArgs(
@@ -55,7 +56,8 @@ async def get_current_run_details(
         chunk_id=0,
         records_per_metric=10,
         previous_run_status="success"
-        if previous_run is None or previous_run.extra["run_manager"]["status"] == "success"
+        if previous_run is None
+        or ("run_manager" in previous_run.extra and previous_run.extra["run_manager"]["status"]["status"] == "success")
         else "failure",  # For first run also, previous_run_status will be success
     )
 
