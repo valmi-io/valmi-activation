@@ -20,11 +20,11 @@
 
 - Describe technology
 
-- Write Vision:
+- Write Vision
 
-- Describe licenses:
+- Describe licenses
 
-- Write known issues & Roadmap: 
+- Write known issues & Roadmap
   1. can only work with single worker uvicorn, to go multiprocess, acquire lock for metrics, job_manager & run_manager& warmup processes.
   2. Share the dbSession.
   3. ...
