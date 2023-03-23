@@ -6,7 +6,7 @@
 </p>
 <p align="center">
 <a href="https://github.com/valmi-io/valmi-activation/stargazers/" target="_blank">
-    <img src="https://img.shields.io/github/stars/valmi-io/valmi-activation?style=social&label=Star&maxAge=2592000" alt="Test">
+    <img src="https://img.shields.io/github/stars/valmi-io/valmi-activation?style=social&label=Star&maxAge=100000" alt="Test">
 </a>
   
 <a href="https://github.com/valmi-io/valmi-activation/blob/main/LICENSE.md" target="_blank">
