@@ -42,7 +42,7 @@ RUN chmod +x ./docker-entrypoint.sh
 
 
 
-RUN groupadd -r valmi_group && useradd -r -g user valmi_user
+RUN groupadd -r valmi_group && useradd -r -g valmi_group valmi_user
 RUN chown  -R valmi_user:valmi_group /valmi/integration_code
 USER valmi_user 
 
