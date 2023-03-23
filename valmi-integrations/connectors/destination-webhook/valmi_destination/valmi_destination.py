@@ -1,3 +1,28 @@
+"""
+Copyright (c) 2023 valmi.io <https://github.com/valmi-io>
+
+Created Date: Wednesday, March 8th 2023, 11:38:42 am
+Author: Rajashekar Varkala @ valmi.io
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+"""
+
 import argparse
 import io
 import logging
@@ -14,28 +39,6 @@ logger = logging.getLogger("airbyte")
 
 
 class ValmiDestination(Destination):
-    '''
-    def read_state(self, state_path: str) -> Union[List[AirbyteStateMessage], MutableMapping[str, Any]]:
-        """
-        Retrieves the input state of a sync by reading from the specified JSON file. Incoming state can be deserialized  as a list of AirbyteStateMessages for the per-stream state format. Regardless of the
-        incoming input type, it will always be transformed and output as a list of AirbyteStateMessage(s).
-        :param state_path: The filepath to where the stream states are located
-        :return: The complete stream state based on the connector's previous sync
-        """
-        if state_path:
-            state_obj = self._read_json_file(state_path)
-            is_per_stream_state = isinstance(state_obj, List)
-            if is_per_stream_state:
-                parsed_state_messages = []
-                for state in state_obj:
-                    parsed_message = AirbyteStateMessage.parse_obj(state)
-                    if not parsed_message.stream and not parsed_message.data and not parsed_message.global_:
-                        raise ValueError("AirbyteStateMessage should contain either a stream, global, or state field")
-                    parsed_state_messages.append(parsed_message)
-                return parsed_state_messages
-        return None
-    '''
-
     def parse_args(self, args: List[str]) -> argparse.Namespace:
         parent_parser = argparse.ArgumentParser(add_help=False)
         main_parser = argparse.ArgumentParser()
