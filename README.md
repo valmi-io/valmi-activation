@@ -26,8 +26,9 @@
 - Describe licenses
 
 - Write known issues & Roadmap
-  1. remove hard-coded references to **/tmp/shared_dir** 
-  2. Add support for object stores like S3, GCS etc.
-  3. can only work with single worker uvicorn, to go multiprocess, acquire lock for metrics, job_manager & run_manager& warmup processes.
-  4. Share the dbSession.
-  5. ...
+  1. Inject checkpoint state for re-runs.
+  2. remove hard-coded references to **/tmp/shared_dir** 
+  3. Add support for object stores like S3, GCS etc.
+  4. can only work with single worker uvicorn, to go multiprocess, acquire lock for metrics, job_manager & run_manager& warmup processes.
+  5. Share the dbSession.
+  6. ...
