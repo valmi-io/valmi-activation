@@ -56,9 +56,13 @@ docker-compose up -d --build
 http://localhost:3000
 ```
 
-Solarized dark             |  Solarized Ocean
+UI Backend API Server       |  Activation Server Api
 :-------------------------:|:-------------------------:
-![](https://...Dark.png)  |  ![](https://...Ocean.png)
+![](https://www.valmi.io/img/api-4000.png)  |  ![](https://www.valmi.io/img/api-8000.png)
+
+  Warehouses and Destinations   |  Sync Runs
+:-------------------------:|:-------------------------:
+![](https://www.valmi.io/img/connections.png)  |  ![](https://www.valmi.io/img/sync_runs.png)
 
 #### b. TODO:
 - Describe architecture details
