@@ -56,7 +56,9 @@ docker-compose up -d --build
 http://localhost:3000
 ```
 
-
+Solarized dark             |  Solarized Ocean
+:-------------------------:|:-------------------------:
+![](https://...Dark.png)  |  ![](https://...Ocean.png)
 
 #### b. TODO:
 - Describe architecture details
