@@ -19,7 +19,7 @@
  <p align="center">We envision a world where a vibrant community of engineers develops around connectors - a world in which the power of the open-source platform draws on the collective mind to keep the fast-moving world of connectors functional and cost-effective.</p>
 
 
-### How to Run 
+### a. How to Run 
 
 1. Clone this repo and move into the directory.
 ```
