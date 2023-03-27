@@ -65,8 +65,9 @@ UI Backend API Server       |  Activation Server Api
 ![](https://www.valmi.io/img/connections.png)  |  ![](https://www.valmi.io/img/sync_runs.png)
 
 #### Watch the demo video here.
-<p align="center">[<img  src="https://i.ytimg.com/vi/UEC3-C4_7nk/maxresdefault.jpg" width="50%"/>](https://www.youtube.com/watch?v=UEC3-C4_7nk "Watch the demo video") </p>
- 
+<div align="center">
+[<img  src="https://i.ytimg.com/vi/UEC3-C4_7nk/maxresdefault.jpg" width="50%"/>](https://www.youtube.com/watch?v=UEC3-C4_7nk "Watch the demo video") 
+ </div>
 #### b. TODO:
 - Describe architecture details
 
