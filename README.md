@@ -21,6 +21,12 @@
 
 ### a. How to Run 
 
+Demo at https://demo.valmi.io
+
+Or
+
+Run locally as below
+
 1. Clone this repo and move into the directory.
 ```
 git clone git@github.com:valmi-io/valmi-activation.git
