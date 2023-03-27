@@ -24,8 +24,9 @@
 1. Clone this repo and move into the directory.
 ```
 git clone git@github.com:valmi-io/valmi-activation.git
-git submodule update --init --recursive
 cd valmi-activation
+git submodule update --init --recursive
+
 ```
 
 2. Setup the environment
