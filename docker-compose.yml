@@ -1,4 +1,4 @@
-version: "3.8" 
+version: "3.8"
 
 services:
   # This service runs dagit, which loads your user code from the user code container.
@@ -36,7 +36,7 @@ services:
     depends_on:
       - valmi-db
       - valmi-repo
-      
+
   # This service runs the dagster-daemon process, which is responsible for taking runs
   # off of the queue and launching them, as well as creating runs from schedules or sensors.
   dagster_daemon:
@@ -64,8 +64,7 @@ services:
       - valmi-db
       - valmi-repo
 
-
-###############################################################################################
+  ###############################################################################################
   # This service runs the postgres DB used by dagster for run storage, schedule storage,
   # and event log storage.
   valmi-db:
@@ -73,7 +72,7 @@ services:
     container_name: valmi-db
     command: ["postgres", "-c", "log_statement=all"]
     volumes:
-       - postgres:/data/postgres
+      - postgres:/data/postgres
     ports:
       - "5432:5432"
     environment:
@@ -114,7 +113,18 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8000:8000"
-    command: ["uvicorn", "main:app",   "--port", "8000", "--host", "0.0.0.0",  "--log-level" ,"debug","--reload"]
+    command:
+      [
+        "uvicorn",
+        "main:app",
+        "--port",
+        "8000",
+        "--host",
+        "0.0.0.0",
+        "--log-level",
+        "debug",
+        "--reload",
+      ]
     container_name: valmi-activation
     restart: on-failure
 
@@ -132,7 +142,6 @@ services:
       APP_BACKEND: "valmi-app-backend"
       DAGIT_HOST: "dagit"
       DAGIT_PORT: 3000
-
 
   valmi-app-backend:
     env_file:
@@ -154,13 +163,28 @@ services:
       DATABASE_URL: "postgresql://postgres:changeme@valmi-db:5432/valmi_app"
       ACTIVATION_SERVER: "http://valmi-activation:8000"
 
-
+  valmi-app:
+    env_file:
+      - ./valmi-app/.env
+    ports:
+      - "3000:3000"
+    build:
+      context: ./valmi-app
+      dockerfile: Dockerfile
+    container_name: valmi-app
+    restart: on-failure
+    volumes:
+      - ./valmi-app:/workspace:z
+    networks:
+      - valmi-network
+    depends_on:
+      - valmi-db
+      - valmi-app-backend
 
 volumes:
-    postgres:
+  postgres:
 
 networks:
   valmi-network:
     driver: bridge
-    name: valmi-network 
-
+    name: valmi-network
