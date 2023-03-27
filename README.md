@@ -23,7 +23,7 @@
 
 Demo at https://demo.valmi.io
 
-Or
+OR
 
 Run locally as below
 
