@@ -58,7 +58,7 @@ http://localhost:3000
 
 
 
-#### **TODO**:
+#### b. TODO:
 - Describe architecture details
 
 - Write Vision
