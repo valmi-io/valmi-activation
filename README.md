@@ -57,7 +57,12 @@ make build_docker
 docker-compose up -d --build
 ```
 
-5. Access the service
+5. We are adding support for object stores like S3, GCS. Until then, Local storage is used.
+```
+sudo chmod -R 777 /tmp/shared_dir/intermediate_store
+```
+
+6. Access the service
 
 ```
 http://localhost:3000
