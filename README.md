@@ -68,7 +68,7 @@ sudo chmod -R 777 /tmp/shared_dir/intermediate_store
 http://localhost:3000
 ```
 
-UI Backend API Server       |  Activation Server Api
+UI Backend API Server (http://localhost:4000/api/docs)       |  Activation Server Api (http://localhost:8000/docs)
 :-------------------------:|:-------------------------:
 ![](https://www.valmi.io/img/api-4000.png)  |  ![](https://www.valmi.io/img/api-8000.png)
 
