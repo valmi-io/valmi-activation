@@ -1,6 +1,6 @@
 .PHONY: build_docker
 build_docker: copy_dbt 
-	docker build . -t valmiio/source-postgres:stable
+	docker build . -t valmiio/source-postgres:0.1.0
 
 copy_dbt:
 	rm -rf ./valmi_dbt/valmi_dbt_source_transform
