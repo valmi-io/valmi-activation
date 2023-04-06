@@ -32,6 +32,8 @@ from .run_time_args import RunTimeArgs
 from airbyte_cdk.sources.streams.http.http import HttpStream
 from requests import Request, Session
 
+from flatten_json import flatten
+
 
 class UnsupportedMethodException(Exception):
     pass
@@ -60,12 +62,13 @@ class CustomHttpSink(HttpStream):
             else {}
         )
         mapped_data = self.map_data(catalog.sinks[0].mapping, json_data)
+
         if config["method"] == "GET":
             mapped_data["_message_id"] = record_counter
             mapped_data["_sync_mode"] = catalog.sinks[0].destination_sync_mode.value
 
             s = Session()
-            req = Request("GET", config["url"], params=mapped_data, headers=headers)
+            req = Request("GET", config["url"], params=flatten(mapped_data), headers=headers)
             prepped = s.prepare_request(req)
             self._send_request(prepped, request_kwargs={"timeout": run_time_args.http_timeout})
 
