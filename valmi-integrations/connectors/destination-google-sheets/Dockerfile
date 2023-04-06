@@ -1,0 +1,60 @@
+FROM  python:3.9.16-slim  as base
+
+# build and load all requirements
+FROM base as builder
+WORKDIR /valmi/integration_code
+
+# upgrade pip to the latest version
+RUN apt upgrade \
+    && pip install --upgrade pip \
+    && apt install tzdata  
+
+COPY setup.py ./ 
+
+# install necessary packages to a temporary folder
+RUN pip install --prefix=/install .
+
+# build a clean environment
+FROM base
+WORKDIR /valmi/integration_code
+
+# copy all loaded and built libraries to a pure basic image
+COPY --from=builder /install /usr/local
+# add default timezone settings
+COPY --from=builder /usr/share/zoneinfo/Etc/UTC /etc/localtime
+RUN echo "Etc/UTC" > /etc/timezone
+
+# bash is installed for more convenient debugging.
+RUN apt install bash
+
+# copy payload code only
+COPY main.py ./
+COPY destination_google_sheets ./destination_google_sheets
+COPY valmi_protocol ./valmi_protocol
+COPY valmi_destination ./valmi_destination
+COPY destination_container_wrapper.py ./
+COPY proc_stdout_handler.py ./
+COPY proc_stdout_event_handlers.py ./
+COPY engine.py ./
+COPY read_handlers.py ./
+COPY docker-entrypoint.sh ./
+RUN chmod +x ./docker-entrypoint.sh
+
+
+
+RUN groupadd -r valmi_group && useradd -r -g valmi_group valmi_user
+RUN chown  -R valmi_user:valmi_group /valmi/integration_code
+USER valmi_user 
+
+## ALPINE BELOW
+#RUN addgroup -S valmi_group && adduser -S valmi_user -G valmi_group
+#RUN chown  -R valmi_user:valmi_group /valmi/integration_code
+#USER valmi_user
+
+ENV PYTHONUNBUFFERED 1
+ENV VALMI_ENTRYPOINT "python /valmi/integration_code/main.py"
+ENV VALMI_INTERMEDIATE_STORE "{\"provider\": \"local\", \"local\": {\"directory\": \"/tmp/shared_dir/intermediate_store\"}}"
+ENTRYPOINT ["./docker-entrypoint.sh"]
+
+LABEL io.valmi.version=0.1.0
+LABEL io.valmi.name=valmi/destination-webhook
