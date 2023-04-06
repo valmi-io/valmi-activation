@@ -1,6 +1,8 @@
+file := .version
+version := $(shell cat ${file})
 .PHONY: build_docker
 build_docker: copy_dbt 
-	docker build . -t valmiio/source-postgres:0.1.0
+	docker build . -t valmiio/source-postgres:${version} --build-arg VERSION=${version}
 
 copy_dbt:
 	rm -rf ./valmi_dbt/valmi_dbt_source_transform

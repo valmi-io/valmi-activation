@@ -46,5 +46,7 @@ ENV PYTHONUNBUFFERED 1
 ENV VALMI_ENTRYPOINT "python /valmi/integration_code/main.py"
 ENV VALMI_INTERMEDIATE_STORE "{\"provider\": \"local\", \"local\": {\"directory\": \"/tmp/shared_dir/intermediate_store\"}}"
 ENTRYPOINT ["./docker-entrypoint.sh"]
-LABEL io.valmi.version=0.1.0
+
+ARG VERSION
+LABEL io.valmi.version=${VERSION}
 LABEL io.valmi.name=valmiio/source-postgres
