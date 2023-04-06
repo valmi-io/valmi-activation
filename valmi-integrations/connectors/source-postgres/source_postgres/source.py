@@ -45,6 +45,7 @@ from airbyte_cdk.models import (
 
 from airbyte_cdk.sources import Source
 from valmi_dbt.dbt_airbyte_adapter import DbtAirbyteAdpater
+from valmi_protocol import add_event_meta, add_sync_op
 from valmi_protocol.valmi_protocol import ValmiCatalog, ValmiStream, ConfiguredValmiCatalog
 from fal import FalDbt
 from dbt.contracts.results import RunResultOutput, RunStatus
@@ -190,8 +191,13 @@ class SourcePostgres(Source):
 
             for row in agate_table.rows:
                 data: Dict[str, Any] = {}
+                # TODO: for other sync_modes , restructure code - only upsert supported now.
+                add_sync_op(data, catalog.streams[0].destination_sync_mode, catalog.streams[0].destination_sync_mode)
                 for i in range(len(row)):
-                    data[agate_table.column_names[i]] = row[i]
+                    if agate_table.column_names[i].startswith("_valmi"):
+                        add_event_meta(data, agate_table.column_names[i], row[i])
+                    else:
+                        data[agate_table.column_names[i]] = row[i]
                 last_row_num = row[0]
 
                 yield AirbyteMessage(
