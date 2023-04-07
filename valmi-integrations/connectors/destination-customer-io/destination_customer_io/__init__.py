@@ -3,6 +3,6 @@
 #
 
 
-from .destination import DestinationGoogleSheets
+from .destination import DestinationCustomerIO
 
-__all__ = ["DestinationGoogleSheets"]
+__all__ = ["DestinationCustomerIO"]
