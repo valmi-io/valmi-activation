@@ -31,9 +31,9 @@ from typing import Any, Iterable, List, Mapping
 
 from airbyte_cdk.destinations import Destination
 from airbyte_cdk.models import AirbyteMessage, Type
-from valmi_protocol import ConfiguredValmiDestinationCatalog
-from airbyte_cdk.sources.utils.schema_helpers import check_config_against_spec_or_exit
-from airbyte_cdk.utils.traced_exception import AirbyteTracedException
+from pyparsing import abstractmethod
+from valmi_protocol import ConfiguredValmiDestinationCatalog, ConfiguredValmiCatalog
+from airbyte_cdk import AirbyteLogger
 
 logger = logging.getLogger("airbyte")
 
@@ -64,6 +64,12 @@ class ValmiDestination(Destination):
         write_required.add_argument(
             "--catalog", type=str, required=True, help="path to the configured catalog JSON file"
         )
+        write_required.add_argument(
+            "--destination_catalog",
+            type=str,
+            required=True,
+            help="path to the configured destination catalog JSON file",
+        )
 
         # discover
         discover_parser = subparsers.add_parser(
@@ -89,19 +95,12 @@ class ValmiDestination(Destination):
         cmd = parsed_args.command
 
         # if cmd not in ["discover", "write"]:
-        if cmd not in ["discover"]:
+        if cmd not in ["discover", "write"]:
             for msg in super().run_cmd(parsed_args):
                 yield msg
             return
 
-        spec = self.spec(logger)
         config = self.read_config(config_path=parsed_args.config)
-
-        if self.check_config_against_spec:
-            try:
-                check_config_against_spec_or_exit(config, spec)
-            except AirbyteTracedException as traced_exc:
-                raise traced_exc
 
         if cmd == "discover":
             for msg in self.discover_handler(config, parsed_args):
@@ -117,6 +116,7 @@ class ValmiDestination(Destination):
                 # config=config, configured_catalog_path=parsed_args.catalog, input_stream=wrapped_stdin, state=state
                 config=config,
                 configured_catalog_path=parsed_args.catalog,
+                configured_destination_catalog_path=parsed_args.destination_catalog,
                 input_stream=wrapped_stdin,
             )
             return
@@ -125,20 +125,34 @@ class ValmiDestination(Destination):
         catalog = self.discover(logger, config)
         yield AirbyteMessage(type=Type.CATALOG, catalog=catalog)
 
+    @abstractmethod
+    def write(
+        self,
+        config: Mapping[str, Any],
+        configured_catalog: ConfiguredValmiCatalog,
+        input_messages: Iterable[AirbyteMessage],
+        configured_destination_catalog: ConfiguredValmiDestinationCatalog,
+        logger: AirbyteLogger,
+    ) -> Iterable[AirbyteMessage]:
+        """Implement to define how the connector writes data to the destination"""
+
     def _run_write(
         self,
         config: Mapping[str, Any],
         configured_catalog_path: str,
+        configured_destination_catalog_path: str,
         input_stream: io.TextIOWrapper,
         # state: Dict[str, any],
     ) -> Iterable[AirbyteMessage]:
-        catalog = ConfiguredValmiDestinationCatalog.parse_file(configured_catalog_path)
+        catalog = ConfiguredValmiCatalog.parse_file(configured_catalog_path)
+        destination_catalog = ConfiguredValmiDestinationCatalog.parse_file(configured_destination_catalog_path)
         input_messages = self._parse_input_stream(input_stream)
         logger.info("Begin writing to the destination...")
         yield from self.write(
             # config=config, configured_catalog=catalog, input_messages=input_messages, state=state, logger=logger
             config=config,
             configured_catalog=catalog,
+            configured_destination_catalog=destination_catalog,
             input_messages=input_messages,
             logger=logger,
         )
