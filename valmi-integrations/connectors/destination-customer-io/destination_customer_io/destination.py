@@ -30,13 +30,11 @@ from typing import Any, Iterable, Mapping
 from airbyte_cdk import AirbyteLogger
 from airbyte_cdk.destinations import Destination
 from airbyte_cdk.models import (
-    AirbyteStateType,
-    Type,
     AirbyteConnectionStatus,
     AirbyteStateMessage,
     AirbyteMessage,
 )
-from airbyte_cdk.models.airbyte_protocol import Status
+from airbyte_cdk.models.airbyte_protocol import Status, Type, AirbyteStateType
 from valmi_protocol import (
     ValmiDestinationCatalog,
     ValmiSink,
@@ -46,13 +44,10 @@ from valmi_protocol import (
 from valmi_destination import ValmiDestination
 from .run_time_args import RunTimeArgs
 
-from google.auth.exceptions import RefreshError
+from customerio import CustomerIO, Regions
 
-from .client import GoogleSheetsClient
-from .helpers import ConnectionTest, get_spreadsheet_id
-from .spreadsheet import GoogleSheets
-from .writer import GoogleSheetsWriter
-from datetime import datetime
+
+from .customer_io_utils import get_region
 
 
 class DestinationCustomerIO(ValmiDestination):
@@ -72,8 +67,6 @@ class DestinationCustomerIO(ValmiDestination):
         counter = 0
         run_time_args = RunTimeArgs.parse_obj(config["run_time_args"] if "run_time_args" in config else {})
 
-        """
-        Reads the input stream of messages, config, and catalog to write data to the destination.
         """
         spreadsheet_id = get_spreadsheet_id(config["spreadsheet_id"])
 
@@ -112,6 +105,7 @@ class DestinationCustomerIO(ValmiDestination):
         # deduplicating records for `upsert` mode
         writer.deduplicate_records(configured_catalog.streams[0], configured_destination_catalog.sinks[0])
 
+        """
         # Sync completed - final state message
         yield AirbyteMessage(
             type=Type.STATE,
@@ -122,7 +116,10 @@ class DestinationCustomerIO(ValmiDestination):
         )
 
     def discover(self, logger: AirbyteLogger, config: json) -> ValmiDestinationCatalog:
-        sinks = [ValmiSink(name="GoogleSheets", supported_sync_modes=["upsert"], json_schema={})]
+        sinks = [
+            ValmiSink(name="Person", supported_sync_modes=["upsert"], json_schema={}),
+            ValmiSink(name="Device", supported_sync_modes=["upsert"], json_schema={}),
+        ]
         return ValmiDestinationCatalog(sinks=sinks)
 
     def check(self, logger: AirbyteLogger, config: Mapping[str, Any]) -> AirbyteConnectionStatus:
@@ -134,14 +131,20 @@ class DestinationCustomerIO(ValmiDestination):
             :: Status.SUCCEEDED - if creadentials are valid, token is refreshed, target spreadsheet is available.
             :: Status.FAILED - if could not obtain new token, target spreadsheet is not available or other exception occured (with message).
         """
-        spreadsheet_id = get_spreadsheet_id(config["spreadsheet_id"])
+
         try:
-            client = GoogleSheetsClient(config).authorize()
-            spreadsheet = GoogleSheets(client, spreadsheet_id)
-            check_result = ConnectionTest(spreadsheet).perform_connection_test()
-            if check_result:
-                return AirbyteConnectionStatus(status=Status.SUCCEEDED)
-        except RefreshError as token_err:
-            return AirbyteConnectionStatus(status=Status.FAILED, message=f"{token_err}")
+            cio = CustomerIO(
+                config["tracking_site_id"],
+                config["tracking_api_key"],
+                region=Regions.US
+                if get_region(config["tracking_site_id"], config["tracking_api_key"]).lower() == "us"
+                else Regions.EU,
+            )
+            cio.identify(
+                id="connector-test@valmi.io", email="connector-test@valmi.io", name="test.valmi.io", plan="free"
+            )
+            cio.delete(customer_id="connector-test@valmi.io")
+
+            return AirbyteConnectionStatus(status=Status.SUCCEEDED)
         except Exception as err:
             return AirbyteConnectionStatus(status=Status.FAILED, message=f"An exception occurred: {repr(err)}")

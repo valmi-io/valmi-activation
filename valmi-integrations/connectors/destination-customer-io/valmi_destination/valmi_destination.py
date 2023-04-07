@@ -31,7 +31,7 @@ from typing import Any, Iterable, List, Mapping
 
 from airbyte_cdk.destinations import Destination
 from airbyte_cdk.models import AirbyteMessage, Type
-from pyparsing import abstractmethod
+from abc import abstractmethod
 from valmi_protocol import ConfiguredValmiDestinationCatalog, ConfiguredValmiCatalog
 from airbyte_cdk import AirbyteLogger
 

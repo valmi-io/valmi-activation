@@ -3,16 +3,14 @@ from setuptools import find_packages, setup
 MAIN_REQUIREMENTS = [
     "airbyte-cdk",
     "requests",
-    "pygsheets==2.0.5",
-    "google-auth-oauthlib==0.5.1",
-    "google-api-python-client==2.47.0",
+    "customerio",
 ]
 
 TEST_REQUIREMENTS = ["pytest~=6.2"]
 
 setup(
-    name="destination_webhook",
-    description="Destination implementation for Webhook.",
+    name="destination_customer_io",
+    description="Destination implementation for Customer.io .",
     author="valmi.io",
     author_email="contact@valmi.io",
     packages=find_packages(),
