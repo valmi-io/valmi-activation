@@ -40,7 +40,7 @@ from airbyte_cdk.models import (
 )
 from airbyte_cdk.models.airbyte_protocol import Status, Type, AirbyteStateType
 from .custom_http_sink import CustomHttpSink
-from valmi_protocol import ValmiDestinationCatalog, ConfiguredValmiDestinationCatalog, ValmiSink
+from valmi_protocol import ValmiDestinationCatalog, ConfiguredValmiDestinationCatalog, ConfiguredValmiCatalog, ValmiSink
 from valmi_destination import ValmiDestination
 from .run_time_args import RunTimeArgs
 
@@ -54,7 +54,8 @@ class DestinationWebhook(ValmiDestination):
         self,
         logger: AirbyteLogger,
         config: Mapping[str, Any],
-        configured_catalog: ConfiguredValmiDestinationCatalog,
+        configured_catalog: ConfiguredValmiCatalog,
+        configured_destination_catalog: ConfiguredValmiDestinationCatalog,
         input_messages: Iterable[AirbyteMessage],
         # state: Dict[str, any],
     ) -> Iterable[AirbyteMessage]:
@@ -68,7 +69,7 @@ class DestinationWebhook(ValmiDestination):
             if msg.type == Type.RECORD:
                 try:
                     http_handler.handle(
-                        config, configured_catalog, msg.record.data, counter, run_time_args=run_time_args
+                        config, configured_destination_catalog, msg.record.data, counter, run_time_args=run_time_args
                     )
                 except Exception as e:
                     yield AirbyteMessage(

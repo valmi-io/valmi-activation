@@ -4,6 +4,8 @@ from .valmi_protocol import (
     ValmiDestinationCatalog,
     DestinationSyncMode,
     ConfiguredValmiDestinationCatalog,
+    ConfiguredValmiSink,
+    ConfiguredValmiCatalog,
 )
 
 __all__ = [
@@ -12,4 +14,6 @@ __all__ = [
     "ValmiDestinationCatalog",
     "ConfiguredValmiDestinationCatalog",
     "DestinationSyncMode",
+    "ConfiguredValmiSink",
+    "ConfiguredValmiCatalog",
 ]

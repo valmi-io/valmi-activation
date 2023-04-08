@@ -1,7 +1,32 @@
+"""
+Copyright (c) 2023 valmi.io <https://github.com/valmi-io>
+
+Created Date: Sunday, March 19th 2023, 12:47:57 pm
+Author: Rajashekar Varkala @ valmi.io
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+"""
+
 from enum import Enum
 from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Extra, Field
-from airbyte_cdk.models import AirbyteCatalog, AirbyteStream
+from airbyte_cdk.models import AirbyteCatalog, AirbyteStream, ConfiguredAirbyteStream, ConfiguredAirbyteCatalog
 import inspect
 
 
@@ -53,12 +78,6 @@ class ConfiguredValmiSink(BaseModel):
 
 # TODO: Hack. Think of a nice way
 @optional
-class ValmiStream(AirbyteStream):
-    pass
-
-
-# TODO: Hack. Think of a nice way
-@optional
 class ValmiDestinationCatalog(AirbyteCatalog):
     class Config:
         extra = Extra.allow
@@ -71,3 +90,33 @@ class ConfiguredValmiDestinationCatalog(BaseModel):
         extra = Extra.allow
 
     sinks: List[ConfiguredValmiSink]
+
+
+# TODO: Hack. Think of a nice way
+@optional
+class ValmiStream(AirbyteStream):
+    pass
+
+
+class ConfiguredValmiStream(ConfiguredAirbyteStream):
+    class Config:
+        extra = Extra.allow
+
+    stream: ValmiStream
+    destination_sync_mode: DestinationSyncMode
+
+
+# TODO: Hack. Think of a nice way
+@optional
+class ValmiCatalog(AirbyteCatalog):
+    class Config:
+        extra = Extra.allow
+
+    streams: Optional[List[ValmiStream]]
+
+
+class ConfiguredValmiCatalog(ConfiguredAirbyteCatalog):
+    class Config:
+        extra = Extra.allow
+
+    streams: List[ConfiguredValmiStream]
