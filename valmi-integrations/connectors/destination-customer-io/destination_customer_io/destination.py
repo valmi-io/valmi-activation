@@ -23,7 +23,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-
 import json
 from typing import Any, Iterable, Mapping
 
@@ -44,10 +43,10 @@ from valmi_protocol import (
 from valmi_destination import ValmiDestination
 from .run_time_args import RunTimeArgs
 
-from customerio import CustomerIO, Regions
+from customerio import Regions
+from datetime import datetime
 
-
-from .customer_io_utils import get_region
+from .customer_io_utils import CustomerIOExt, get_region
 
 
 class DestinationCustomerIO(ValmiDestination):
@@ -67,28 +66,28 @@ class DestinationCustomerIO(ValmiDestination):
         counter = 0
         run_time_args = RunTimeArgs.parse_obj(config["run_time_args"] if "run_time_args" in config else {})
 
-        """
-        spreadsheet_id = get_spreadsheet_id(config["spreadsheet_id"])
-
-        client = GoogleSheetsClient(config).authorize()
-        spreadsheet = GoogleSheets(client, spreadsheet_id)
-        writer = GoogleSheetsWriter(spreadsheet)
-
-        writer.init_buffer_sink(
-            configured_stream=configured_catalog.streams[0], sink=configured_destination_catalog.sinks[0]
+        cio = CustomerIOExt(
+            run_time_args,
+            config["tracking_site_id"],
+            config["tracking_api_key"],
+            region=Regions.US
+            if get_region(config["tracking_site_id"], config["tracking_api_key"]).lower() == "us"
+            else Regions.EU,
+            url_prefix="/api/v2",
         )
-
         for message in input_messages:
             now = datetime.now()
 
             if message.type == Type.RECORD:
                 record = message.record
-                writer.add_to_buffer(record.stream, record.data)
-                writer.queue_write_operation(record.stream)
+                flushed = cio.add_to_queue(
+                    record.data,
+                    configured_stream=configured_catalog.streams[0],
+                    sink=configured_destination_catalog.sinks[0],
+                )
 
                 counter = counter + 1
-                if counter % run_time_args.chunk_size == 0:
-                    writer.write_whats_left()
+                if flushed:
                     yield AirbyteMessage(
                         type=Type.STATE,
                         state=AirbyteStateMessage(
@@ -100,12 +99,7 @@ class DestinationCustomerIO(ValmiDestination):
                 if (datetime.now() - now).seconds > 5:
                     logger.info("A log every 5 seconds - is this required??")
 
-        # if there are any records left in buffer
-        writer.write_whats_left()
-        # deduplicating records for `upsert` mode
-        writer.deduplicate_records(configured_catalog.streams[0], configured_destination_catalog.sinks[0])
-
-        """
+        cio.flush()
         # Sync completed - final state message
         yield AirbyteMessage(
             type=Type.STATE,
@@ -123,17 +117,8 @@ class DestinationCustomerIO(ValmiDestination):
         return ValmiDestinationCatalog(sinks=sinks)
 
     def check(self, logger: AirbyteLogger, config: Mapping[str, Any]) -> AirbyteConnectionStatus:
-        """
-        Connection check method for Google Spreadsheets.
-        Info:
-            Checks whether target spreadsheet_id is available using provided credentials.
-        Returns:
-            :: Status.SUCCEEDED - if creadentials are valid, token is refreshed, target spreadsheet is available.
-            :: Status.FAILED - if could not obtain new token, target spreadsheet is not available or other exception occured (with message).
-        """
-
         try:
-            cio = CustomerIO(
+            cio = CustomerIOExt(
                 config["tracking_site_id"],
                 config["tracking_api_key"],
                 region=Regions.US
