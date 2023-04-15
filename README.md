@@ -54,7 +54,7 @@ cp .env-sample .env
 cd ../valmi-app
 cp .env-example .env
 ```
-3. Only For Mac M1 and M2 users (arm64 architecture)
+3. Make connectors
 ```
 cd valmi-integrations/connectors/source-postgres
 make build_docker
