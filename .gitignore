@@ -188,3 +188,6 @@ valmi-integrations/connectors/source-postgres/valmi_dbt/valmi_dbt_source_transfo
 valmi-integrations/connectors/source-postgres/valmi_dbt/valmi_dbt_source_transform/models/transit/ignored_snapshot.sql
 valmi-integrations/connectors/source-postgres/valmi_dbt/valmi_dbt_source_transform/models/transit/sync_metrics.sql
 valmi-integrations/connectors/source-postgres/valmi_dbt/valmi_dbt_source_transform/models/transit/transit_snapshot.sql
+valmi-integrations/connectors/source-postgres/valmi_dbt/valmi_dbt_source_transform/.gitignore
+valmi-integrations/connectors/source-postgres/valmi_dbt/valmi_dbt_source_transform/LICENSE.md
+valmi-integrations/connectors/source-postgres/valmi_dbt/valmi_dbt_source_transform/macros/finalize_transit_snapshot.sql

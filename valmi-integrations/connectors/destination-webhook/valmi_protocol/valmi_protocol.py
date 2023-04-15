@@ -52,6 +52,7 @@ def optional(*fields):
 
 class DestinationSyncMode(Enum):
     upsert = "upsert"
+    mirror = "mirror"
 
 
 class ValmiSink(BaseModel):
