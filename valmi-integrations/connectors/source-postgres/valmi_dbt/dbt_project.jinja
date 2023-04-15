@@ -23,7 +23,7 @@ models:
   valmi_postgres:
       materialized: table
       staging:
-        materialized: view
+        materialized: table
 
 
 vars:
@@ -33,9 +33,12 @@ vars:
   stg_snapshot: "stg_snapshot_{{args['sync_id']}}"
   ignored_snapshot: "ignored_snapshot_{{args['sync_id']}}"
   transit_snapshot: "transit_snapshot_{{args['sync_id']}}"
+  cleanup_snapshot: "cleanup_snapshot_{{args['sync_id']}}"
 
   full_refresh: "{{args['full_refresh']}}" 
   previous_run_status: "{{args['previous_run_status']}}" 
+
+  destination_sync_mode: "{{args['destination_sync_mode']}}" 
 
   columns: {{args['columns']}} 
   id_key: "{{args['id_key']}}" 

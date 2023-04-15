@@ -40,7 +40,13 @@ from airbyte_cdk.models import (
 )
 from airbyte_cdk.models.airbyte_protocol import Status, Type, AirbyteStateType
 from .custom_http_sink import CustomHttpSink
-from valmi_protocol import ValmiDestinationCatalog, ConfiguredValmiDestinationCatalog, ConfiguredValmiCatalog, ValmiSink
+from valmi_protocol import (
+    ValmiDestinationCatalog,
+    ConfiguredValmiDestinationCatalog,
+    ConfiguredValmiCatalog,
+    ValmiSink,
+    DestinationSyncMode,
+)
 from valmi_destination import ValmiDestination
 from .run_time_args import RunTimeArgs
 
@@ -105,7 +111,13 @@ class DestinationWebhook(ValmiDestination):
         )
 
     def discover(self, logger: AirbyteLogger, config: json) -> ValmiDestinationCatalog:
-        sinks = [ValmiSink(name="Webhook", supported_sync_modes=["upsert"], json_schema={})]
+        sinks = [
+            ValmiSink(
+                name="Webhook",
+                supported_sync_modes=[DestinationSyncMode.upsert, DestinationSyncMode.mirror],
+                json_schema={},
+            )
+        ]
         return ValmiDestinationCatalog(sinks=sinks)
 
     def check(self, logger: AirbyteLogger, config: Mapping[str, Any]) -> AirbyteConnectionStatus:

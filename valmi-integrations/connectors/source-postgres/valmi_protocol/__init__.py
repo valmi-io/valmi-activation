@@ -5,7 +5,7 @@ from .valmi_protocol import (
     DestinationSyncMode,
     ConfiguredValmiDestinationCatalog,
 )
-from .valmi_event import add_event_meta, add_sync_op
+from .valmi_event import add_event_meta
 
 __all__ = [
     "ValmiSink",
@@ -14,5 +14,4 @@ __all__ = [
     "ConfiguredValmiDestinationCatalog",
     "DestinationSyncMode",
     "add_event_meta",
-    "add_sync_op",
 ]

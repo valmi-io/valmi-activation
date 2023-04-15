@@ -1,49 +1,30 @@
 {
-    "streams": [
-        {
-            "sync_mode": "full_refresh",
-            "destination_sync_mode":"upsert",
-            "id_key": "sync_id",
-            "stream": {
-                "name": "\"valmi_activation\".\"public\".\"sync_runs\"",
-                "json_schema": {
-                  "$schema": "http://json-schema.org/draft-07/schema#",
-                  "type": "object",
-                  "properties": {
-                    "sync_id": {
-                      "type": "uuid"
-                    },
-                    "run_id": {
-                      "type": "uuid"
-                    },
-                    "run_at": {
-                      "type": "timestamp without time zone"
-                    },
-                    "created_at": {
-                      "type": "timestamp without time zone"
-                    },
-                    "updated_at": {
-                      "type": "timestamp without time zone"
-                    },
-                    "status": {
-                      "type": "text"
-                    },
-                    "metrics": {
-                      "type": "json"
-                    },
-                    "extra": {
-                      "type": "json"
-                    },
-                    "dagster_run_id": {
-                      "type": "text"
-                    }
-                  }
-                }, 
-                "supported_sync_modes": [
-                  "full_refresh",
-                  "incremental"
-                ]
+  "streams": [
+    {
+      "id_key": "actor_id",
+      "stream": {
+        "name": "\"dvdrental\".\"public\".\"actor\"",
+        "json_schema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "properties": {
+            "actor_id": {
+              "type": "integer"
+            },
+            "first_name": {
+              "type": "character varying(45)"
+            },
+            "last_update": {
+              "type": "timestamp without time zone"
             }
-        }
-    ]
+          }
+        },
+        "supported_sync_modes": [
+          "full_refresh",
+          "incremental"
+        ]
+      },
+      "sync_mode": "full_refresh",
+      "destination_sync_mode": "mirror"
+    }
+  ]
 }

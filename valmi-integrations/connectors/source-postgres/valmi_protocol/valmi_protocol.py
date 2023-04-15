@@ -52,6 +52,7 @@ def optional(*fields):
 
 class DestinationSyncMode(Enum):
     upsert = "upsert"
+    mirror = "mirror"
 
 
 class ValmiSink(BaseModel):
@@ -95,6 +96,9 @@ class ConfiguredValmiDestinationCatalog(BaseModel):
 # TODO: Hack. Think of a nice way
 @optional
 class ValmiStream(AirbyteStream):
+    supported_destinaton_sync_modes: List[DestinationSyncMode] = Field(
+        ..., description="List of destination sync modes supported by this stream.", min_items=1
+    )
     pass
 
 

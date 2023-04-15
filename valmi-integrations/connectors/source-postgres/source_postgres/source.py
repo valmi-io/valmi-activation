@@ -41,12 +41,13 @@ from airbyte_cdk.models import (
     EstimateType,
     AirbyteStateType,
     TraceType,
+    SyncMode,
 )
 
 from airbyte_cdk.sources import Source
 from valmi_dbt.dbt_airbyte_adapter import DbtAirbyteAdpater
-from valmi_protocol import add_event_meta, add_sync_op
-from valmi_protocol.valmi_protocol import ValmiCatalog, ValmiStream, ConfiguredValmiCatalog
+from valmi_protocol import add_event_meta
+from valmi_protocol.valmi_protocol import ValmiCatalog, ValmiStream, ConfiguredValmiCatalog, DestinationSyncMode
 from fal import FalDbt
 from dbt.contracts.results import RunResultOutput, RunStatus
 
@@ -91,6 +92,8 @@ class SourcePostgres(Source):
                 streams.append(
                     ValmiStream(
                         name=str(row),
+                        supported_destinaton_sync_modes=(DestinationSyncMode.upsert, DestinationSyncMode.mirror),
+                        supported_sync_modes=(SyncMode.FULL_REFRESH, SyncMode.INCREMENTAL)
                         # json_schema=json_schema,
                     )
                 )
@@ -174,49 +177,67 @@ class SourcePostgres(Source):
         for metric_msg in self.generate_sync_metrics(faldbt, logger=logger, sync_id=sync_id, catalog=catalog):
             yield metric_msg
 
+        if catalog.streams[0].destination_sync_mode == DestinationSyncMode.upsert:
+            tables_to_sync = [
+                {
+                    "table": f"ref('transit_snapshot_{sync_id}')",
+                    "columns": catalog.streams[0].stream.json_schema["properties"].keys(),
+                }
+            ]
+        elif catalog.streams[0].destination_sync_mode == DestinationSyncMode.mirror:
+            tables_to_sync = [
+                # TODO: becoming spahgetti code. Need to refactor
+                {"table": "source('scratch', var('cleanup_snapshot'))", "columns": [catalog.streams[0].id_key]},
+                {
+                    "table": f"ref('transit_snapshot_{sync_id}')",
+                    "columns": catalog.streams[0].stream.json_schema["properties"].keys(),
+                },
+            ]
+
         # set the below two values from the checkpoint state
-        last_row_num = -1
         chunk_id = 0
-        while True:
-            columns = catalog.streams[0].stream.json_schema["properties"].keys()
-            adapter_resp, agate_table = self.dbt_adapter.execute_sql(
-                faldbt,
-                "SELECT _valmi_row_num, {1} \
-                    FROM {{{{ ref('transit_snapshot_{0}') }}}} \
-                    WHERE _valmi_row_num > {3} \
-                    LIMIT {2};".format(
-                    sync_id, ",".join(columns), chunk_size, last_row_num
-                ),
-            )
-
-            for row in agate_table.rows:
-                data: Dict[str, Any] = {}
-                # TODO: for other sync_modes , restructure code - only upsert supported now.
-                add_sync_op(data, catalog.streams[0].destination_sync_mode, catalog.streams[0].destination_sync_mode)
-                for i in range(len(row)):
-                    if agate_table.column_names[i].startswith("_valmi"):
-                        add_event_meta(data, agate_table.column_names[i], row[i])
-                    else:
-                        data[agate_table.column_names[i]] = row[i]
-                last_row_num = row[0]
-
-                yield AirbyteMessage(
-                    type=Type.RECORD,
-                    record=AirbyteRecordMessage(
-                        stream=catalog.streams[0].stream.name,
-                        data=data,
-                        emitted_at=int(datetime.now().timestamp()) * 1000,
+        for loop_var, item in enumerate(tables_to_sync):
+            last_row_num = -1
+            while True:
+                columns = item["columns"]
+                adapter_resp, agate_table = self.dbt_adapter.execute_sql(
+                    faldbt,
+                    "SELECT _valmi_row_num, _valmi_sync_op, {1} \
+                        FROM {{{{ {0} }}}} \
+                        WHERE _valmi_row_num > {3} \
+                        LIMIT {2};".format(
+                        item["table"], ",".join(columns), chunk_size, last_row_num
                     ),
                 )
-            if len(agate_table.rows) <= 0:
+
+                for row in agate_table.rows:
+                    data: Dict[str, Any] = {}
+                    for i in range(len(row)):
+                        if agate_table.column_names[i].startswith("_valmi"):
+                            add_event_meta(data, agate_table.column_names[i], row[i])
+                        else:
+                            data[agate_table.column_names[i]] = row[i]
+                    last_row_num = row[0]
+
+                    yield AirbyteMessage(
+                        type=Type.RECORD,
+                        record=AirbyteRecordMessage(
+                            stream=catalog.streams[0].stream.name,
+                            data=data,
+                            emitted_at=int(datetime.now().timestamp()) * 1000,
+                        ),
+                    )
+                if len(agate_table.rows) <= 0:
+                    break
+                else:
+                    chunk_id += 1
+                    yield AirbyteMessage(
+                        type=Type.STATE,
+                        state=AirbyteStateMessage(type=AirbyteStateType.STREAM, data={"chunk_id": chunk_id}),
+                        emitted_at=int(datetime.now().timestamp()) * 1000,
+                    )
+            if loop_var == len(tables_to_sync) - 1:
                 return
-            else:
-                chunk_id += 1
-                yield AirbyteMessage(
-                    type=Type.STATE,
-                    state=AirbyteStateMessage(type=AirbyteStateType.STREAM, data={"chunk_id": chunk_id}),
-                    emitted_at=int(datetime.now().timestamp()) * 1000,
-                )
 
     def read_catalog(self, catalog_path: str) -> ConfiguredValmiCatalog:
         return ConfiguredValmiCatalog.parse_obj(self._read_json_file(catalog_path))
