@@ -76,7 +76,7 @@ class DatastoreCleanerThread(threading.Thread):
                 logger.info("Cleaning all datastore ")
 
                 runs = self.run_service.get_active_or_latest_runs(
-                    after=datetime.now() - timedelta(seconds=v.get("DATASTORE_CLEAN_UNTIL") or 60)
+                    after=datetime.now() - timedelta(seconds=v.get("DATASTORE_CLEAN_UNTIL") or 600)
                 )
 
                 store_path = join(SHARED_DIR, "intermediate_store")
