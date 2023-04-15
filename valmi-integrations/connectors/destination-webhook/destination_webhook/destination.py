@@ -66,6 +66,8 @@ class DestinationWebhook(ValmiDestination):
         # state: Dict[str, any],
     ) -> Iterable[AirbyteMessage]:
         counter = 0
+        counter_by_type = {}
+        chunk_id = 0
 
         run_time_args = RunTimeArgs.parse_obj(config["run_time_args"] if "run_time_args" in config else {})
 
@@ -77,6 +79,7 @@ class DestinationWebhook(ValmiDestination):
                     http_handler.handle(
                         config, configured_destination_catalog, msg.record.data, counter, run_time_args=run_time_args
                     )
+
                 except Exception as e:
                     yield AirbyteMessage(
                         type=Type.TRACE,
@@ -89,14 +92,28 @@ class DestinationWebhook(ValmiDestination):
                     return
 
                 counter = counter + 1
-                if counter % run_time_args.records_per_metric == 0:
+
+                if msg.record.data["_valmi_meta"]["_valmi_sync_op"] not in counter_by_type:
+                    counter_by_type[msg.record.data["_valmi_meta"]["_valmi_sync_op"]] = 0
+
+                counter_by_type[msg.record.data["_valmi_meta"]["_valmi_sync_op"]] = (
+                    counter_by_type[msg.record.data["_valmi_meta"]["_valmi_sync_op"]] + 1
+                )
+
+                if counter % run_time_args.records_per_metric == 0 or counter % run_time_args.chunk_size == 0:
                     yield AirbyteMessage(
                         type=Type.STATE,
                         state=AirbyteStateMessage(
                             type=AirbyteStateType.STREAM,
-                            data={"records_delivered": counter, "finished": False},
+                            data={
+                                "records_delivered": counter_by_type,
+                                "chunk_id": chunk_id,
+                                "finished": False,
+                            },
                         ),
                     )
+                    counter_by_type.clear()
+                    chunk_id = chunk_id + 1
 
                 if (datetime.now() - now).seconds > 5:
                     logger.info("A log every 5 seconds - is this required??")
@@ -106,7 +123,11 @@ class DestinationWebhook(ValmiDestination):
             type=Type.STATE,
             state=AirbyteStateMessage(
                 type=AirbyteStateType.STREAM,
-                data={"records_delivered": counter, "finished": True},
+                data={
+                    "records_delivered": counter_by_type,
+                    "chunk_id": chunk_id,
+                    "finished": True,
+                },
             ),
         )
 

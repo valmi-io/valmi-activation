@@ -125,17 +125,22 @@ class CheckpointHandler(DefaultHandler):
 
         records_delivered = record["state"]["data"]["records_delivered"]
         finished = record["state"]["data"]["finished"]
-        self.engine.connector_state.register_records(records_delivered)
+
+        total_records = 0
+        for k, v in records_delivered.items():
+            total_records += v
+
+        self.engine.connector_state.register_records(total_records)
 
         commit = False
-        if finished or records_delivered % self.engine.connector_state.run_time_args["chunk_size"] == 0:
+        if finished or total_records % self.engine.connector_state.run_time_args["chunk_size"] == 0:
             commit = True
         if commit:
-            self.engine.metric(commit=True)
-            self.engine.connector_state.register_chunk()
+            self.engine.metric_ext(records_delivered, record["state"]["data"]["chunk_id"], commit=True)
+            # self.engine.connector_state.register_chunk()
             self.engine.checkpoint(record)
         else:
-            self.engine.metric(commit=False)
+            self.engine.metric_ext(records_delivered, record["state"]["data"]["chunk_id"], commit=True)
 
         return True
 

@@ -1,11 +1,3 @@
-import logging
-from typing import Any
-
-from fastapi import Depends
-
-from fastapi.routing import APIRouter
-from pydantic import UUID4
-
 """
 Copyright (c) 2023 valmi.io <https://github.com/valmi-io>
 
@@ -30,6 +22,15 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
+
+import logging
+from typing import Any
+
+from fastapi import Depends
+
+from fastapi.routing import APIRouter
+from pydantic import UUID4
+
 from vyper import v
 from api.schemas import MetricCreate, MetricBase, GenericResponse
 from api.services import MetricsService, get_metrics_service

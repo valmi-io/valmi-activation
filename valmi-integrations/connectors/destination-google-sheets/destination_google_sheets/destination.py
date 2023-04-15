@@ -42,6 +42,7 @@ from valmi_protocol import (
     ValmiSink,
     ConfiguredValmiCatalog,
     ConfiguredValmiDestinationCatalog,
+    DestinationSyncMode,
 )
 from valmi_destination import ValmiDestination
 from .run_time_args import RunTimeArgs
@@ -70,6 +71,7 @@ class DestinationGoogleSheets(ValmiDestination):
         # state: Dict[str, any],
     ) -> Iterable[AirbyteMessage]:
         counter = 0
+        chunk_id = 0
         run_time_args = RunTimeArgs.parse_obj(config["run_time_args"] if "run_time_args" in config else {})
 
         """
@@ -100,9 +102,14 @@ class DestinationGoogleSheets(ValmiDestination):
                         type=Type.STATE,
                         state=AirbyteStateMessage(
                             type=AirbyteStateType.STREAM,
-                            data={"records_delivered": counter, "finished": False},
+                            data={
+                                "records_delivered": {DestinationSyncMode.upsert: counter},
+                                "chunk_id": chunk_id,
+                                "finished": False,
+                            },
                         ),
                     )
+                    chunk_id = chunk_id + 1
 
                 if (datetime.now() - now).seconds > 5:
                     logger.info("A log every 5 seconds - is this required??")
@@ -117,12 +124,16 @@ class DestinationGoogleSheets(ValmiDestination):
             type=Type.STATE,
             state=AirbyteStateMessage(
                 type=AirbyteStateType.STREAM,
-                data={"records_delivered": counter, "finished": True},
+                data={
+                    "records_delivered": {DestinationSyncMode.upsert: counter},
+                    "chunk_id": chunk_id,
+                    "finished": True,
+                },
             ),
         )
 
     def discover(self, logger: AirbyteLogger, config: json) -> ValmiDestinationCatalog:
-        sinks = [ValmiSink(name="GoogleSheets", supported_sync_modes=["upsert"], json_schema={})]
+        sinks = [ValmiSink(name="GoogleSheets", supported_sync_modes=[DestinationSyncMode.upsert], json_schema={})]
         return ValmiDestinationCatalog(sinks=sinks)
 
     def check(self, logger: AirbyteLogger, config: Mapping[str, Any]) -> AirbyteConnectionStatus:

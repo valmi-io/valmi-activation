@@ -23,6 +23,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+import copy
 import os
 import uuid
 from pydantic import UUID4
@@ -74,6 +75,9 @@ class NullEngine:
     def metric(self):
         pass
 
+    def metric_ext(self, metric_json, chunk_id, commit=False):
+        pass
+
     def current_run_details(self):
         return {}
 
@@ -110,13 +114,22 @@ class Engine(NullEngine):
         return r.json()
 
     def metric(self, commit=False):
+        self.metric_ext({"success": self.connector_state.records_in_chunk}, commit=commit)
+
+    def metric_ext(self, metric_json, chunk_id, commit=False):
         print("Sending metric")
+        # TODO: remove it. just to make it visible in the UI for now
+        metric_copy = copy.deepcopy(metric_json)
+        if "upsert" in metric_copy:
+            metric_copy["success"] = metric_copy["upsert"]
+            del metric_copy["upsert"]
+
         payload = {
             "sync_id": self.connector_state.run_time_args["sync_id"],
             "run_id": self.connector_state.run_time_args["run_id"],
-            "chunk_id": self.connector_state.num_chunks,
+            "chunk_id": chunk_id,
             "connector_id": CONNECTOR_STRING,
-            "metrics": {"success": self.connector_state.records_in_chunk},
+            "metrics": metric_copy,
             "commit": commit,
         }
 
