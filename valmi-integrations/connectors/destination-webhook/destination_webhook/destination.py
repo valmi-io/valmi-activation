@@ -69,6 +69,10 @@ class DestinationWebhook(ValmiDestination):
         counter_by_type = {}
         chunk_id = 0
 
+        # REORGANIZE THIS - initialising metrics
+        counter_by_type["upsert"] = 0
+        counter_by_type["delete"] = 0
+
         run_time_args = RunTimeArgs.parse_obj(config["run_time_args"] if "run_time_args" in config else {})
 
         http_handler = CustomHttpSink(run_time_args=run_time_args)

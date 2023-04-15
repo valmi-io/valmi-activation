@@ -75,73 +75,84 @@ class Metrics:
             )
 
     def clear_metrics(self, sync_id: UUID4, run_id: UUID4) -> None:
-        self.con.sql(f"DELETE FROM {METRICS_TABLE} WHERE sync_id = '{sync_id}' AND run_id = '{run_id}'")
-        # pass
+        try:
+            self.con.sql(f"DELETE FROM {METRICS_TABLE} WHERE sync_id = '{sync_id}' AND run_id = '{run_id}'")
+        except Exception as e:
+            self.con.rollback()
+            raise e
 
     def get_metrics(self, sync_id: UUID4, run_id: UUID4, ingore_chunk_id: int = None) -> dict[str, dict[str, int]]:
         # get the metrics of the run
         # deduplicate by chunk_id and return
-        ignore_clause = " AND m.chunk_id != %s" % ingore_chunk_id if ingore_chunk_id is not None else ""
-        aggregated_metrics = self.con.sql(
-            f"SELECT deduped_chunks.connector_id AS connector_id,  deduped_chunks.metric_type AS metric_type, SUM(count) as count \
-                FROM {METRICS_TABLE} m2 RIGHT JOIN \
-                        ( SELECT m.connector_id AS connector_id, m.chunk_id AS chunk_id, m.metric_type as metric_type, max(m.created_at) AS created_at \
-                        FROM {METRICS_TABLE} m \
-                        WHERE m.sync_id = '{sync_id}' AND m.run_id = '{run_id}' \
-                            {ignore_clause} \
-                        GROUP BY  m.connector_id, m.chunk_id, m.metric_type ) deduped_chunks \
-                    ON m2.chunk_id = deduped_chunks.chunk_id AND \
-                        m2.created_at = deduped_chunks.created_at AND \
-                        m2.connector_id = deduped_chunks.connector_id AND \
-                        m2.metric_type = deduped_chunks.metric_type \
-                WHERE sync_id = '{sync_id}' AND run_id = '{run_id}' \
-                GROUP BY  deduped_chunks.connector_id, deduped_chunks.metric_type"
-        ).fetchall()
+        try:
+            ignore_clause = " AND m.chunk_id != %s" % ingore_chunk_id if ingore_chunk_id is not None else ""
+            aggregated_metrics = self.con.sql(
+                f"SELECT deduped_chunks.connector_id AS connector_id,  deduped_chunks.metric_type AS metric_type, SUM(count) as count \
+                    FROM {METRICS_TABLE} m2 RIGHT JOIN \
+                            ( SELECT m.connector_id AS connector_id, m.chunk_id AS chunk_id, m.metric_type as metric_type, max(m.created_at) AS created_at \
+                            FROM {METRICS_TABLE} m \
+                            WHERE m.sync_id = '{sync_id}' AND m.run_id = '{run_id}' \
+                                {ignore_clause} \
+                            GROUP BY  m.connector_id, m.chunk_id, m.metric_type ) deduped_chunks \
+                        ON m2.chunk_id = deduped_chunks.chunk_id AND \
+                            m2.created_at = deduped_chunks.created_at AND \
+                            m2.connector_id = deduped_chunks.connector_id AND \
+                            m2.metric_type = deduped_chunks.metric_type \
+                    WHERE sync_id = '{sync_id}' AND run_id = '{run_id}' \
+                    GROUP BY  deduped_chunks.connector_id, deduped_chunks.metric_type"
+            ).fetchall()
 
-        ret_map = {}
-        for x, y, z in aggregated_metrics:
-            # print(x, y, z)
-            metric_map = ret_map.get(x, {})
-            ret_map[x] = metric_map
-            metric_map[y] = z
-        return ret_map
+            ret_map = {}
+            for x, y, z in aggregated_metrics:
+                # print(x, y, z)
+                metric_map = ret_map.get(x, {})
+                ret_map[x] = metric_map
+                metric_map[y] = z
+            return ret_map
+        except Exception as e:
+            self.con.rollback()
+            raise e
 
     def put_metrics(
         self, sync_id: UUID4, connector_id: UUID4, run_id: UUID4, chunk_id: int, metrics: dict[str, int], **kwargs
     ) -> None:
-        """
-        DISABLE AGGREGATION IF IT IS SLOW
-        """
-        # aggregate for every MAX chunks
-        MAX = 10
-        sync_info = self.con.sql(
-            f"SELECT COUNT(*) FROM {METRICS_TABLE} WHERE sync_id = '{sync_id}' \
-                        AND run_id = '{run_id}' AND connector_id= '{connector_id}'"
-        ).fetchone()
-        if (
-            False and sync_info[0] > MAX
-        ):  # TODO: Disabling aggregation until we inject state into connectors, otherwise metrics are counted multiple times when connectors are retried
-            print("AGGREGATING")
-            # aggregate ignoring the latest chunk
-            old_metrics = self.get_metrics(sync_id=sync_id, run_id=run_id, ingore_chunk_id=chunk_id)
-            print("old metrics below")
-            print(old_metrics)
-            for conn, old_metric in old_metrics.items():
-                if len(old_metric.keys()) > 0 and conn == connector_id:
-                    self.con.begin()
-                    self.con.sql(
-                        f"DELETE FROM {METRICS_TABLE} WHERE sync_id = '{sync_id}' \
-                            AND run_id = '{run_id}' AND connector_id= '{connector_id}' AND chunk_id != {chunk_id}"
-                    )
-                    # generate CHUNK_ID
-                    print("inserting magical chunk")
-                    print(old_metric)
-                    self._insert_metrics(sync_id, connector_id, run_id, MAGIC_CHUNK_ID, old_metric)
-                    self.con.commit()
+        try:
+            """
+            DISABLE AGGREGATION IF IT IS SLOW
+            """
+            # aggregate for every MAX chunks
+            MAX = 10
+            sync_info = self.con.sql(
+                f"SELECT COUNT(*) FROM {METRICS_TABLE} WHERE sync_id = '{sync_id}' \
+                            AND run_id = '{run_id}' AND connector_id= '{connector_id}'"
+            ).fetchone()
+            if (
+                False and sync_info[0] > MAX
+            ):  # TODO: Disabling aggregation until we inject state into connectors, otherwise metrics are counted multiple times when connectors are retried
+                print("AGGREGATING")
+                # aggregate ignoring the latest chunk
+                old_metrics = self.get_metrics(sync_id=sync_id, run_id=run_id, ingore_chunk_id=chunk_id)
+                print("old metrics below")
+                print(old_metrics)
+                for conn, old_metric in old_metrics.items():
+                    if len(old_metric.keys()) > 0 and conn == connector_id:
+                        self.con.begin()
+                        self.con.sql(
+                            f"DELETE FROM {METRICS_TABLE} WHERE sync_id = '{sync_id}' \
+                                AND run_id = '{run_id}' AND connector_id= '{connector_id}' AND chunk_id != {chunk_id}"
+                        )
+                        # generate CHUNK_ID
+                        print("inserting magical chunk")
+                        print(old_metric)
+                        self._insert_metrics(sync_id, connector_id, run_id, MAGIC_CHUNK_ID, old_metric)
+                        self.con.commit()
 
-        self.con.begin()
-        self._insert_metrics(sync_id, connector_id, run_id, chunk_id, metrics)
-        self.con.commit()
+            self.con.begin()
+            self._insert_metrics(sync_id, connector_id, run_id, chunk_id, metrics)
+            self.con.commit()
+        except Exception as e:
+            self.con.rollback()
+            raise e
 
     def _insert_metrics(
         self, sync_id: UUID4, connector_id: UUID4, run_id: UUID4, chunk_id: int, metrics: dict[str, int]
