@@ -23,7 +23,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from proc_stdout_event_handlers import (
+from .proc_stdout_event_handlers import (
     Engine,
     StoreWriter,
     StoreReader,

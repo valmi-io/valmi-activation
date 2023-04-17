@@ -27,7 +27,7 @@ import json
 import os
 import io
 import threading
-from proc_stdout_event_handlers import LogHandler, CheckpointHandler, DefaultHandler, Engine, TraceHandler
+from .proc_stdout_event_handlers import LogHandler, CheckpointHandler, DefaultHandler, Engine, TraceHandler
 import logging
 
 handlers = {

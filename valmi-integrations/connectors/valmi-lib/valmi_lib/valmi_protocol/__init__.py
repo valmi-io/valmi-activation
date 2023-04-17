@@ -2,18 +2,24 @@ from .valmi_protocol import (
     ValmiSink,
     ValmiStream,
     ValmiDestinationCatalog,
-    DestinationSyncMode,
     ConfiguredValmiDestinationCatalog,
-    ConfiguredValmiSink,
     ConfiguredValmiCatalog,
+    ConfiguredValmiStream,
+    ConfiguredValmiSink,
+    ValmiCatalog,
+    DestinationSyncMode,
 )
+from .valmi_event import add_event_meta
 
 __all__ = [
     "ValmiSink",
+    "ConfiguredValmiSink",
     "ValmiStream",
+    "ConfiguredValmiStream",
+    "ValmiCatalog",
     "ValmiDestinationCatalog",
     "ConfiguredValmiDestinationCatalog",
-    "DestinationSyncMode",
-    "ConfiguredValmiSink",
     "ConfiguredValmiCatalog",
+    "DestinationSyncMode",
+    "add_event_meta",
 ]

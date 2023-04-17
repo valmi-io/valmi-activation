@@ -1,7 +1,7 @@
 from setuptools import find_packages, setup
 
 MAIN_REQUIREMENTS = [
-    "airbyte-cdk",
+    "valmi_connector_lib==0.1.7",
     "requests",
     "customerio",
 ]

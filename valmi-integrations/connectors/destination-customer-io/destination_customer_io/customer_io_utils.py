@@ -3,7 +3,7 @@ from airbyte_cdk import AirbyteLogger
 import requests
 from customerio import CustomerIO
 from io import StringIO
-from valmi_protocol import ValmiStream, ConfiguredValmiSink
+from valmi_lib.valmi_protocol import ValmiStream, ConfiguredValmiSink
 import json
 from .http_sink import HttpSink
 from .run_time_args import RunTimeArgs

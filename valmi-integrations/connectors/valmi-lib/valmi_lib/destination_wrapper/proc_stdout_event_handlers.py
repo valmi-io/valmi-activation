@@ -27,7 +27,7 @@ import json
 import os
 from os.path import join
 import time
-from engine import NullEngine, ConnectorState, Engine
+from .engine import NullEngine, ConnectorState, Engine
 
 # TODO: Constants - need to become env vars
 MAGIC_NUM = 0x7FFFFFFF

@@ -28,14 +28,14 @@ import os
 import sys
 import subprocess
 import io
-from proc_stdout_handler import ProcStdoutHandlerThread
-from proc_stdout_event_handlers import (
+from .proc_stdout_handler import ProcStdoutHandlerThread
+from .proc_stdout_event_handlers import (
     Engine,
     StoreReader,
     NullEngine,
 )
-from read_handlers import ReadCheckpointHandler, ReadDefaultHandler, ReadLogHandler, ReadRecordHandler
-from proc_stdout_handler import handlers as stdout_handlers
+from .read_handlers import ReadCheckpointHandler, ReadDefaultHandler, ReadLogHandler, ReadRecordHandler
+from .proc_stdout_handler import handlers as stdout_handlers
 
 handlers = {
     "LOG": ReadLogHandler,
