@@ -1,6 +1,5 @@
 *
 !docker-entrypoint.sh
-!source_container_wrapper.py
 !Dockerfile
 !main.py
 !source_postgres
@@ -8,5 +7,3 @@
 !libs
 !profiles_template.jinja
 !valmi_dbt
-!valmi_protocol
-!valmi_destination
