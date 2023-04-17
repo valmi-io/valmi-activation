@@ -1,7 +1,7 @@
 from setuptools import find_packages, setup
 
 MAIN_REQUIREMENTS = [
-    "valmi_connector_lib==0.1.7",
+    "valmi_connector_lib",
     "requests",
     "customerio",
 ]
