@@ -26,7 +26,7 @@ SOFTWARE.
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Union
 
 import requests
-from valmi_protocol import ConfiguredValmiDestinationCatalog
+from valmi_lib.valmi_protocol import ConfiguredValmiDestinationCatalog
 from .run_time_args import RunTimeArgs
 
 from airbyte_cdk.sources.streams.http.http import HttpStream

@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-MAIN_REQUIREMENTS = ["airbyte-cdk", "requests", "flatten-json"]
+MAIN_REQUIREMENTS = ["valmi-connector-lib", "requests", "flatten-json"]
 
 TEST_REQUIREMENTS = ["pytest~=6.2"]
 

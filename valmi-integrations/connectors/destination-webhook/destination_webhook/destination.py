@@ -40,14 +40,14 @@ from airbyte_cdk.models import (
 )
 from airbyte_cdk.models.airbyte_protocol import Status, Type, AirbyteStateType
 from .custom_http_sink import CustomHttpSink
-from valmi_protocol import (
+from valmi_lib.valmi_protocol import (
     ValmiDestinationCatalog,
     ConfiguredValmiDestinationCatalog,
     ConfiguredValmiCatalog,
     ValmiSink,
     DestinationSyncMode,
 )
-from valmi_destination import ValmiDestination
+from valmi_lib.valmi_destination import ValmiDestination
 from .run_time_args import RunTimeArgs
 
 
