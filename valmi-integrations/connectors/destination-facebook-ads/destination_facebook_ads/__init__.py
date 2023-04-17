@@ -3,6 +3,6 @@
 #
 
 
-from .destination import DestinationCustomerIO
+from .destination import DestinationFacebookAds
 
-__all__ = ["DestinationCustomerIO"]
+__all__ = ["DestinationFacebookAds"]

@@ -44,13 +44,10 @@ from valmi_lib.valmi_protocol import (
 from valmi_lib.valmi_destination import ValmiDestination
 from .run_time_args import RunTimeArgs
 
-from customerio import Regions
 from datetime import datetime
 
-from .customer_io_utils import CustomerIOExt, get_region
 
-
-class DestinationCustomerIO(ValmiDestination):
+class DestinationFacebookAds(ValmiDestination):
     def __init__(self):
         super().__init__()
         Destination.VALID_CMDS = {"spec", "check", "discover", "write"}
