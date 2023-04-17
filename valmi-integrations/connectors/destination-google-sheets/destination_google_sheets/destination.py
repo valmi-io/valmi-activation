@@ -37,14 +37,14 @@ from airbyte_cdk.models import (
     AirbyteMessage,
 )
 from airbyte_cdk.models.airbyte_protocol import Status
-from valmi_protocol import (
+from valmi_lib.valmi_protocol import (
     ValmiDestinationCatalog,
     ValmiSink,
     ConfiguredValmiCatalog,
     ConfiguredValmiDestinationCatalog,
     DestinationSyncMode,
 )
-from valmi_destination import ValmiDestination
+from valmi_lib.valmi_destination import ValmiDestination
 from .run_time_args import RunTimeArgs
 
 from google.auth.exceptions import RefreshError

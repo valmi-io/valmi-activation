@@ -1,7 +1,7 @@
 from setuptools import find_packages, setup
 
 MAIN_REQUIREMENTS = [
-    "airbyte-cdk",
+    "valmi_connector_lib",
     "requests",
     "pygsheets==2.0.5",
     "google-auth-oauthlib==0.5.1",

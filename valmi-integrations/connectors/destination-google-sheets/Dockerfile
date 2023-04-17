@@ -30,13 +30,6 @@ RUN apt install bash
 # copy payload code only
 COPY main.py ./
 COPY destination_google_sheets ./destination_google_sheets
-COPY valmi_protocol ./valmi_protocol
-COPY valmi_destination ./valmi_destination
-COPY destination_container_wrapper.py ./
-COPY proc_stdout_handler.py ./
-COPY proc_stdout_event_handlers.py ./
-COPY engine.py ./
-COPY read_handlers.py ./
 COPY docker-entrypoint.sh ./
 RUN chmod +x ./docker-entrypoint.sh
 
