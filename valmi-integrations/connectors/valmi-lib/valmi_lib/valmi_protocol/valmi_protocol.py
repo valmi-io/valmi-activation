@@ -84,6 +84,10 @@ class ValmiDestinationCatalog(AirbyteCatalog):
         extra = Extra.allow
 
     sinks: Optional[List[ValmiSink]]
+    allow_object_creation: bool = Field(..., description="Allow object creation in destination.")
+    object_schema: Dict[str, Any] = Field(..., description="Object creation schema using Json Schema specs.")
+    more: bool = False
+    type: str = Field(..., description="Type of the object.")
 
 
 class ConfiguredValmiDestinationCatalog(BaseModel):
@@ -96,7 +100,7 @@ class ConfiguredValmiDestinationCatalog(BaseModel):
 # TODO: Hack. Think of a nice way
 @optional
 class ValmiStream(AirbyteStream):
-    supported_destinaton_sync_modes: List[DestinationSyncMode] = Field(
+    supported_destination_sync_modes: List[DestinationSyncMode] = Field(
         ..., description="List of destination sync modes supported by this stream.", min_items=1
     )
     pass

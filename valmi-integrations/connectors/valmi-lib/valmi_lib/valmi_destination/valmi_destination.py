@@ -30,7 +30,7 @@ import sys
 from typing import Any, Iterable, List, Mapping
 
 from airbyte_cdk.destinations import Destination
-from airbyte_cdk.models import AirbyteMessage, Type
+from airbyte_cdk.models import AirbyteMessage, Type, AirbyteConnectionStatus, Status
 from abc import abstractmethod
 from valmi_lib.valmi_protocol import ConfiguredValmiDestinationCatalog, ConfiguredValmiCatalog
 from airbyte_cdk import AirbyteLogger
@@ -80,6 +80,16 @@ class ValmiDestination(Destination):
             "--config", type=str, required=True, help="path to the json configuration file"
         )
 
+        # create object
+        create_parser = subparsers.add_parser(
+            "create", help="create an object on the destination", parents=[parent_parser]
+        )
+        required_create_parser = create_parser.add_argument_group("required named arguments")
+        required_create_parser.add_argument("--object", type=str, required=True, help="path to the json object file")
+        required_create_parser.add_argument(
+            "--config", type=str, required=True, help="path to the json configuration file"
+        )
+
         parsed_args = main_parser.parse_args(args)
         cmd = parsed_args.command
         if not cmd:
@@ -107,6 +117,11 @@ class ValmiDestination(Destination):
                 yield msg
             return
 
+        if cmd == "create":
+            for msg in self.create_handler(config, parsed_args):
+                yield msg
+            return
+
         elif cmd == "write":
             # state = self.read_state(parsed_args.state)
 
@@ -120,6 +135,20 @@ class ValmiDestination(Destination):
                 input_stream=wrapped_stdin,
             )
             return
+
+    def create_handler(self, config, parsed_args: argparse.Namespace) -> Iterable[AirbyteMessage]:
+        try:
+            object_schema = self.read_config(config_path=parsed_args.object)
+
+            self.create(logger, config, object_schema)
+            yield AirbyteMessage(
+                type=Type.CONNECTION_STATUS, connectionStatus=AirbyteConnectionStatus(status=Status.SUCCEEDED)
+            )
+        except Exception as err:
+            yield AirbyteMessage(
+                type=Type.CONNECTION_STATUS,
+                connectionStatus=AirbyteConnectionStatus(status=Status.Failed, message=str(err)),
+            )
 
     def discover_handler(self, config, parsed_args: argparse.Namespace) -> Iterable[AirbyteMessage]:
         catalog = self.discover(logger, config)

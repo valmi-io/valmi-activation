@@ -92,7 +92,7 @@ class SourcePostgres(Source):
                 streams.append(
                     ValmiStream(
                         name=str(row),
-                        supported_destinaton_sync_modes=(DestinationSyncMode.upsert, DestinationSyncMode.mirror),
+                        supported_destination_sync_modes=(DestinationSyncMode.upsert, DestinationSyncMode.mirror),
                         supported_sync_modes=(SyncMode.full_refresh, SyncMode.incremental)
                         # json_schema=json_schema,
                     )
