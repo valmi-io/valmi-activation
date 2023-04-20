@@ -132,10 +132,9 @@ class DbtAirbyteAdpater:
     def generate_dummy_project_yml(self, logger: AirbyteLogger):
         template = self.get_jinja_template(logger, "dbt_project.jinja")
 
-        class Args(object):
+        class Args(object):    
             def __getitem__(self, arg):
                 return ""
-
         args = Args()
 
         output = template.render(args=args)

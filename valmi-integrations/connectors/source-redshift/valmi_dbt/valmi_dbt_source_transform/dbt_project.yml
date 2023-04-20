@@ -1,0 +1,44 @@
+name: 'valmi_postgres'
+
+config-version: 2
+version: '0.1'
+
+profile: 'valmi_postgres'
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+test-paths: ["tests"]
+analysis-paths: ["analysis"]
+macro-paths: ["macros"]
+
+target-path: "target"
+clean-targets:
+    - "target"
+    - "dbt_modules"
+    - "logs"
+
+require-dbt-version: [">=1.0.0", "<2.0.0"]
+
+models:
+  valmi_postgres:
+      materialized: table
+      staging:
+        materialized: table
+
+# Define variables here
+vars:
+  source_table: "customer"
+  init: "init"
+  finalized_snapshot:  "finalized_snapshot"
+  stg_snapshot: "stg_snapshot"
+  ignored_snapshot: "ignored_snapshot"
+  transit_snapshot: "transit_snapshot"
+  cleanup_snapshot: "cleanup_snapshot"
+
+  full_refresh: "true"
+  previous_run_status: "success"
+
+  destination_sync_mode: "mirror"
+
+  columns: ["customer_id","email","first_name","activebool","last_update"]
+  id_key: "customer_id" 

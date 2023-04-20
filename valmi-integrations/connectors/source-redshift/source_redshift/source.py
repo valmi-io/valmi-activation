@@ -52,7 +52,7 @@ from fal import FalDbt
 from dbt.contracts.results import RunResultOutput, RunStatus
 
 
-class SourcePostgres(Source):
+class SourceRedshift(Source):
     def initialize(self, logger: AirbyteLogger, config):
         os.environ["DO_NOT_TRACK"] = "True"
         os.environ["FAL_STATS_ENABLED"] = "False"
