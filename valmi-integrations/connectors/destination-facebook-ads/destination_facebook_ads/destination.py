@@ -143,8 +143,8 @@ class DestinationFacebookAds(ValmiDestination):
         # discover the list of available audiences
         # allow to create a custom one
         sinks = [
-            ValmiSink(name="Person", supported_sync_modes=[DestinationSyncMode.upsert], json_schema={}),
-            ValmiSink(name="Device", supported_sync_modes=[DestinationSyncMode.upsert], json_schema={}),
+            ValmiSink(name="aud1", supported_sync_modes=[DestinationSyncMode.upsert], json_schema={}),
+            ValmiSink(name="aud2", supported_sync_modes=[DestinationSyncMode.upsert], json_schema={}),
         ]
         json_schema = {
             "$schema": "http://json-schema.org/draft-07/schema#",
