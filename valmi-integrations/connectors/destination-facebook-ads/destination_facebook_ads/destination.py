@@ -43,13 +43,15 @@ from .run_time_args import RunTimeArgs
 from datetime import datetime
 from facebook_business.api import FacebookAdsApi
 from facebook_business.adobjects.adaccount import AdAccount
-from facebook_business.adobjects.customaudience import CustomAudience
+from facebook_business.adobjects.adaccountuser import AdAccountUser
+
+from .fb_ads_utils import FBAdsUtils
 
 
 class DestinationFacebookAds(ValmiDestination):
     def __init__(self):
         super().__init__()
-        Destination.VALID_CMDS = {"spec", "check", "discover", "write"}
+        Destination.VALID_CMDS = {"spec", "check", "discover", "create", "write"}
 
     def write(
         self,
@@ -61,55 +63,62 @@ class DestinationFacebookAds(ValmiDestination):
         # state: Dict[str, any],
     ) -> Iterable[AirbyteMessage]:
         counter = 0
+        counter_by_type = {}
         chunk_id = 0
         run_time_args = RunTimeArgs.parse_obj(config["run_time_args"] if "run_time_args" in config else {})
 
-        cio = CustomerIOExt(
-            run_time_args,
-            config["tracking_site_id"],
-            config["tracking_api_key"],
-            region=Regions.US
-            if get_region(config["tracking_site_id"], config["tracking_api_key"]).lower() == "us"
-            else Regions.EU,
-            url_prefix="/api/v2",
-        )
+        counter_by_type["upsert"] = 0
+        counter_by_type["delete"] = 0
+
+        fb_utils = FBAdsUtils(config, None)
+
+        # It is assumed and required that all deletes are done before upserts
         for message in input_messages:
             now = datetime.now()
 
             if message.type == Type.RECORD:
                 record = message.record
-                flushed = cio.add_to_queue(
+                flushed = fb_utils.add_to_queue(
                     record.data,
                     configured_stream=configured_catalog.streams[0],
                     sink=configured_destination_catalog.sinks[0],
                 )
 
                 counter = counter + 1
+
+                if message.record.data["_valmi_meta"]["_valmi_sync_op"] not in counter_by_type:
+                    counter_by_type[message.record.data["_valmi_meta"]["_valmi_sync_op"]] = 0
+
+                counter_by_type[message.record.data["_valmi_meta"]["_valmi_sync_op"]] = (
+                    counter_by_type[message.record.data["_valmi_meta"]["_valmi_sync_op"]] + 1
+                )
+
                 if flushed or counter % run_time_args["chunk_size"] == 0:
                     yield AirbyteMessage(
                         type=Type.STATE,
                         state=AirbyteStateMessage(
                             type=AirbyteStateType.STREAM,
                             data={
-                                "records_delivered": {DestinationSyncMode.upsert: counter},
+                                "records_delivered": counter_by_type,
                                 "chunk_id": chunk_id,
                                 "finished": False,
                             },
                         ),
                     )
-                    chunk_id = chunk_id + 1
+                    if counter % run_time_args["chunk_size"] == 0:
+                        chunk_id = chunk_id + 1
 
                 if (datetime.now() - now).seconds > 5:
                     logger.info("A log every 5 seconds - is this required??")
 
-        cio.flush()
+        fb_utils.flush(configured_stream=configured_catalog.streams[0], sink=configured_destination_catalog.sinks[0])
         # Sync completed - final state message
         yield AirbyteMessage(
             type=Type.STATE,
             state=AirbyteStateMessage(
                 type=AirbyteStateType.STREAM,
                 data={
-                    "records_delivered": {DestinationSyncMode.upsert: counter},
+                    "records_delivered": counter_by_type,
                     "chunk_id": chunk_id,
                     "finished": True,
                 },
@@ -122,99 +131,91 @@ class DestinationFacebookAds(ValmiDestination):
         config: json,
         object_spec: json,
     ) -> AirbyteConnectionStatus:
-        fields = []
-        params = {
-            "name": "My new Custom Audience",
-            "subtype": "CUSTOM",
-            "description": "People who purchased on my website",
-            "customer_file_source": "USER_PROVIDED_ONLY",
-        }
-        """
-        print(
-            type(
-                my_account.create_custom_audience(
-                    fields=fields,
-                    params=params,
-                )
-            )
-        )"""
-
-    def discover(self, logger: AirbyteLogger, config: json) -> ValmiDestinationCatalog:
-        # discover the list of available audiences
-        # allow to create a custom one
-        sinks = [
-            ValmiSink(name="aud1", supported_sync_modes=[DestinationSyncMode.upsert], json_schema={}),
-            ValmiSink(name="aud2", supported_sync_modes=[DestinationSyncMode.upsert], json_schema={}),
-        ]
-        json_schema = {
-            "$schema": "http://json-schema.org/draft-07/schema#",
-            "type": "object",
-            "properties": {"audience_name": {"type": "string"}},
-        }
-        return ValmiDestinationCatalog(sinks=sinks, allow_object_creation=True, object_schema=json_schema)
-
-    def check(self, logger: AirbyteLogger, config: Mapping[str, Any]) -> AirbyteConnectionStatus:
         try:
-            my_app_id = "241962301579509"
-            my_app_secret = "1cf83c3613d6c1fecf04f079780caeed"
-            my_access_token = "EAADcED0I4PUBAKEvubsyMM3CQkEBcPGZBY7VztffEfaeZCZCIkdttZBEHaONImNWkEwpkpZAKUVjX4wdZCi5K9bUwyX2Cu6IlnVi7EmE4EUGUZBFCwBughvCdYxQDrW7nBZCZAB8yZAe7NZAZBtVy1L7vJQZBWU3tIvR6NFI81UjRJft8ZBkvPgbEHiVZALrb82blQBcIlfXesCF9Ul3V39CwMRd1NZBBENC03ZB0NaQZD"
-            FacebookAdsApi.init(my_app_id, my_app_secret, my_access_token)
-
-            # print(list(AdAccountUser(fbid="me").get_ad_accounts(fields=["name", "account_id"])))
-            my_account = AdAccount("act_618148706850682")
-            print(my_account.get_custom_audiences(fields=["name", "id"]))
+            FacebookAdsApi.init(config["app_id"], config["app_secret"], config["long_term_acccess_token"])
 
             fields = []
             params = {
-                "name": "My new Custom Audience",
+                "name": f"{object_spec['audience_name']}",
                 "subtype": "CUSTOM",
-                "description": "People who purchased on my website",
+                "description": f"{object_spec['audience_description']}",
                 "customer_file_source": "USER_PROVIDED_ONLY",
             }
-            """
-            print(
-                type(
-                    my_account.create_custom_audience(
-                        fields=fields,
-                        params=params,
+            my_account = AdAccount(config["account"])
+
+            my_account.create_custom_audience(
+                fields=fields,
+                params=params,
+            )
+            return AirbyteConnectionStatus(status=Status.SUCCEEDED)
+        except Exception as err:
+            return AirbyteConnectionStatus(status=Status.FAILED, message=f"An exception occurred: {repr(err)}")
+
+    def discover(self, logger: AirbyteLogger, config: json) -> ValmiDestinationCatalog:
+        fb_utils = FBAdsUtils(config, None)
+
+        if "account" in config:
+            my_account = AdAccount(config["account"])
+            audiences = my_account.get_custom_audiences(fields=["name", "id"])
+
+            sinks = []
+
+            json_schema = fb_utils.get_custom_audience_schema()
+
+            for aud in audiences:
+                sinks.append(
+                    ValmiSink(
+                        name=str(aud["name"]),
+                        id=str(aud["id"]),
+                        supported_destination_sync_modes=(DestinationSyncMode.upsert, DestinationSyncMode.mirror),
+                        json_schema=json_schema,
+                        supported_destination_ids_modes=fb_utils.get_id_keys_with_supported_sync_modes(),
                     )
                 )
-            )"""
-            # Add users
+            json_schema = {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "type": "object",
+                "properties": {"audience_name": {"type": "string"}, "audience_description": {"type": "string"}},
+            }
+            catalog = ValmiDestinationCatalog(sinks=sinks, allow_object_creation=True, object_schema=json_schema)
+            catalog.__setattr__("type", "audience")
+            catalog.__setattr__("more", False)
+            return catalog
 
-            print(
-                CustomAudience("23853634257840489").add_users(
-                    schema=[CustomAudience.Schema.MultiKeySchema.email, CustomAudience.Schema.MultiKeySchema.fn],
-                    users=[["raj@valmi.io", "Raj V"], ["test@valmi.io", "Test V"]],
-                    is_raw=True,
+        else:
+            sinks = []
+
+            json_schema = {
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "type": "object",
+                "properties": {},
+            }
+            accounts = list(AdAccountUser(fbid="me").get_ad_accounts(fields=["name", "account_id"]))
+
+            for row in accounts:
+                sinks.append(
+                    ValmiSink(
+                        name=str(row["name"]),
+                        id=str(row["account_id"]),
+                        supported_destination_sync_modes=(DestinationSyncMode.upsert, DestinationSyncMode.mirror),
+                        # json_schema=json_schema,
+                    )
                 )
-            )
+            catalog = ValmiDestinationCatalog(sinks=sinks, allow_object_creation=False)
+            catalog.__setattr__("type", "account")
+            catalog.__setattr__("more", True)
+            return catalog
 
-            # DEL USERS
-            print(
-                CustomAudience("23853634257840489").remove_users(
-                    schema=[CustomAudience.Schema.MultiKeySchema.email, CustomAudience.Schema.MultiKeySchema.fn],
-                    users=[["raj@valmi.io", "Raj V"], ["test@valmi.io", "Test V"]],
-                    is_raw=True,
-                )
-            )
+    def check(self, logger: AirbyteLogger, config: Mapping[str, Any]) -> AirbyteConnectionStatus:
+        try:
+            FacebookAdsApi.init(config["app_id"], config["app_secret"], config["long_term_acccess_token"])
 
-            # ADD USERS
-            print(
-                CustomAudience("23853634257840489").add_users(
-                    schema=[CustomAudience.Schema.MultiKeySchema.email, CustomAudience.Schema.MultiKeySchema.fn],
-                    users=[["v.rajashekar@gmail.com", "Raj V"]],
-                    is_raw=True,
-                )
-            )
+            # checking by getting list of ad accounts
+            accounts = list(AdAccountUser(fbid="me").get_ad_accounts(fields=["name", "account_id"]))
+            if len(accounts) > 0:
+                return AirbyteConnectionStatus(status=Status.SUCCEEDED)
+            else:
+                raise Exception("No ad accounts found")
 
-            # write facebook marketing api code to add users to custom audience here
-
-            """
-            my_account = AdAccount("act_{{adaccount-id}}")
-            campaigns = my_account.get_campaigns()
-            print(campaigns)
-            """
-            return AirbyteConnectionStatus(status=Status.SUCCEEDED)
         except Exception as err:
             return AirbyteConnectionStatus(status=Status.FAILED, message=f"An exception occurred: {repr(err)}")

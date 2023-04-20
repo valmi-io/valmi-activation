@@ -101,7 +101,8 @@ class DestinationCustomerIO(ValmiDestination):
                             },
                         ),
                     )
-                    chunk_id = chunk_id + 1
+                    if counter % run_time_args["chunk_size"] == 0:
+                        chunk_id = chunk_id + 1
 
                 if (datetime.now() - now).seconds > 5:
                     logger.info("A log every 5 seconds - is this required??")

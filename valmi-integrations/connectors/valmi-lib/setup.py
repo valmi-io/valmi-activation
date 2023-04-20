@@ -12,7 +12,7 @@ TEST_REQUIREMENTS = [
 
 setup(
     name="valmi_connector_lib",
-    version="0.1.8",
+    version="0.1.12",
     description="Connector library for valmi connectors.",
     long_description="Connector library for valmi connectors.",
     author="Rajashekar Varkala @ valmi.io",

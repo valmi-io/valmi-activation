@@ -55,17 +55,30 @@ class DestinationSyncMode(Enum):
     mirror = "mirror"
 
 
+class DestinationIdWithSupportedSyncModes(BaseModel):
+    destination_id: str
+    destination_sync_modes: List[DestinationSyncMode] = Field(
+        ..., description="List of sync modes supported by this id.", min_items=1
+    )
+
+
 class ValmiSink(BaseModel):
     class Config:
         extra = Extra.allow
 
-    supported_sync_modes: List[DestinationSyncMode] = Field(
+    supported_destination_sync_modes: List[DestinationSyncMode] = Field(
         ..., description="List of sync modes supported by this sink.", min_items=1
     )
 
     # SINK object -- Hubspot kind of destinations can populate this - Webhooks are empty
     name: str = Field(..., description="Sink's name.")
+    id: str = Field(..., description="Sink's id.")
+
     json_schema: Optional[Dict[str, Any]] = Field(..., description="Sink schema using Json Schema specs.")
+
+    supported_destination_ids_modes: List[DestinationIdWithSupportedSyncModes] = Field(
+        ..., description="List of supported_destination ids", min_items=1
+    )
 
 
 class ConfiguredValmiSink(BaseModel):
@@ -75,6 +88,7 @@ class ConfiguredValmiSink(BaseModel):
     sink: ValmiSink = None
     destination_sync_mode: DestinationSyncMode
     mapping: Dict[str, Any] = Field(..., description="Create mapping from source to destination fields.")
+    destination_id: str
 
 
 # TODO: Hack. Think of a nice way
