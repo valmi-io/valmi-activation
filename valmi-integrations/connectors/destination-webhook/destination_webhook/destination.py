@@ -139,7 +139,7 @@ class DestinationWebhook(ValmiDestination):
         sinks = [
             ValmiSink(
                 name="Webhook",
-                supported_sync_modes=[DestinationSyncMode.upsert, DestinationSyncMode.mirror],
+                supported_destination_sync_modes=[DestinationSyncMode.upsert, DestinationSyncMode.mirror],
                 json_schema={},
             )
         ]
