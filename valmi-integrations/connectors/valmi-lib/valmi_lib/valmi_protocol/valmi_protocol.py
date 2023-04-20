@@ -79,6 +79,7 @@ class ValmiSink(BaseModel):
     supported_destination_ids_modes: List[DestinationIdWithSupportedSyncModes] = Field(
         ..., description="List of supported_destination ids", min_items=1
     )
+    allow_freeform_fields: bool = Field(..., description="Allow freeform fields in destination.")
 
 
 class ConfiguredValmiSink(BaseModel):

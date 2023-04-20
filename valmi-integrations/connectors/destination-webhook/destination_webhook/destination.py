@@ -136,12 +136,14 @@ class DestinationWebhook(ValmiDestination):
             ),
         )
 
+    # TODO: may not need to do supported_destination_ids_modes , check with UI
     def discover(self, logger: AirbyteLogger, config: json) -> ValmiDestinationCatalog:
         sinks = [
             ValmiSink(
                 name="Webhook",
                 supported_destination_sync_modes=[DestinationSyncMode.upsert, DestinationSyncMode.mirror],
                 json_schema={},
+                allow_freeform_fields=True,
             )
         ]
         return ValmiDestinationCatalog(sinks=sinks)

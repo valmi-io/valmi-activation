@@ -121,10 +121,21 @@ class DestinationCustomerIO(ValmiDestination):
             ),
         )
 
+    # TODO: need to do supported_destination_ids_modes= get_id_keys_with_supported_sync_modes(),
     def discover(self, logger: AirbyteLogger, config: json) -> ValmiDestinationCatalog:
         sinks = [
-            ValmiSink(name="Person", supported_destination_sync_modes=[DestinationSyncMode.upsert], json_schema={}),
-            ValmiSink(name="Device", supported_destination_sync_modes=[DestinationSyncMode.upsert], json_schema={}),
+            ValmiSink(
+                name="Person",
+                supported_destination_sync_modes=[DestinationSyncMode.upsert],
+                json_schema={},
+                allow_freeform_fields=True,
+            ),
+            ValmiSink(
+                name="Device",
+                supported_destination_sync_modes=[DestinationSyncMode.upsert],
+                json_schema={},
+                allow_freeform_fields=True,
+            ),
         ]
         return ValmiDestinationCatalog(sinks=sinks)
 

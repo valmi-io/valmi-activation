@@ -135,7 +135,10 @@ class DestinationGoogleSheets(ValmiDestination):
     def discover(self, logger: AirbyteLogger, config: json) -> ValmiDestinationCatalog:
         sinks = [
             ValmiSink(
-                name="GoogleSheets", supported_destination_sync_modes=[DestinationSyncMode.upsert], json_schema={}
+                name="GoogleSheets",
+                supported_destination_sync_modes=[DestinationSyncMode.upsert],
+                json_schema={},
+                allow_freeform_fields=True,
             )
         ]
         return ValmiDestinationCatalog(sinks=sinks)
