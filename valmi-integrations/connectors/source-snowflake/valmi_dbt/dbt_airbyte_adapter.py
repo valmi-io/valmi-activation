@@ -130,14 +130,13 @@ class DbtAirbyteAdpater:
 
         self.adapter: SQLAdapter = adapters_factory.get_adapter(self.faldbt._config)
 
-        # TODO: WEIRD quoting - should check
         with self.adapter.connection_named("discover-connection"):
             if "namespace" in config:
                 return (
                     False,
                     self.adapter.list_relations(
-                        config["database_to_sync"],
-                        schema=config["namespace"],
+                        self.quote_string(config["database_to_sync"]),
+                        schema=self.quote_string(config["namespace"]),
                     ),
                     "table",
                 )
@@ -268,7 +267,7 @@ class DbtAirbyteAdpater:
         for filename in glob.iglob(self.get_abs_path("valmi_dbt_source_transform/**/*.sql"), recursive=True):
             nosuffix = filename[:-4]
             if not nosuffix.endswith(sync_id):
-                os.rename(filename, nosuffix + "_" + sync_id + ".sql")
+                os.rename(filename, nosuffix + "_" + self.sanitise_uuid(sync_id) + ".sql")
 
     def get_table_name(self, full_path):
         return full_path.split(".")[-1].strip('"')

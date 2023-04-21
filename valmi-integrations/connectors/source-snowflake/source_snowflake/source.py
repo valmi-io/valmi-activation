@@ -158,6 +158,7 @@ class SourceSnowflake(Source):
                     if result.status == RunStatus.Error:
                         error_msg = result.message
                         break
+
             yield AirbyteMessage(
                 type=Type.TRACE,
                 trace=AirbyteTraceMessage(
@@ -189,11 +190,11 @@ class SourceSnowflake(Source):
             adapter_resp, agate_table = self.dbt_adapter.execute_sql(
                 faldbt,
                 "SELECT _valmi_row_num, _valmi_sync_op, {1} \
-                    FROM {{{{ ref('transit_snapshot_{0}') }}}} \
+                    FROM  {{{{ ref('transit_snapshot_{0}') }}}} \
                     WHERE _valmi_row_num > {3} \
                     ORDER BY _valmi_row_num ASC \
                     LIMIT {2};".format(
-                    sync_id, ",".join(columns), chunk_size, last_row_num
+                    self.dbt_adapter.sanitise_uuid(sync_id), ",".join(columns), chunk_size, last_row_num
                 ),
             )
 
@@ -230,7 +231,7 @@ class SourceSnowflake(Source):
     def generate_sync_metrics(self, faldbt, logger, sync_id, catalog) -> Generator[AirbyteMessage, None, None]:
         adapter_resp, agate_table = self.dbt_adapter.execute_sql(
             faldbt,
-            "SELECT * FROM {{{{ ref('sync_metrics_{0}') }}}}".format(sync_id),
+            "SELECT * FROM {{{{ ref('sync_metrics_{0}') }}}}".format(self.dbt_adapter.sanitise_uuid(sync_id)),
         )
 
         for row in agate_table.rows.values():
