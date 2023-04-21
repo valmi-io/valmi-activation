@@ -46,6 +46,7 @@ from valmi_lib.valmi_protocol import (
     ConfiguredValmiCatalog,
     ValmiSink,
     DestinationSyncMode,
+    DestinationIdWithSupportedSyncModes,
 )
 from valmi_lib.valmi_destination import ValmiDestination
 from .run_time_args import RunTimeArgs
@@ -142,6 +143,13 @@ class DestinationWebhook(ValmiDestination):
             ValmiSink(
                 name="Webhook",
                 supported_destination_sync_modes=[DestinationSyncMode.upsert, DestinationSyncMode.mirror],
+                id="_dummy",
+                supported_destination_ids_modes=[
+                    DestinationIdWithSupportedSyncModes(
+                        destination_id="_dummy",
+                        destination_sync_modes=[DestinationSyncMode.upsert, DestinationSyncMode.mirror],
+                    )
+                ],
                 json_schema={},
                 allow_freeform_fields=True,
             )

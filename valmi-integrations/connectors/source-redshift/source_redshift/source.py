@@ -115,7 +115,7 @@ class SourceRedshift(Source):
                     "properties": {},
                 }
                 for column in self.dbt_adapter.get_columns(self.dbt_adapter.adapter, row):
-                    json_schema["properties"][str(column)] = {"type": "{0}".format(str(column))}
+                    json_schema["properties"][column.column] = {"type": "{0}".format(column.dtype)}
 
                 streams.append(
                     ValmiStream(

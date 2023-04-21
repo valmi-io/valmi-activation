@@ -1,0 +1,9 @@
+*
+!docker-entrypoint.sh
+!Dockerfile
+!main.py
+!source_snowflake
+!setup.py
+!libs
+!profiles_template.jinja
+!valmi_dbt

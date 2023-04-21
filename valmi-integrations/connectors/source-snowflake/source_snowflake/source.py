@@ -52,7 +52,7 @@ from fal import FalDbt
 from dbt.contracts.results import RunResultOutput, RunStatus
 
 
-class SourcePostgres(Source):
+class SourceSnowflake(Source):
     def initialize(self, logger: AirbyteLogger, config):
         os.environ["DO_NOT_TRACK"] = "True"
         os.environ["FAL_STATS_ENABLED"] = "False"
@@ -81,7 +81,7 @@ class SourcePostgres(Source):
 
         # TODO: using sequential discover methodology for now.
         logger.debug("Discovering streams...")
-        more, result_streams = self.dbt_adapter.discover_streams(logger=logger, config=config)
+        more, result_streams, type = self.dbt_adapter.discover_streams(logger=logger, config=config)
 
         if more:
             streams = []
@@ -101,7 +101,7 @@ class SourcePostgres(Source):
                     )
                 )
             catalog = ValmiCatalog(streams=streams)
-            catalog.__setattr__("type", "namespace")
+            catalog.__setattr__("type", type)
             catalog.__setattr__("more", more)
             return catalog
         else:
@@ -120,12 +120,13 @@ class SourcePostgres(Source):
                 streams.append(
                     ValmiStream(
                         name=stream_name,
-                        supported_sync_modes=["full_refresh", "incremental"],
+                        supported_destination_sync_modes=(DestinationSyncMode.upsert, DestinationSyncMode.mirror),
+                        supported_sync_modes=(SyncMode.full_refresh, SyncMode.incremental),
                         json_schema=json_schema,
                     )
                 )
             catalog = ValmiCatalog(streams=streams)
-            catalog.__setattr__("type", "table")
+            catalog.__setattr__("type", type)
             catalog.__setattr__("more", more)
             return catalog
 
