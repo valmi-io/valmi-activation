@@ -1,20 +1,17 @@
 {
   "streams": [
     {
-      "id_key": "actor_id",
+      "id_key": "CUSTOMER_ID",
       "stream": {
-        "name": "\"dvdrental\".\"public\".\"actor\"",
+        "name": "\"dvdrental\".\"dvdrental\".\"customer\"",
         "json_schema": {
           "$schema": "http://json-schema.org/draft-07/schema#",
           "properties": {
-            "actor_id": {
-              "type": "integer"
+            "FIRST_NAME": {
+              "type": "VARCHAR"
             },
-            "first_name": {
-              "type": "character varying(45)"
-            },
-            "last_update": {
-              "type": "timestamp without time zone"
+            "CUSTOMER_ID": {
+              "type": "NUMBER"
             }
           }
         },
@@ -23,7 +20,7 @@
           "incremental"
         ]
       },
-      "sync_mode": "full_refresh",
+      "sync_mode": "incremental",
       "destination_sync_mode": "mirror"
     }
   ]

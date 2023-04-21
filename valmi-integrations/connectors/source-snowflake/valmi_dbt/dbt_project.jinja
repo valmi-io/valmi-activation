@@ -26,8 +26,13 @@ models:
         materialized: table
 
 
+quoting:
+  database: false
+  schema: false
+  identifier: true
+
 vars:
-  source_table: "{{args['name']}}"
+  source_table: "\"{{args['name']}}\""
   init: "init_{{args['sync_id']}}"
   finalized_snapshot:  "finalized_snapshot_{{args['sync_id']}}"
   stg_snapshot: "stg_snapshot_{{args['sync_id']}}"

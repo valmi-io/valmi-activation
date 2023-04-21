@@ -200,8 +200,8 @@ class SourceSnowflake(Source):
             for row in agate_table.rows:
                 data: Dict[str, Any] = {}
                 for i in range(len(row)):
-                    if agate_table.column_names[i].startswith("_valmi"):
-                        add_event_meta(data, agate_table.column_names[i], row[i])
+                    if agate_table.column_names[i].lower().startswith("_valmi"):
+                        add_event_meta(data, agate_table.column_names[i].lower(), row[i])
                     else:
                         data[agate_table.column_names[i]] = row[i]
                 last_row_num = row[0]
@@ -241,8 +241,8 @@ class SourceSnowflake(Source):
                     estimate=AirbyteEstimateTraceMessage(
                         name=catalog.streams[0].stream.name,
                         type=EstimateType.STREAM,
-                        row_estimate=row["count"],
-                        row_kind=f'{row["kind"]}$${row["error_code"]}',
+                        row_estimate=row["COUNT(*)"],
+                        row_kind=f'{row["KIND"]}$${row["ERROR_CODE"]}',
                     ),
                     emitted_at=int(datetime.now().timestamp()) * 1000,
                 ),

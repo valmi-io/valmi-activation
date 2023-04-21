@@ -119,20 +119,25 @@ class DbtAirbyteAdpater:
         return dbs
 
     def quote_string(self, s):
-        sanitised_s = s.strip('"')
+        sanitised_s = self.unquote_string(s)
         return f'"{sanitised_s}"'
+
+    def unquote_string(self, s):
+        return s.strip('"')
 
     def discover_streams(self, logger: AirbyteLogger, config):
         self.faldbt = self.get_fal_dbt()
 
         self.adapter: SQLAdapter = adapters_factory.get_adapter(self.faldbt._config)
 
+        # TODO: WEIRD quoting - should check
         with self.adapter.connection_named("discover-connection"):
             if "namespace" in config:
                 return (
                     False,
                     self.adapter.list_relations(
-                        self.quote_string(config["database_to_sync"]), schema=self.quote_string(config["namespace"])
+                        config["database_to_sync"],
+                        schema=config["namespace"],
                     ),
                     "table",
                 )
@@ -176,7 +181,7 @@ class DbtAirbyteAdpater:
 
         col_arr_str = ",".join([f'"{col}"' for col in catalog.streams[0].stream.json_schema["properties"].keys()])
         args = {
-            "sync_id": sync_id,
+            "sync_id": self.sanitise_uuid(sync_id),
             "full_refresh": full_refresh,
             "columns": f"[{col_arr_str}]",
             "id_key": catalog.streams[0].id_key,
@@ -195,8 +200,8 @@ class DbtAirbyteAdpater:
         source = {
             "stream": self.get_table_name(catalog.streams[0].stream.name),
             "schema": self.get_namespace(catalog.streams[0].stream.name),
-            "database": config["database"],
-            "sync_id": sync_id,
+            "database": self.get_database(catalog.streams[0].stream.name),
+            "sync_id": self.sanitise_uuid(sync_id),
         }
 
         output = template.render(source=source)
@@ -270,3 +275,9 @@ class DbtAirbyteAdpater:
 
     def get_namespace(self, full_path):
         return full_path.split(".")[-2].strip('"')
+
+    def get_database(self, full_path):
+        return full_path.split(".")[-3].strip('"')
+
+    def sanitise_uuid(self, uuid):
+        return uuid.replace("-", "_")

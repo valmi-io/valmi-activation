@@ -89,7 +89,7 @@ class ConfiguredValmiSink(BaseModel):
     sink: ValmiSink = None
     destination_sync_mode: DestinationSyncMode
     mapping: Dict[str, Any] = Field(..., description="Create mapping from source to destination fields.")
-    destination_id: str
+    destination_id: Optional[str]
 
 
 # TODO: Hack. Think of a nice way
