@@ -147,7 +147,7 @@ class HubspotClient:
                 ValmiSink(
                     name=f"{obj_name}",
                     id=f"{obj_id}",
-                    supported_destination_sync_modes=[DestinationSyncMode.upsert],
+                    supported_destination_sync_modes=[DestinationSyncMode.upsert, DestinationSyncMode.update],
                     json_schema=json_schema,
                     allow_freeform_fields=False,
                     supported_destination_ids_modes=v["supported_destination_ids_modes"],
