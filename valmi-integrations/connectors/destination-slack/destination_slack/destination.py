@@ -92,7 +92,7 @@ class DestinationSlack(ValmiDestination):
                         state=AirbyteStateMessage(
                             type=AirbyteStateType.STREAM,
                             data={
-                                "records_delivered": {DestinationSyncMode.upsert.value: counter},
+                                "records_delivered": {DestinationSyncMode.append.value: counter},
                                 "chunk_id": chunk_id,
                                 "finished": False,
                             },
