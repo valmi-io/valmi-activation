@@ -3,6 +3,6 @@
 #
 
 
-from .destination import DestinationTemplate
+from .destination import DestinationHubspot
 
-__all__ = ["DestinationTemplate"]
+__all__ = ["DestinationHubspot"]
