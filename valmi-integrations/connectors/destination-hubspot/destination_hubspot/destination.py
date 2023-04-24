@@ -35,13 +35,11 @@ from valmi_lib.valmi_protocol import (
     ValmiDestinationCatalog,
     ConfiguredValmiCatalog,
     ConfiguredValmiDestinationCatalog,
-    DestinationSyncMode,
 )
 from valmi_lib.valmi_destination import ValmiDestination
 from .run_time_args import RunTimeArgs
-
+from .hubspot_utils import HubspotClient
 from datetime import datetime
-from .hubspot_utils import map_data
 
 
 class DestinationHubspot(ValmiDestination):
@@ -61,49 +59,63 @@ class DestinationHubspot(ValmiDestination):
         # Start handling messages
 
         counter = 0
+        counter_by_type = {}
         chunk_id = 0
         run_time_args = RunTimeArgs.parse_obj(config["run_time_args"] if "run_time_args" in config else {})
+
+        counter_by_type["upsert"] = 0
+        counter_by_type["delete"] = 0
+
+        hub_client = HubspotClient(run_time_args=run_time_args)
 
         for message in input_messages:
             now = datetime.now()
 
             if message.type == Type.RECORD:
                 record = message.record
-                mapped_data = map_data(configured_destination_catalog.sinks[0].mapping, record.data)
-
-                ## External api call to send data to destination  . Example below
-                """
-                response = client.chat_postMessage(
-                    channel=configured_destination_catalog.sinks[0].sink.id, text=str(mapped_data)
+                flushed = hub_client.add_to_queue(
+                    record.data,
+                    config,
+                    configured_stream=configured_catalog.streams[0],
+                    sink=configured_destination_catalog.sinks[0],
                 )
-                """
 
                 counter = counter + 1
-                if counter % run_time_args.chunk_size == 0:
+
+                if message.record.data["_valmi_meta"]["_valmi_sync_op"] not in counter_by_type:
+                    counter_by_type[message.record.data["_valmi_meta"]["_valmi_sync_op"]] = 0
+
+                counter_by_type[message.record.data["_valmi_meta"]["_valmi_sync_op"]] = (
+                    counter_by_type[message.record.data["_valmi_meta"]["_valmi_sync_op"]] + 1
+                )
+
+                if flushed or counter % run_time_args.chunk_size == 0:
                     yield AirbyteMessage(
                         type=Type.STATE,
                         state=AirbyteStateMessage(
                             type=AirbyteStateType.STREAM,
                             data={
-                                "records_delivered": {DestinationSyncMode.append.value: counter},
+                                "records_delivered": counter_by_type,
                                 "chunk_id": chunk_id,
                                 "finished": False,
                             },
                         ),
                     )
-                    counter = 0
-                    chunk_id = chunk_id + 1
+                    if counter % run_time_args.chunk_size == 0:
+                        counter_by_type.clear()
+                        chunk_id = chunk_id + 1
 
                 if (datetime.now() - now).seconds > 5:
                     logger.info("A log every 5 seconds - is this required??")
 
+        hub_client.flush(config=config, sink=configured_destination_catalog.sinks[0])
         # Sync completed - final state message
         yield AirbyteMessage(
             type=Type.STATE,
             state=AirbyteStateMessage(
                 type=AirbyteStateType.STREAM,
                 data={
-                    "records_delivered": {DestinationSyncMode.append.value: counter},
+                    "records_delivered": counter_by_type,
                     "chunk_id": chunk_id,
                     "finished": True,
                 },
@@ -111,29 +123,13 @@ class DestinationHubspot(ValmiDestination):
         )
 
     def discover(self, logger: AirbyteLogger, config: json) -> ValmiDestinationCatalog:
-        """
-        client = WebClient(token=config["credentials"]["access_token"])
-        response = client.api_call("conversations.list", params=[])
-        sinks = []
-        for channel in response["channels"]:
-            channel_name = channel["name"]
-            channel_id = channel["id"]
-            sinks.append(
-                ValmiSink(
-                    name=f"{channel_name}",
-                    id=f"{channel_id}",
-                    supported_destination_sync_modes=[DestinationSyncMode.append],
-                    json_schema={},
-                    allow_freeform_fields=True,
-                    supported_destination_ids_modes=None,
-                )
-            )
-        return ValmiDestinationCatalog(sinks=sinks)
-        """
-        pass
+        hub_client = HubspotClient(run_time_args=None)
+        return hub_client.get_sinks(config)
 
     def check(self, logger: AirbyteLogger, config: Mapping[str, Any]) -> AirbyteConnectionStatus:
         try:
+            hub_client = HubspotClient(run_time_args=None)
+            hub_client.get_access_token(config=config)
             return AirbyteConnectionStatus(status=Status.SUCCEEDED)
         except Exception as err:
             return AirbyteConnectionStatus(status=Status.FAILED, message=f"An exception occurred: {repr(err)}")

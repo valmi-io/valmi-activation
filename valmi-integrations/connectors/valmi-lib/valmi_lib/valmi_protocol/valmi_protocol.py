@@ -54,6 +54,8 @@ class DestinationSyncMode(Enum):
     upsert = "upsert"
     mirror = "mirror"
     append = "append"
+    update = "update"
+    create = "create"
 
 
 class DestinationIdWithSupportedSyncModes(BaseModel):

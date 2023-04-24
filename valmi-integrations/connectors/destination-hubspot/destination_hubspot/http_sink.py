@@ -18,9 +18,9 @@ class HttpSink(HttpStream):
     def max_retries(self) -> Union[int, None]:
         return self.run_time_args.max_retries
 
-    def send(self, method, url, data, headers, auth):
+    def send(self, method, url, data, json, headers, auth):
         s = Session()
-        req = Request(method, url, data=data, headers=headers, auth=auth)
+        req = Request(method, url, data=data, json=json, headers=headers, auth=auth)
         prepped = s.prepare_request(req)
         self._send_request(prepped, request_kwargs={"timeout": self.run_time_args.http_timeout})
 

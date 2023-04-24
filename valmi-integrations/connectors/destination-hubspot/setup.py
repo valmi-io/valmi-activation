@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-MAIN_REQUIREMENTS = ["valmi_connector_lib", "requests", "hubspot-api-client"]
+MAIN_REQUIREMENTS = ["valmi_connector_lib", "requests", "hubspot-api-client", "tenacity"]
 
 TEST_REQUIREMENTS = ["pytest~=6.2"]
 

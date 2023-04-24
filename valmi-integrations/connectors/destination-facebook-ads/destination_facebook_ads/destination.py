@@ -106,6 +106,7 @@ class DestinationFacebookAds(ValmiDestination):
                         ),
                     )
                     if counter % run_time_args["chunk_size"] == 0:
+                        counter_by_type.clear()
                         chunk_id = chunk_id + 1
 
                 if (datetime.now() - now).seconds > 5:
