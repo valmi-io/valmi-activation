@@ -1,7 +1,7 @@
 from typing import Any, Dict
 
 
-def map_data(self, mapping: Dict[str, str], data: Dict[str, Any]):
+def map_data(mapping: Dict[str, str], data: Dict[str, Any]):
     mapped_data = {}
     if "_valmi_meta" in data:
         mapped_data["_valmi_meta"] = data["_valmi_meta"]

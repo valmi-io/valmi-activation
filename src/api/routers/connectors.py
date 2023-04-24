@@ -109,7 +109,7 @@ async def discover(connector_type: str, config: ConnectorConfig) -> str:
     lines = []
     args = shlex.split(
         "docker run --network host \
-            --rm -v /tmp/shared_dir/{0}:/secrets/config.json \
+            -v /tmp/shared_dir/{0}:/secrets/config.json \
                 {1}:{2} discover --config /secrets/config.json".format(
             newid, config.docker_image, config.docker_tag
         )

@@ -64,13 +64,9 @@ class DestinationSlack(ValmiDestination):
         # Invite  bot this to the selected channel
         client = WebClient(token=config["credentials"]["access_token"])
 
-        response = client.conversations_join(channel=configured_destination_catalog.sinks[0].id)
+        response = client.conversations_join(channel=configured_destination_catalog.sinks[0].sink.id)
         if not response["ok"]:
             raise Exception(response["message"]["error"])
-
-        response = client.chat_postMessage(
-            channel="#engg", text="@channel I am test message from valmi.io reverse ETL Slack Destination"
-        )
 
         # Start handling messages
 
@@ -86,24 +82,24 @@ class DestinationSlack(ValmiDestination):
                 mapped_data = map_data(configured_destination_catalog.sinks[0].mapping, record.data)
 
                 response = client.chat_postMessage(
-                    channel=configured_destination_catalog.sinks[0].id, text=str(mapped_data)
+                    channel=configured_destination_catalog.sinks[0].sink.id, text=str(mapped_data)
                 )
 
                 counter = counter + 1
-                if counter % run_time_args["chunk_size"] == 0:
+                if counter % run_time_args.chunk_size == 0:
                     yield AirbyteMessage(
                         type=Type.STATE,
                         state=AirbyteStateMessage(
                             type=AirbyteStateType.STREAM,
                             data={
-                                "records_delivered": {DestinationSyncMode.upsert: counter},
+                                "records_delivered": {DestinationSyncMode.upsert.value: counter},
                                 "chunk_id": chunk_id,
                                 "finished": False,
                             },
                         ),
                     )
-                    if counter % run_time_args["chunk_size"] == 0:
-                        chunk_id = chunk_id + 1
+                    counter = 0
+                    chunk_id = chunk_id + 1
 
                 if (datetime.now() - now).seconds > 5:
                     logger.info("A log every 5 seconds - is this required??")
@@ -117,7 +113,7 @@ class DestinationSlack(ValmiDestination):
             state=AirbyteStateMessage(
                 type=AirbyteStateType.STREAM,
                 data={
-                    "records_delivered": {DestinationSyncMode.upsert: counter},
+                    "records_delivered": {DestinationSyncMode.upsert.value: counter},
                     "chunk_id": chunk_id,
                     "finished": True,
                 },
