@@ -118,14 +118,18 @@ class Engine(NullEngine):
 
     def metric_ext(self, metric_json, chunk_id, commit=False):
         print("Sending metric")
-        # TODO: remove it. just to make it visible in the UI for now
+        # TODO: remove the following code. just to make it visible in the UI for now
         metric_copy = copy.deepcopy(metric_json)
-        if "upsert" in metric_copy:
-            metric_copy["success"] = metric_copy["upsert"]
-            del metric_copy["upsert"]
-        elif "append" in metric_copy:
-            metric_copy["success"] = metric_copy["append"]
-            del metric_copy["append"]
+        keys_list = list(metric_copy.keys())
+        for key in keys_list:
+            if key in [
+                "upsert",
+                "append",
+                "create",
+                "update",
+            ]:
+                metric_copy["success"] = metric_copy[key]
+                del metric_copy[key]
 
         payload = {
             "sync_id": self.connector_state.run_time_args["sync_id"],
