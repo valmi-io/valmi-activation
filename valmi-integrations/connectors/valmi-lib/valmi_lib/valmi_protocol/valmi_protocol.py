@@ -53,6 +53,7 @@ def optional(*fields):
 class DestinationSyncMode(Enum):
     upsert = "upsert"
     mirror = "mirror"
+    append = "append"
 
 
 class DestinationIdWithSupportedSyncModes(BaseModel):

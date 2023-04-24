@@ -113,7 +113,7 @@ class DestinationSlack(ValmiDestination):
             state=AirbyteStateMessage(
                 type=AirbyteStateType.STREAM,
                 data={
-                    "records_delivered": {DestinationSyncMode.upsert.value: counter},
+                    "records_delivered": {DestinationSyncMode.append.value: counter},
                     "chunk_id": chunk_id,
                     "finished": True,
                 },
@@ -131,7 +131,7 @@ class DestinationSlack(ValmiDestination):
                 ValmiSink(
                     name=f"{channel_name}",
                     id=f"{channel_id}",
-                    supported_destination_sync_modes=[DestinationSyncMode.upsert],
+                    supported_destination_sync_modes=[DestinationSyncMode.append],
                     json_schema={},
                     allow_freeform_fields=True,
                     supported_destination_ids_modes=None,

@@ -123,6 +123,9 @@ class Engine(NullEngine):
         if "upsert" in metric_copy:
             metric_copy["success"] = metric_copy["upsert"]
             del metric_copy["upsert"]
+        elif "append" in metric_copy:
+            metric_copy["success"] = metric_copy["append"]
+            del metric_copy["append"]
 
         payload = {
             "sync_id": self.connector_state.run_time_args["sync_id"],
