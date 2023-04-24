@@ -76,8 +76,8 @@ class ValmiSink(BaseModel):
 
     json_schema: Optional[Dict[str, Any]] = Field(..., description="Sink schema using Json Schema specs.")
 
-    supported_destination_ids_modes: List[DestinationIdWithSupportedSyncModes] = Field(
-        ..., description="List of supported_destination ids", min_items=1
+    supported_destination_ids_modes: Optional[List[DestinationIdWithSupportedSyncModes]] = Field(
+        ..., description="List of supported_destination ids", min_items=0
     )
     allow_freeform_fields: bool = Field(..., description="Allow freeform fields in destination.")
 

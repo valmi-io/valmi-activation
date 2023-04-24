@@ -37,7 +37,7 @@
       }
     }
   },
-  "authProvider":"facebook_ads",
+  "authProvider":"facebook$$ads",
   "authSpecification": {
     "auth_type": "oauth2.0",
     "oauth2Specification": {

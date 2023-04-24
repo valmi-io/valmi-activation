@@ -1,7 +1,7 @@
 """
 Copyright (c) 2023 valmi.io <https://github.com/valmi-io>
 
-Created Date: Wednesday, March 8th 2023, 11:38:42 am
+Created Date: Monday, April 24th 2023, 7:51:41 am
 Author: Rajashekar Varkala @ valmi.io
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -23,17 +23,15 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+
 import json
+import time
 from typing import Any, Iterable, Mapping
 
 from airbyte_cdk import AirbyteLogger
 from airbyte_cdk.destinations import Destination
-from airbyte_cdk.models import (
-    AirbyteConnectionStatus,
-    AirbyteStateMessage,
-    AirbyteMessage,
-)
-from airbyte_cdk.models.airbyte_protocol import Status, Type, AirbyteStateType
+from airbyte_cdk.models import AirbyteConnectionStatus, AirbyteStateMessage, AirbyteMessage, Status
+from airbyte_cdk.models.airbyte_protocol import Type, AirbyteStateType
 from valmi_lib.valmi_protocol import (
     ValmiDestinationCatalog,
     ValmiSink,
@@ -45,6 +43,8 @@ from valmi_lib.valmi_destination import ValmiDestination
 from .run_time_args import RunTimeArgs
 
 from datetime import datetime
+from slack_sdk import WebClient
+from .slack_utils import map_data
 
 
 class DestinationSlack(ValmiDestination):
@@ -61,32 +61,36 @@ class DestinationSlack(ValmiDestination):
         input_messages: Iterable[AirbyteMessage],
         # state: Dict[str, any],
     ) -> Iterable[AirbyteMessage]:
+        # Invite  bot this to the selected channel
+        client = WebClient(token=config["credentials"]["access_token"])
+
+        response = client.conversations_join(channel=configured_destination_catalog.sinks[0].id)
+        if not response["ok"]:
+            raise Exception(response["message"]["error"])
+
+        response = client.chat_postMessage(
+            channel="#engg", text="@channel I am test message from valmi.io reverse ETL Slack Destination"
+        )
+
+        # Start handling messages
+
         counter = 0
         chunk_id = 0
         run_time_args = RunTimeArgs.parse_obj(config["run_time_args"] if "run_time_args" in config else {})
 
-        cio = CustomerIOExt(
-            run_time_args,
-            config["tracking_site_id"],
-            config["tracking_api_key"],
-            region=Regions.US
-            if get_region(config["tracking_site_id"], config["tracking_api_key"]).lower() == "us"
-            else Regions.EU,
-            url_prefix="/api/v2",
-        )
         for message in input_messages:
             now = datetime.now()
 
             if message.type == Type.RECORD:
                 record = message.record
-                flushed = cio.add_to_queue(
-                    record.data,
-                    configured_stream=configured_catalog.streams[0],
-                    sink=configured_destination_catalog.sinks[0],
+                mapped_data = map_data(configured_destination_catalog.sinks[0].mapping, record.data)
+
+                response = client.chat_postMessage(
+                    channel=configured_destination_catalog.sinks[0].id, text=str(mapped_data)
                 )
 
                 counter = counter + 1
-                if flushed or counter % run_time_args["chunk_size"] == 0:
+                if counter % run_time_args["chunk_size"] == 0:
                     yield AirbyteMessage(
                         type=Type.STATE,
                         state=AirbyteStateMessage(
@@ -104,7 +108,9 @@ class DestinationSlack(ValmiDestination):
                 if (datetime.now() - now).seconds > 5:
                     logger.info("A log every 5 seconds - is this required??")
 
-        cio.flush()
+                # slack lets 1 message per second
+                time.sleep(1)
+
         # Sync completed - final state message
         yield AirbyteMessage(
             type=Type.STATE,
@@ -118,22 +124,23 @@ class DestinationSlack(ValmiDestination):
             ),
         )
 
-    # TODO: need to do supported_destination_ids_modes= get_id_keys_with_supported_sync_modes(),
     def discover(self, logger: AirbyteLogger, config: json) -> ValmiDestinationCatalog:
-        sinks = [
-            ValmiSink(
-                name="Person",
-                supported_destination_sync_modes=[DestinationSyncMode.upsert],
-                json_schema={},
-                allow_freeform_fields=True,
-            ),
-            ValmiSink(
-                name="Device",
-                supported_destination_sync_modes=[DestinationSyncMode.upsert],
-                json_schema={},
-                allow_freeform_fields=True,
-            ),
-        ]
+        client = WebClient(token=config["credentials"]["access_token"])
+        response = client.api_call("conversations.list", params=[])
+        sinks = []
+        for channel in response["channels"]:
+            channel_name = channel["name"]
+            channel_id = channel["id"]
+            sinks.append(
+                ValmiSink(
+                    name=f"{channel_name}",
+                    id=f"{channel_id}",
+                    supported_destination_sync_modes=[DestinationSyncMode.upsert],
+                    json_schema={},
+                    allow_freeform_fields=True,
+                    supported_destination_ids_modes=None,
+                )
+            )
         return ValmiDestinationCatalog(sinks=sinks)
 
     def check(self, logger: AirbyteLogger, config: Mapping[str, Any]) -> AirbyteConnectionStatus:

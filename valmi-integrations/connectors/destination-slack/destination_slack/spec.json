@@ -1,33 +1,51 @@
-{
+{ 
+  "documentationUrl": "https://docs.valmi.io/integrations/destinations/slack",
   "connectionSpecification": {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "title": "Destination Google Sheets",
+    "title": "Destination Slack",
     "type": "object",
+    "required": [ "credentials"],
     "additionalProperties": false,
-    "required": [
-      "tracking_site_id",
-      "app_api_key",
-      "tracking_api_key"
-    ],
-    "properties": {
-      "tracking_site_id": {
-        "title": "Site ID",
-        "type": "string",
-        "description": "The Site ID for the tracking API",
-        "airbyte_secret": true
-      },
-      "tracking_api_key": {
-        "title": "Tracking API key",
-        "type": "string",
-        "description": "The Api key for the tracking API",
-        "airbyte_secret": true
-      },
-      "app_api_key": {
-        "title": "App Api key",
-        "type": "string",
-        "description": "The App Api key for the data API",
-        "airbyte_secret": true
+    "properties": { 
+      "credentials": {
+        "type": "object",
+        "title": "Authentication via Slack (OAuth)",
+        "description": "Slack Credentials for connecting to Slack Channels.",
+        "required": ["bot_user_id","client_id", "client_secret", "access_token"],
+        "properties": {
+          "bot_user_id": {
+            "title": "Bot User ID",
+            "type": "string",
+            "description": "The Bot User ID of your Slack developer application.",
+            "airbyte_secret": true
+          },
+          "client_id": {
+            "title": "Client ID",
+            "type": "string",
+            "description": "The Client ID of your Slack developer application.",
+            "airbyte_secret": true
+          },
+          "client_secret": {
+            "title": "Client Secret",
+            "type": "string",
+            "description": "The Client Secret of your Slack developer application.",
+            "airbyte_secret": true
+          },
+          "access_token": {
+            "title": "Access Token",
+            "type": "string",
+            "description": "The bot access token obtained from OAuth.",
+            "airbyte_secret": true
+          } 
+        }
       }
+    }
+  },
+  "authProvider":"slack",
+  "authSpecification": {
+    "auth_type": "oauth2.0",
+    "oauth2Specification": {
+      "rootObject": ["credentials"]
     }
   }
 }
