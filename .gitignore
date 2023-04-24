@@ -204,3 +204,4 @@ valmi-integrations/connectors/source-snowflake/valmi_dbt/valmi_dbt_source_transf
 valmi-integrations/connectors/source-snowflake/valmi_dbt/valmi_dbt_source_transform/models/transit/sync_metrics.sql
 valmi-integrations/connectors/source-snowflake/valmi_dbt/valmi_dbt_source_transform/models/transit/transit_snapshot.sql
 valmi-integrations/connectors/destination-slack/secrets/.config.json
+valmi-integrations/connectors/destination-template/secrets/.config.json
