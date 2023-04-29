@@ -136,9 +136,11 @@ class DestinationGoogleSheets(ValmiDestination):
         sinks = [
             ValmiSink(
                 name="GoogleSheets",
+                id="GoogleSheets",
                 supported_destination_sync_modes=[DestinationSyncMode.upsert],
                 json_schema={},
                 allow_freeform_fields=True,
+                supported_destination_ids_modes=None,
             )
         ]
         return ValmiDestinationCatalog(sinks=sinks)
