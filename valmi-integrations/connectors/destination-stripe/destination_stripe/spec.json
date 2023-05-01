@@ -1,17 +1,20 @@
-{ 
+{
   "documentationUrl": "https://docs.valmi.io/integrations/destinations/stripe",
   "connectionSpecification": {
     "$schema": "http://json-schema.org/draft-07/schema#",
     "title": "Destination Stripe",
     "type": "object",
-    "required": [ "api_key"],
+    "required": [
+      "api_key"
+    ],
     "additionalProperties": false,
-    "properties": { 
+    "properties": {
       "api_key": {
         "title": "API Key",
         "type": "string",
         "description": "The Stripe API key to access the stripe object.",
         "airbyte_secret": true
       }
+    }
   }
 }
