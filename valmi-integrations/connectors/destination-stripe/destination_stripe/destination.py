@@ -36,12 +36,15 @@ from valmi_lib.valmi_protocol import (
     ConfiguredValmiCatalog,
     ConfiguredValmiDestinationCatalog,
     DestinationSyncMode,
+    DestinationIdWithSupportedSyncModes,
+    ValmiSink,
 )
 from valmi_lib.valmi_destination import ValmiDestination
 from .run_time_args import RunTimeArgs
 
 from datetime import datetime
-from .slack_utils import map_data
+from .stripe_utils import StripeUtils
+import stripe
 
 
 class DestinationStripe(ValmiDestination):
@@ -61,38 +64,50 @@ class DestinationStripe(ValmiDestination):
         # Start handling messages
 
         counter = 0
+        counter_by_type = {}
         chunk_id = 0
         run_time_args = RunTimeArgs.parse_obj(config["run_time_args"] if "run_time_args" in config else {})
+
+        counter_by_type["upsert"] = 0
+        counter_by_type["update"] = 0
+
+        stripe_utils = StripeUtils(run_time_args=run_time_args)
 
         for message in input_messages:
             now = datetime.now()
 
             if message.type == Type.RECORD:
                 record = message.record
-                mapped_data = map_data(configured_destination_catalog.sinks[0].mapping, record.data)
 
-                ## External api call to send data to destination  . Example below
-                """
-                response = client.chat_postMessage(
-                    channel=configured_destination_catalog.sinks[0].sink.id, text=str(mapped_data)
-                )
-                """
+                if message.record.data["_valmi_meta"]["_valmi_sync_op"] == "upsert":
+                    stripe_utils.upsert(record)
+                elif message.record.data["_valmi_meta"]["_valmi_sync_op"] == "update":
+                    stripe_utils.update(record)
 
                 counter = counter + 1
-                if counter % run_time_args.chunk_size == 0:
+
+                if message.record.data["_valmi_meta"]["_valmi_sync_op"] not in counter_by_type:
+                    counter_by_type[message.record.data["_valmi_meta"]["_valmi_sync_op"]] = 0
+
+                counter_by_type[message.record.data["_valmi_meta"]["_valmi_sync_op"]] = (
+                    counter_by_type[message.record.data["_valmi_meta"]["_valmi_sync_op"]] + 1
+                )
+
+                if counter % run_time_args["chunk_size"] == 0:
                     yield AirbyteMessage(
                         type=Type.STATE,
                         state=AirbyteStateMessage(
                             type=AirbyteStateType.STREAM,
                             data={
-                                "records_delivered": {DestinationSyncMode.append.value: counter},
+                                "records_delivered": counter_by_type,
                                 "chunk_id": chunk_id,
                                 "finished": False,
                             },
                         ),
                     )
-                    counter = 0
-                    chunk_id = chunk_id + 1
+                    if counter % run_time_args["chunk_size"] == 0:
+                        counter_by_type.clear()
+                        chunk_id = chunk_id + 1
 
                 if (datetime.now() - now).seconds > 5:
                     logger.info("A log every 5 seconds - is this required??")
@@ -103,7 +118,7 @@ class DestinationStripe(ValmiDestination):
             state=AirbyteStateMessage(
                 type=AirbyteStateType.STREAM,
                 data={
-                    "records_delivered": {DestinationSyncMode.append.value: counter},
+                    "records_delivered": counter_by_type,
                     "chunk_id": chunk_id,
                     "finished": True,
                 },
@@ -111,29 +126,28 @@ class DestinationStripe(ValmiDestination):
         )
 
     def discover(self, logger: AirbyteLogger, config: json) -> ValmiDestinationCatalog:
-        """
-        client = WebClient(token=config["credentials"]["access_token"])
-        response = client.api_call("conversations.list", params=[])
         sinks = []
-        for channel in response["channels"]:
-            channel_name = channel["name"]
-            channel_id = channel["id"]
-            sinks.append(
-                ValmiSink(
-                    name=f"{channel_name}",
-                    id=f"{channel_id}",
-                    supported_destination_sync_modes=[DestinationSyncMode.append],
-                    json_schema={},
-                    allow_freeform_fields=True,
-                    supported_destination_ids_modes=None,
-                )
+        sinks.append(
+            ValmiSink(
+                name="Customer",
+                id="Customer",
+                supported_destination_sync_modes=[DestinationSyncMode.upsert, DestinationSyncMode.update],
+                json_schema={},
+                allow_freeform_fields=True,
+                supported_destination_ids_modes=[
+                    DestinationIdWithSupportedSyncModes(
+                        destination_id="email",
+                        destination_sync_modes=[DestinationSyncMode.upsert, DestinationSyncMode.update],
+                    )
+                ],
             )
+        )
         return ValmiDestinationCatalog(sinks=sinks)
-        """
-        pass
 
     def check(self, logger: AirbyteLogger, config: Mapping[str, Any]) -> AirbyteConnectionStatus:
         try:
+            stripe.api_key = config["api_key"]
+            value = stripe.Balance.retrieve()
             return AirbyteConnectionStatus(status=Status.SUCCEEDED)
         except Exception as err:
             return AirbyteConnectionStatus(status=Status.FAILED, message=f"An exception occurred: {repr(err)}")

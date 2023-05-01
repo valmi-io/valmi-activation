@@ -12,7 +12,7 @@
 
             "console": "integratedTerminal",
             "justMyCode": true,
-            "args" :["check", "--config", "secrets/config.json"],
+            "args" :["check", "--config", "secrets/.config.json"],
         }
     ]
 }
