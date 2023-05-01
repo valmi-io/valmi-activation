@@ -44,7 +44,7 @@ from datetime import datetime
 from .slack_utils import map_data
 
 
-class DestinationSlack(ValmiDestination):
+class DestinationTemplate(ValmiDestination):
     def __init__(self):
         super().__init__()
         Destination.VALID_CMDS = {"spec", "check", "discover", "write"}

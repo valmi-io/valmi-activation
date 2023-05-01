@@ -1,8 +1,8 @@
 { 
-  "documentationUrl": "https://docs.valmi.io/integrations/destinations/slack",
+  "documentationUrl": "https://docs.valmi.io/integrations/destinations/template",
   "connectionSpecification": {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "title": "Destination Slack",
+    "title": "Destination Template",
     "type": "object",
     "required": [ "credentials"],
     "additionalProperties": false,
