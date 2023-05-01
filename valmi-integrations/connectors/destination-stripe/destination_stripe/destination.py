@@ -52,6 +52,7 @@ class DestinationStripe(ValmiDestination):
         super().__init__()
         Destination.VALID_CMDS = {"spec", "check", "discover", "write"}
 
+    # TODO: finalise upsert and update methods
     def write(
         self,
         logger: AirbyteLogger,
@@ -125,6 +126,7 @@ class DestinationStripe(ValmiDestination):
             ),
         )
 
+    # TODO:  list available keys
     def discover(self, logger: AirbyteLogger, config: json) -> ValmiDestinationCatalog:
         sinks = []
         sinks.append(
