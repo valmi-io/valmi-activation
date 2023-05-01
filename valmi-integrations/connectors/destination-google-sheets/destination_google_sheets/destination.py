@@ -103,7 +103,7 @@ class DestinationGoogleSheets(ValmiDestination):
                         state=AirbyteStateMessage(
                             type=AirbyteStateType.STREAM,
                             data={
-                                "records_delivered": {DestinationSyncMode.upsert: counter},
+                                "records_delivered": {DestinationSyncMode.upsert.value: counter},
                                 "chunk_id": chunk_id,
                                 "finished": False,
                             },
@@ -125,7 +125,7 @@ class DestinationGoogleSheets(ValmiDestination):
             state=AirbyteStateMessage(
                 type=AirbyteStateType.STREAM,
                 data={
-                    "records_delivered": {DestinationSyncMode.upsert: counter},
+                    "records_delivered": {DestinationSyncMode.upsert.value: counter},
                     "chunk_id": chunk_id,
                     "finished": True,
                 },
