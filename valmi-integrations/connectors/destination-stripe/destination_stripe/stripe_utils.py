@@ -1,3 +1,4 @@
+import json
 from typing import Any, Dict, Union
 from airbyte_cdk import AirbyteLogger
 from valmi_lib.valmi_protocol import ValmiStream, ConfiguredValmiSink
@@ -15,9 +16,9 @@ class StripeUtils:
 
     def make_customer_object(self, data, configured_stream: ValmiStream, sink: ConfiguredValmiSink):
         obj = {}
-        obj["type"] = "person"
-        obj["action"] = "identify"
-        obj["identifiers"] = {"id": str(data[configured_stream.id_key])}  # TODO: take the id type from UI
+        obj["object"] = "customer"
+        # obj["id"] = {"id": str(data[configured_stream.id_key])} # We are using only email for the id  # TODO: take the id type from UI
+        obj["email"] = {"email": data[configured_stream.id_key]}
         mapped_data = self.map_data(sink.mapping, data)
         obj["attributes"] = mapped_data
         return obj
@@ -47,8 +48,11 @@ class StripeUtils:
         backoff_handler = default_backoff_handler(max_tries=max_tries, factor=self.retry_factor)
         return backoff_handler(user_backoff_handler)(request_obj)
 
-    def upsert(self, record):
-        self.make_request(record)
+    def upsert(self, record, configured_stream: ValmiStream, sink: ConfiguredValmiSink):
+        self.logger.debug(json.dumps(self.make_customer_object(record.data, configured_stream, sink)))
+        # self.make_request(record)
 
-    def update(self, record):
-        self.make_request(record)
+    def update(self, record, configured_stream: ValmiStream, sink: ConfiguredValmiSink):
+        self.logger.debug(json.dumps(self.make_customer_object(record.data, configured_stream, sink)))
+
+        # self.make_request(record)

@@ -93,7 +93,7 @@ class DestinationFacebookAds(ValmiDestination):
                     counter_by_type[message.record.data["_valmi_meta"]["_valmi_sync_op"]] + 1
                 )
 
-                if flushed or counter % run_time_args["chunk_size"] == 0:
+                if flushed or counter % run_time_args.chunk_size == 0:
                     yield AirbyteMessage(
                         type=Type.STATE,
                         state=AirbyteStateMessage(
@@ -105,7 +105,7 @@ class DestinationFacebookAds(ValmiDestination):
                             },
                         ),
                     )
-                    if counter % run_time_args["chunk_size"] == 0:
+                    if counter % run_time_args.chunk_size == 0:
                         counter_by_type.clear()
                         chunk_id = chunk_id + 1
 

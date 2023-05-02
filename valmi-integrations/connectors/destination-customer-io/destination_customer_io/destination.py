@@ -89,7 +89,7 @@ class DestinationCustomerIO(ValmiDestination):
                 )
 
                 counter = counter + 1
-                if flushed or counter % run_time_args["chunk_size"] == 0:
+                if flushed or counter % run_time_args.chunk_size == 0:
                     yield AirbyteMessage(
                         type=Type.STATE,
                         state=AirbyteStateMessage(
@@ -101,7 +101,7 @@ class DestinationCustomerIO(ValmiDestination):
                             },
                         ),
                     )
-                    if counter % run_time_args["chunk_size"] == 0:
+                    if counter % run_time_args.chunk_size == 0:
                         chunk_id = chunk_id + 1
 
                 if (datetime.now() - now).seconds > 5:

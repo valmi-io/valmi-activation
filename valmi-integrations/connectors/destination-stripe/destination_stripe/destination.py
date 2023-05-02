@@ -81,9 +81,17 @@ class DestinationStripe(ValmiDestination):
                 record = message.record
 
                 if message.record.data["_valmi_meta"]["_valmi_sync_op"] == "upsert":
-                    stripe_utils.upsert(record)
+                    stripe_utils.upsert(
+                        record,
+                        configured_stream=configured_catalog.streams[0],
+                        sink=configured_destination_catalog.sinks[0],
+                    )
                 elif message.record.data["_valmi_meta"]["_valmi_sync_op"] == "update":
-                    stripe_utils.update(record)
+                    stripe_utils.update(
+                        record,
+                        configured_stream=configured_catalog.streams[0],
+                        sink=configured_destination_catalog.sinks[0],
+                    )
 
                 counter = counter + 1
 
@@ -94,7 +102,7 @@ class DestinationStripe(ValmiDestination):
                     counter_by_type[message.record.data["_valmi_meta"]["_valmi_sync_op"]] + 1
                 )
 
-                if counter % run_time_args["chunk_size"] == 0:
+                if counter % run_time_args.chunk_size == 0:
                     yield AirbyteMessage(
                         type=Type.STATE,
                         state=AirbyteStateMessage(
@@ -106,7 +114,7 @@ class DestinationStripe(ValmiDestination):
                             },
                         ),
                     )
-                    if counter % run_time_args["chunk_size"] == 0:
+                    if counter % run_time_args.chunk_size == 0:
                         counter_by_type.clear()
                         chunk_id = chunk_id + 1
 
@@ -126,7 +134,6 @@ class DestinationStripe(ValmiDestination):
             ),
         )
 
-    # TODO:  list available keys
     def discover(self, logger: AirbyteLogger, config: json) -> ValmiDestinationCatalog:
         sinks = []
         sinks.append(
@@ -134,7 +141,39 @@ class DestinationStripe(ValmiDestination):
                 name="Customer",
                 id="Customer",
                 supported_destination_sync_modes=[DestinationSyncMode.upsert, DestinationSyncMode.update],
-                json_schema={},
+                json_schema={
+                    "$schema": "http://json-schema.org/draft-07/schema#",
+                    "type": "object",
+                    "properties": {
+                        "id": {"type": "string"},
+                        "address": {"type": "object"},
+                        "description": {"type": "string"},
+                        "email": {"type": "string"},
+                        "metadata": {"type": "object"},
+                        "name": {"type": "string"},
+                        "phone": {"type": "string"},
+                        "shipping": {"type": "object"},
+                        "balance": {"type": "integer"},
+                        "cash_balance": {"type": "object"},
+                        "created": {"type": "timestamp"},
+                        "currency": {"type": "string"},
+                        "default_source": {"type": "string"},
+                        "delinquent": {"type": "bool"},
+                        "discount": {"type": "object"},
+                        "invoice_credit_balance": {"type": "object"},
+                        "invoice_prefix": {"type": "string"},
+                        "invoice_settings": {"type": "object"},
+                        "livemode": {"type": "boolean"},
+                        "next_invoice_sequence": {"type": "integer"},
+                        "preferred_locales": {"type": "list"},
+                        "sources": {"type": "list"},
+                        "subscriptions": {"type": "list"},
+                        "tax": {"type": "object"},
+                        "tax_exempt": {"type": "string"},
+                        "tax_ids": {"type": "list"},
+                        "test_clock": {"type": "string"},
+                    },
+                },
                 allow_freeform_fields=True,
                 supported_destination_ids_modes=[
                     DestinationIdWithSupportedSyncModes(
