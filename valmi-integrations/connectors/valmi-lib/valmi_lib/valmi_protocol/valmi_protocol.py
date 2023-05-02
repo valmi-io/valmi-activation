@@ -58,11 +58,15 @@ class DestinationSyncMode(Enum):
     create = "create"
 
 
-class DestinationIdWithSupportedSyncModes(BaseModel):
-    destination_id: str
-    destination_sync_modes: List[DestinationSyncMode] = Field(
-        ..., description="List of sync modes supported by this id.", min_items=1
+class FieldCatalog(BaseModel):
+    class Config:
+        extra = Extra.allow
+
+    json_schema: Optional[Dict[str, Any]] = Field(..., description="Sink schema using Json Schema specs.")
+    supported_destination_ids: Optional[List[str]] = Field(
+        ..., description="List of supported_destination ids", min_items=0
     )
+    allow_freeform_fields: bool = Field(..., description="Allow freeform fields in destination.")
 
 
 class ValmiSink(BaseModel):
@@ -73,16 +77,10 @@ class ValmiSink(BaseModel):
         ..., description="List of sync modes supported by this sink.", min_items=1
     )
 
-    # SINK object -- Hubspot kind of destinations can populate this - Webhooks are empty
     name: str = Field(..., description="Sink's name.")
     id: str = Field(..., description="Sink's id.")
 
-    json_schema: Optional[Dict[str, Any]] = Field(..., description="Sink schema using Json Schema specs.")
-
-    supported_destination_ids_modes: Optional[List[DestinationIdWithSupportedSyncModes]] = Field(
-        ..., description="List of supported_destination ids", min_items=0
-    )
-    allow_freeform_fields: bool = Field(..., description="Allow freeform fields in destination.")
+    field_catalog: Dict[str, FieldCatalog] = Field(..., description="Sink Fields mapped by Destination Sync Mode")
 
 
 class ConfiguredValmiSink(BaseModel):

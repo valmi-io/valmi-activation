@@ -1,7 +1,7 @@
 """
 Copyright (c) 2023 valmi.io <https://github.com/valmi-io>
 
-Created Date: Monday, April 24th 2023, 7:51:41 am
+Created Date: Monday, May 1st 2023, 12:30:00 pm
 Author: Rajashekar Varkala @ valmi.io
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -23,21 +23,20 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-
 import json
 from typing import Any, Iterable, Mapping
 
 from airbyte_cdk import AirbyteLogger
 from airbyte_cdk.destinations import Destination
-from airbyte_cdk.models import AirbyteConnectionStatus, AirbyteStateMessage, AirbyteMessage, Status
+from airbyte_cdk.models import AirbyteStateMessage, AirbyteMessage, Status, AirbyteConnectionStatus
 from airbyte_cdk.models.airbyte_protocol import Type, AirbyteStateType
 from valmi_lib.valmi_protocol import (
     ValmiDestinationCatalog,
     ConfiguredValmiCatalog,
     ConfiguredValmiDestinationCatalog,
     DestinationSyncMode,
-    DestinationIdWithSupportedSyncModes,
     ValmiSink,
+    FieldCatalog,
 )
 from valmi_lib.valmi_destination import ValmiDestination
 from .run_time_args import RunTimeArgs
@@ -73,6 +72,8 @@ class DestinationStripe(ValmiDestination):
         counter_by_type["update"] = 0
 
         stripe_utils = StripeUtils(run_time_args=run_time_args)
+        # Inititalise API key
+        stripe.api_key = config["api_key"]
 
         for message in input_messages:
             now = datetime.now()
@@ -141,46 +142,66 @@ class DestinationStripe(ValmiDestination):
                 name="Customer",
                 id="Customer",
                 supported_destination_sync_modes=[DestinationSyncMode.upsert, DestinationSyncMode.update],
-                json_schema={
-                    "$schema": "http://json-schema.org/draft-07/schema#",
-                    "type": "object",
-                    "properties": {
-                        "id": {"type": "string"},
-                        "address": {"type": "object"},
-                        "description": {"type": "string"},
-                        "email": {"type": "string"},
-                        "metadata": {"type": "object"},
-                        "name": {"type": "string"},
-                        "phone": {"type": "string"},
-                        "shipping": {"type": "object"},
-                        "balance": {"type": "integer"},
-                        "cash_balance": {"type": "object"},
-                        "created": {"type": "timestamp"},
-                        "currency": {"type": "string"},
-                        "default_source": {"type": "string"},
-                        "delinquent": {"type": "bool"},
-                        "discount": {"type": "object"},
-                        "invoice_credit_balance": {"type": "object"},
-                        "invoice_prefix": {"type": "string"},
-                        "invoice_settings": {"type": "object"},
-                        "livemode": {"type": "boolean"},
-                        "next_invoice_sequence": {"type": "integer"},
-                        "preferred_locales": {"type": "list"},
-                        "sources": {"type": "list"},
-                        "subscriptions": {"type": "list"},
-                        "tax": {"type": "object"},
-                        "tax_exempt": {"type": "string"},
-                        "tax_ids": {"type": "list"},
-                        "test_clock": {"type": "string"},
-                    },
+                field_catalog={
+                    DestinationSyncMode.upsert: FieldCatalog(
+                        json_schema={
+                            "$schema": "http://json-schema.org/draft-07/schema#",
+                            "type": "object",
+                            "properties": {
+                                "address": {"type": "object"},
+                                "description": {"type": "string"},
+                                "email": {"type": "string"},
+                                "metadata": {"type": "object"},
+                                "name": {"type": "string"},
+                                "phone": {"type": "string"},
+                                "shipping": {"type": "object"},
+                                "balance": {"type": "integer"},
+                                "cash_balance": {"type": "object"},
+                                "coupon": {"type": "object"},
+                                "invoice_prefix": {"type": "string"},
+                                "invoice_settings": {"type": "object"},
+                                "next_invoice_sequence": {"type": "integer"},
+                                "preferred_locales": {"type": "list"},
+                                "source": {"type": "object"},
+                                "tax": {"type": "object"},
+                                "tax_exempt": {"type": "string"},
+                                "tax_ids": {"type": "list"},
+                                "test_clock": {"type": "string"},
+                            },
+                        },
+                        allow_freeform_fields=True,
+                        supported_destination_ids=["email"],
+                    ),
+                    DestinationSyncMode.update: FieldCatalog(
+                        json_schema={
+                            "$schema": "http://json-schema.org/draft-07/schema#",
+                            "type": "object",
+                            "properties": {
+                                "address": {"type": "object"},
+                                "description": {"type": "string"},
+                                "email": {"type": "string"},
+                                "metadata": {"type": "object"},
+                                "name": {"type": "string"},
+                                "phone": {"type": "string"},
+                                "shipping": {"type": "object"},
+                                "payment_method": {"type": "string"},
+                                "balance": {"type": "integer"},
+                                "cash_balance": {"type": "object"},
+                                "coupon": {"type": "object"},
+                                "default_source": {"type": "object"},
+                                "invoice_prefix": {"type": "string"},
+                                "invoice_settings": {"type": "object"},
+                                "next_invoice_sequence": {"type": "integer"},
+                                "preferred_locales": {"type": "list"},
+                                "source": {"type": "object"},
+                                "tax": {"type": "object"},
+                                "tax_exempt": {"type": "string"},
+                            },
+                        },
+                        allow_freeform_fields=True,
+                        supported_destination_ids=["email"],
+                    ),
                 },
-                allow_freeform_fields=True,
-                supported_destination_ids_modes=[
-                    DestinationIdWithSupportedSyncModes(
-                        destination_id="email",
-                        destination_sync_modes=[DestinationSyncMode.upsert, DestinationSyncMode.update],
-                    )
-                ],
             )
         )
         return ValmiDestinationCatalog(sinks=sinks)
