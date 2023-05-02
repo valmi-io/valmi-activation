@@ -103,7 +103,7 @@ class DestinationGoogleSheets(ValmiDestination):
                         state=AirbyteStateMessage(
                             type=AirbyteStateType.STREAM,
                             data={
-                                "records_delivered": {DestinationSyncMode.upsert: counter},
+                                "records_delivered": {DestinationSyncMode.upsert.value: counter},
                                 "chunk_id": chunk_id,
                                 "finished": False,
                             },
@@ -125,7 +125,7 @@ class DestinationGoogleSheets(ValmiDestination):
             state=AirbyteStateMessage(
                 type=AirbyteStateType.STREAM,
                 data={
-                    "records_delivered": {DestinationSyncMode.upsert: counter},
+                    "records_delivered": {DestinationSyncMode.upsert.value: counter},
                     "chunk_id": chunk_id,
                     "finished": True,
                 },
@@ -136,9 +136,11 @@ class DestinationGoogleSheets(ValmiDestination):
         sinks = [
             ValmiSink(
                 name="GoogleSheets",
+                id="GoogleSheets",
                 supported_destination_sync_modes=[DestinationSyncMode.upsert],
                 json_schema={},
                 allow_freeform_fields=True,
+                supported_destination_ids_modes=None,
             )
         ]
         return ValmiDestinationCatalog(sinks=sinks)

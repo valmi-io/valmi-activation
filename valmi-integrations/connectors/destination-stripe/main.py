@@ -5,7 +5,7 @@
 
 import sys
 
-from destination_template import DestinationTemplate
+from destination_stripe import DestinationStripe
 
 if __name__ == "__main__":
-    DestinationTemplate().run(sys.argv[1:])
+    DestinationStripe().run(sys.argv[1:])
