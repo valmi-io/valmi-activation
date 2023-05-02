@@ -71,9 +71,7 @@ class DestinationStripe(ValmiDestination):
         counter_by_type["upsert"] = 0
         counter_by_type["update"] = 0
 
-        stripe_utils = StripeUtils(run_time_args=run_time_args)
-        # Inititalise API key
-        stripe.api_key = config["api_key"]
+        stripe_utils = StripeUtils(config=config, run_time_args=run_time_args)
 
         for message in input_messages:
             now = datetime.now()
@@ -143,7 +141,7 @@ class DestinationStripe(ValmiDestination):
                 id="Customer",
                 supported_destination_sync_modes=[DestinationSyncMode.upsert, DestinationSyncMode.update],
                 field_catalog={
-                    DestinationSyncMode.upsert: FieldCatalog(
+                    DestinationSyncMode.upsert.value: FieldCatalog(
                         json_schema={
                             "$schema": "http://json-schema.org/draft-07/schema#",
                             "type": "object",
@@ -172,7 +170,7 @@ class DestinationStripe(ValmiDestination):
                         allow_freeform_fields=True,
                         supported_destination_ids=["email"],
                     ),
-                    DestinationSyncMode.update: FieldCatalog(
+                    DestinationSyncMode.update.value: FieldCatalog(
                         json_schema={
                             "$schema": "http://json-schema.org/draft-07/schema#",
                             "type": "object",
