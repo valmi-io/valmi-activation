@@ -14,13 +14,6 @@
         "title": "URL",
         "description": "Webhook URL"
       },
-      "headers": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        },
-        "description": "Headers to be added to the http request. eg: Authorization: Bearer <token>"
-      },
       "method": {
         "type": "string",
         "enum": [

@@ -27,7 +27,8 @@ SOFTWARE.
 from datetime import datetime
 import json
 from typing import Any, Iterable, Mapping
-
+import socket
+from contextlib import closing
 from airbyte_cdk import AirbyteLogger
 from airbyte_cdk.destinations import Destination
 from airbyte_cdk.models import (
@@ -46,10 +47,11 @@ from valmi_lib.valmi_protocol import (
     ConfiguredValmiCatalog,
     ValmiSink,
     DestinationSyncMode,
-    DestinationIdWithSupportedSyncModes,
+    FieldCatalog,
 )
 from valmi_lib.valmi_destination import ValmiDestination
 from .run_time_args import RunTimeArgs
+from urllib.parse import urlparse
 
 
 class DestinationWebhook(ValmiDestination):
@@ -139,26 +141,35 @@ class DestinationWebhook(ValmiDestination):
 
     # TODO: may not need to do supported_destination_ids_modes , check with UI
     def discover(self, logger: AirbyteLogger, config: json) -> ValmiDestinationCatalog:
-        sinks = [
+        sinks = []
+        sinks.append(
             ValmiSink(
                 name="Webhook",
-                supported_destination_sync_modes=[DestinationSyncMode.upsert, DestinationSyncMode.mirror],
-                id="_dummy",
-                supported_destination_ids_modes=[
-                    DestinationIdWithSupportedSyncModes(
-                        destination_id="_dummy",
-                        destination_sync_modes=[DestinationSyncMode.upsert, DestinationSyncMode.mirror],
-                    )
+                id="Webhook",
+                supported_destination_sync_modes=[
+                    DestinationSyncMode.upsert,
+                    DestinationSyncMode.mirror,
+                    DestinationSyncMode.append,
+                    DestinationSyncMode.update,
+                    DestinationSyncMode.create,
                 ],
-                json_schema={},
-                allow_freeform_fields=True,
+                field_catalog={
+                    DestinationSyncMode.append.value: FieldCatalog(
+                        json_schema={
+                            "$schema": "http://json-schema.org/draft-07/schema#",
+                            "type": "object",
+                            "properties": {},
+                        },
+                        allow_freeform_fields=True,
+                        supported_destination_ids=[],
+                    )
+                },
             )
-        ]
+        )
         return ValmiDestinationCatalog(sinks=sinks)
 
     def check(self, logger: AirbyteLogger, config: Mapping[str, Any]) -> AirbyteConnectionStatus:
         try:
-            # TODO: What checks make sense for a webhook?
             if not (config["url"].startswith("http://") or config["url"].startswith("https://")):
                 raise Exception("invalid url")
             if "headers" in config:
@@ -167,7 +178,15 @@ class DestinationWebhook(ValmiDestination):
                     if len(kvpair) < 2 or len(kvpair[0].strip()) == 0 or len(kvpair[1].strip()) == 0:
                         raise Exception("invalid header - should be of form <key>: <val>")
 
-            # config['method'] validity check already happens in spec verification
-            return AirbyteConnectionStatus(status=Status.SUCCEEDED)
+            # TODO: What checks make sense for a webhook? Currently just checking for port open
+            url = config["url"]
+            parsed = urlparse(url)
+            scheme = parsed.scheme if parsed.scheme else "http"
+            port = parsed.port if parsed.port else 80 if scheme == "http" else 443
+            with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as sock:
+                if sock.connect_ex((parsed.hostname, port)) == 0:
+                    return AirbyteConnectionStatus(status=Status.SUCCEEDED)
+                else:
+                    return AirbyteConnectionStatus(status=Status.FAILED, message=f"Port {port} is not open")
         except Exception as e:
             return AirbyteConnectionStatus(status=Status.FAILED, message=f"An exception occurred: {repr(e)}")
