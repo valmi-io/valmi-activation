@@ -87,7 +87,7 @@ class CustomHttpSink(HttpStream):
         else:
             raise UnsupportedMethodException("Method not supported - not one of GET or POST")
 
-    def map_data(self, mapping: Dict[str, str], data: Dict[str, Any]):
+    def map_data(self, mapping: list[Dict[str, str]], data: Dict[str, Any]):
         mapped_data = {}
         if "_valmi_meta" in data:
             mapped_data["_valmi_meta"] = data["_valmi_meta"]

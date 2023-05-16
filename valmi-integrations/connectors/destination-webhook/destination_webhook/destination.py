@@ -142,6 +142,15 @@ class DestinationWebhook(ValmiDestination):
     # TODO: may not need to do supported_destination_ids_modes , check with UI
     def discover(self, logger: AirbyteLogger, config: json) -> ValmiDestinationCatalog:
         sinks = []
+        basic_field_catalog = FieldCatalog(
+            json_schema={
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "type": "object",
+                "properties": {},
+            },
+            allow_freeform_fields=True,
+            supported_destination_ids=[],
+        )
         sinks.append(
             ValmiSink(
                 name="Webhook",
@@ -154,15 +163,11 @@ class DestinationWebhook(ValmiDestination):
                     DestinationSyncMode.create,
                 ],
                 field_catalog={
-                    DestinationSyncMode.append.value: FieldCatalog(
-                        json_schema={
-                            "$schema": "http://json-schema.org/draft-07/schema#",
-                            "type": "object",
-                            "properties": {},
-                        },
-                        allow_freeform_fields=True,
-                        supported_destination_ids=[],
-                    )
+                    DestinationSyncMode.append.value: basic_field_catalog,
+                    DestinationSyncMode.mirror.value: basic_field_catalog,
+                    DestinationSyncMode.append.value: basic_field_catalog,
+                    DestinationSyncMode.update.value: basic_field_catalog,
+                    DestinationSyncMode.create.value: basic_field_catalog,
                 },
             )
         )
