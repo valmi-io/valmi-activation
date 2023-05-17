@@ -24,7 +24,7 @@ SOFTWARE.
 """
 
 
-from datetime import datetime
+from collections import namedtuple
 import json
 from typing import Any, Iterable, Mapping
 import socket
@@ -34,12 +34,8 @@ from airbyte_cdk.destinations import Destination
 from airbyte_cdk.models import (
     AirbyteConnectionStatus,
     AirbyteMessage,
-    AirbyteTraceMessage,
-    AirbyteStateMessage,
-    TraceType,
-    AirbyteErrorTraceMessage,
 )
-from airbyte_cdk.models.airbyte_protocol import Status, Type, AirbyteStateType
+from airbyte_cdk.models.airbyte_protocol import Status
 from .custom_http_sink import CustomHttpSink
 from valmi_lib.valmi_protocol import (
     ValmiDestinationCatalog,
@@ -49,9 +45,33 @@ from valmi_lib.valmi_protocol import (
     DestinationSyncMode,
     FieldCatalog,
 )
+from valmi_lib.destination_wrapper.destination_write_wrapper import DestinationWriteWrapper
 from valmi_lib.valmi_destination import ValmiDestination
-from .run_time_args import RunTimeArgs
 from urllib.parse import urlparse
+
+
+class WebhookWriter(DestinationWriteWrapper):
+    def initialise_message_handling(self):
+        self.http_handler = CustomHttpSink(run_time_args=self.run_time_args)
+
+    def handle_message(
+        self,
+        msg,
+        counter,
+    ):
+        ret_tuple = namedtuple("MessageHandleData", ["flushed"])
+        self.http_handler.handle(
+            self.config,
+            self.configured_destination_catalog,
+            msg.record.data,
+            counter,
+            run_time_args=self.run_time_args,
+        )
+        ret_tuple(flushed=True)
+        return ret_tuple
+
+    def finalise_message_handling(self):
+        pass
 
 
 class DestinationWebhook(ValmiDestination):
@@ -68,78 +88,9 @@ class DestinationWebhook(ValmiDestination):
         input_messages: Iterable[AirbyteMessage],
         # state: Dict[str, any],
     ) -> Iterable[AirbyteMessage]:
-        counter = 0
-        counter_by_type = {}
-        chunk_id = 0
+        webhook_writer = WebhookWriter(logger, config, configured_catalog, configured_destination_catalog, None)
+        return webhook_writer.start_message_handling(input_messages)
 
-        # REORGANIZE THIS - initialising metrics
-        counter_by_type["upsert"] = 0
-        counter_by_type["delete"] = 0
-
-        run_time_args = RunTimeArgs.parse_obj(config["run_time_args"] if "run_time_args" in config else {})
-
-        http_handler = CustomHttpSink(run_time_args=run_time_args)
-        for msg in input_messages:
-            now = datetime.now()
-            if msg.type == Type.RECORD:
-                try:
-                    http_handler.handle(
-                        config, configured_destination_catalog, msg.record.data, counter, run_time_args=run_time_args
-                    )
-
-                except Exception as e:
-                    yield AirbyteMessage(
-                        type=Type.TRACE,
-                        trace=AirbyteTraceMessage(
-                            type=TraceType.ERROR,
-                            error=AirbyteErrorTraceMessage(message=str(e)),
-                            emitted_at=int(datetime.now().timestamp()) * 1000,
-                        ),
-                    )
-                    return
-
-                counter = counter + 1
-
-                if msg.record.data["_valmi_meta"]["_valmi_sync_op"] not in counter_by_type:
-                    counter_by_type[msg.record.data["_valmi_meta"]["_valmi_sync_op"]] = 0
-
-                counter_by_type[msg.record.data["_valmi_meta"]["_valmi_sync_op"]] = (
-                    counter_by_type[msg.record.data["_valmi_meta"]["_valmi_sync_op"]] + 1
-                )
-
-                if counter % run_time_args.records_per_metric == 0 or counter % run_time_args.chunk_size == 0:
-                    yield AirbyteMessage(
-                        type=Type.STATE,
-                        state=AirbyteStateMessage(
-                            type=AirbyteStateType.STREAM,
-                            data={
-                                "records_delivered": counter_by_type,
-                                "chunk_id": chunk_id,
-                                "finished": False,
-                            },
-                        ),
-                    )
-                    if counter % run_time_args.chunk_size == 0:
-                        counter_by_type.clear()
-                        chunk_id = chunk_id + 1
-
-                if (datetime.now() - now).seconds > 5:
-                    logger.info("A log every 5 seconds - is this required??")
-
-        # Sync completed - final state message
-        yield AirbyteMessage(
-            type=Type.STATE,
-            state=AirbyteStateMessage(
-                type=AirbyteStateType.STREAM,
-                data={
-                    "records_delivered": counter_by_type,
-                    "chunk_id": chunk_id,
-                    "finished": True,
-                },
-            ),
-        )
-
-    # TODO: may not need to do supported_destination_ids_modes , check with UI
     def discover(self, logger: AirbyteLogger, config: json) -> ValmiDestinationCatalog:
         sinks = []
         basic_field_catalog = FieldCatalog(
