@@ -59,7 +59,7 @@ class WebhookWriter(DestinationWriteWrapper):
         msg,
         counter,
     ):
-        ret_tuple = namedtuple("MessageHandleData", ["flushed"])
+        handler_response = namedtuple("MessageHandleData", ["flushed"])
         self.http_handler.handle(
             self.config,
             self.configured_destination_catalog,
@@ -67,8 +67,7 @@ class WebhookWriter(DestinationWriteWrapper):
             counter,
             run_time_args=self.run_time_args,
         )
-        ret_tuple(flushed=True)
-        return ret_tuple
+        return handler_response(flushed=True)
 
     def finalise_message_handling(self):
         pass
