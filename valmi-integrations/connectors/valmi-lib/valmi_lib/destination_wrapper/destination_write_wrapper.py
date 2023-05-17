@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from datetime import datetime
 from typing import Any, Dict, Iterable, Mapping
 from airbyte_cdk import AirbyteLogger
@@ -54,12 +54,11 @@ class DestinationWriteWrapper:
 
         self.initialise_message_handling()
         for msg in input_messages:
-            print(msg)
             now = datetime.now()
             if msg.type == Type.RECORD:
-                flushed = False
+                handler_response = namedtuple("MessageHandleData", ["flushed"])
                 try:
-                    flushed, _ = self.handle_message(msg, counter)
+                    handler_response = self.handle_message(msg, counter)
                 except Exception as e:
                     yield AirbyteMessage(
                         type=Type.TRACE,
@@ -76,10 +75,10 @@ class DestinationWriteWrapper:
                 counter_by_type[sync_op] = counter_by_type[sync_op] + 1
 
                 commit_state = False
-                if flushed:
+                if handler_response.flushed:
                     commit_state = True
 
-                if flushed or counter % run_time_args.chunk_size == 0:
+                if handler_response.flushed or counter % run_time_args.chunk_size == 0:
                     yield AirbyteMessage(
                         type=Type.STATE,
                         state=AirbyteStateMessage(
