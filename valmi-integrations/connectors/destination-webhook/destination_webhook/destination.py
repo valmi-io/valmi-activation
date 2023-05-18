@@ -37,7 +37,7 @@ from airbyte_cdk.models import (
 )
 from airbyte_cdk.models.airbyte_protocol import Status
 from .custom_http_sink import CustomHttpSink
-from valmi_lib.valmi_protocol import (
+from valmi_connector_lib.valmi_protocol import (
     ValmiDestinationCatalog,
     ConfiguredValmiDestinationCatalog,
     ConfiguredValmiCatalog,
@@ -45,8 +45,8 @@ from valmi_lib.valmi_protocol import (
     DestinationSyncMode,
     FieldCatalog,
 )
-from valmi_lib.destination_wrapper.destination_write_wrapper import DestinationWriteWrapper
-from valmi_lib.valmi_destination import ValmiDestination
+from valmi_connector_lib.destination_wrapper.destination_write_wrapper import DestinationWriteWrapper
+from valmi_connector_lib.valmi_destination import ValmiDestination
 from urllib.parse import urlparse
 
 
