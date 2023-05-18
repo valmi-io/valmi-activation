@@ -75,9 +75,9 @@ class GoogleSheets:
 
         for i, row_value in enumerate(pk_col_values, 2):
             if row_value not in rows_unique_values:
-                rows_unique_values[row_value] = None
+                rows_unique_values[row_value] = i
             else:
-                rows_to_delete.append(i)
+                rows_to_delete.append(rows_unique_values[row_value])
 
         # reverse the order of the list
         rows_to_delete.reverse()
