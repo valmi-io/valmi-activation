@@ -48,6 +48,8 @@ class GoogleSheetsWriter(WriteBufferMixin):
         ):
             self.write_from_queue(stream_name)
             self.clear_buffer(stream_name)
+            return True
+        return False
 
     def write_from_queue(self, stream_name: str):
         """

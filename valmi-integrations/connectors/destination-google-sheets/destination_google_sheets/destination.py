@@ -30,22 +30,19 @@ from typing import Any, Iterable, Mapping
 from airbyte_cdk import AirbyteLogger
 from airbyte_cdk.destinations import Destination
 from airbyte_cdk.models import (
-    AirbyteStateType,
-    Type,
     AirbyteConnectionStatus,
-    AirbyteStateMessage,
     AirbyteMessage,
 )
 from airbyte_cdk.models.airbyte_protocol import Status
-from valmi_lib.valmi_protocol import (
+from valmi_connector_lib.valmi_protocol import (
     ValmiDestinationCatalog,
     ValmiSink,
     ConfiguredValmiCatalog,
     ConfiguredValmiDestinationCatalog,
     DestinationSyncMode,
 )
-from valmi_lib.valmi_destination import ValmiDestination
-from .run_time_args import RunTimeArgs
+from valmi_connector_lib.valmi_destination import ValmiDestination
+from valmi_connector_lib.destination_wrapper import DestinationWriteWrapper, HandlerResponseData
 
 from google.auth.exceptions import RefreshError
 
@@ -53,7 +50,35 @@ from .client import GoogleSheetsClient
 from .helpers import ConnectionTest, get_spreadsheet_id
 from .spreadsheet import GoogleSheets
 from .writer import GoogleSheetsWriter
-from datetime import datetime
+
+
+class SheetsWriter(DestinationWriteWrapper):
+    def initialise_message_handling(self):
+        spreadsheet_id = get_spreadsheet_id(self.config["spreadsheet_id"])
+
+        client = GoogleSheetsClient(self.config).authorize()
+        spreadsheet = GoogleSheets(client, spreadsheet_id)
+        self.writer = GoogleSheetsWriter(spreadsheet)
+
+        self.writer.init_buffer_sink(
+            configured_stream=self.configured_catalog.streams[0], sink=self.configured_destination_catalog.sinks[0]
+        )
+
+    def handle_message(
+        self,
+        msg,
+        counter,
+    ) -> HandlerResponseData:
+        self.writer.add_to_buffer(msg.record.stream, msg.record.data)
+        flushed = self.writer.queue_write_operation(msg.record.stream)
+
+        return HandlerResponseData(flushed=flushed)
+    
+    def finalise_message_handling(self):
+        # if there are any records left in buffer
+        self.writer.write_whats_left()
+        # deduplicating records for `upsert` mode
+        self.writer.deduplicate_records(self.configured_catalog.streams[0], self.configured_destination_catalog.sinks[0])
 
 
 class DestinationGoogleSheets(ValmiDestination):
@@ -70,67 +95,8 @@ class DestinationGoogleSheets(ValmiDestination):
         input_messages: Iterable[AirbyteMessage],
         # state: Dict[str, any],
     ) -> Iterable[AirbyteMessage]:
-        counter = 0
-        chunk_id = 0
-        run_time_args = RunTimeArgs.parse_obj(config["run_time_args"] if "run_time_args" in config else {})
-
-        """
-        Reads the input stream of messages, config, and catalog to write data to the destination.
-        """
-        spreadsheet_id = get_spreadsheet_id(config["spreadsheet_id"])
-
-        client = GoogleSheetsClient(config).authorize()
-        spreadsheet = GoogleSheets(client, spreadsheet_id)
-        writer = GoogleSheetsWriter(spreadsheet)
-
-        writer.init_buffer_sink(
-            configured_stream=configured_catalog.streams[0], sink=configured_destination_catalog.sinks[0]
-        )
-
-        for message in input_messages:
-            now = datetime.now()
-
-            if message.type == Type.RECORD:
-                record = message.record
-                writer.add_to_buffer(record.stream, record.data)
-                writer.queue_write_operation(record.stream)
-
-                counter = counter + 1
-                if counter % run_time_args.chunk_size == 0:
-                    writer.write_whats_left()
-                    yield AirbyteMessage(
-                        type=Type.STATE,
-                        state=AirbyteStateMessage(
-                            type=AirbyteStateType.STREAM,
-                            data={
-                                "records_delivered": {DestinationSyncMode.upsert.value: counter},
-                                "chunk_id": chunk_id,
-                                "finished": False,
-                            },
-                        ),
-                    )
-                    chunk_id = chunk_id + 1
-
-                if (datetime.now() - now).seconds > 5:
-                    logger.info("A log every 5 seconds - is this required??")
-
-        # if there are any records left in buffer
-        writer.write_whats_left()
-        # deduplicating records for `upsert` mode
-        writer.deduplicate_records(configured_catalog.streams[0], configured_destination_catalog.sinks[0])
-
-        # Sync completed - final state message
-        yield AirbyteMessage(
-            type=Type.STATE,
-            state=AirbyteStateMessage(
-                type=AirbyteStateType.STREAM,
-                data={
-                    "records_delivered": {DestinationSyncMode.upsert.value: counter},
-                    "chunk_id": chunk_id,
-                    "finished": True,
-                },
-            ),
-        )
+        sheets_writer = SheetsWriter(logger, config, configured_catalog, configured_destination_catalog, None)
+        return sheets_writer.start_message_handling(input_messages)
 
     def discover(self, logger: AirbyteLogger, config: json) -> ValmiDestinationCatalog:
         sinks = [
@@ -165,3 +131,4 @@ class DestinationGoogleSheets(ValmiDestination):
             return AirbyteConnectionStatus(status=Status.FAILED, message=f"{token_err}")
         except Exception as err:
             return AirbyteConnectionStatus(status=Status.FAILED, message=f"An exception occurred: {repr(err)}")
+

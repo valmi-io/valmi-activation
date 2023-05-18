@@ -24,7 +24,6 @@ SOFTWARE.
 """
 
 
-from collections import namedtuple
 import json
 from typing import Any, Iterable, Mapping
 import socket
@@ -45,7 +44,10 @@ from valmi_connector_lib.valmi_protocol import (
     DestinationSyncMode,
     FieldCatalog,
 )
-from valmi_connector_lib.destination_wrapper.destination_write_wrapper import DestinationWriteWrapper
+from valmi_connector_lib.destination_wrapper.destination_write_wrapper import (
+    DestinationWriteWrapper,
+    HandlerResponseData,
+)
 from valmi_connector_lib.valmi_destination import ValmiDestination
 from urllib.parse import urlparse
 
@@ -58,8 +60,7 @@ class WebhookWriter(DestinationWriteWrapper):
         self,
         msg,
         counter,
-    ):
-        handler_response = namedtuple("MessageHandleData", ["flushed"])
+    ) -> HandlerResponseData:
         self.http_handler.handle(
             self.config,
             self.configured_destination_catalog,
@@ -67,7 +68,7 @@ class WebhookWriter(DestinationWriteWrapper):
             counter,
             run_time_args=self.run_time_args,
         )
-        return handler_response(flushed=True)
+        return HandlerResponseData(flushed=True)
 
     def finalise_message_handling(self):
         pass
