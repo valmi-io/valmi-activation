@@ -43,7 +43,7 @@ from valmi_connector_lib.valmi_protocol import (
     FieldCatalog
 )
 from valmi_connector_lib.valmi_destination import ValmiDestination
-from valmi_connector_lib.destination_wrapper import DestinationWriteWrapper, HandlerResponseData
+from valmi_connector_lib.destination_wrapper.destination_write_wrapper import DestinationWriteWrapper, HandlerResponseData
 
 from google.auth.exceptions import RefreshError
 

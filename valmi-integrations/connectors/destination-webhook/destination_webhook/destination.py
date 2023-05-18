@@ -44,11 +44,11 @@ from valmi_connector_lib.valmi_protocol import (
     DestinationSyncMode,
     FieldCatalog,
 )
-from valmi_connector_connector_lib.destination_wrapper.destination_write_wrapper import (
+from valmi_connector_lib.destination_wrapper.destination_write_wrapper import (
     DestinationWriteWrapper,
     HandlerResponseData,
 )
-from valmi_connector_connector_lib.valmi_destination import ValmiDestination
+from valmi_connector_lib.valmi_destination import ValmiDestination
 from urllib.parse import urlparse
 
 
