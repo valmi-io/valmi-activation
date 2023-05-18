@@ -10,7 +10,7 @@ from .http_sink import HttpSink
 from .retry_decorators import retry_on_exception
 from hubspot.auth.oauth import TokensApi
 
-from valmi_lib.valmi_protocol import (
+from valmi_connector_lib.valmi_protocol import (
     DestinationSyncMode,
     ValmiSink,
     DestinationIdWithSupportedSyncModes,

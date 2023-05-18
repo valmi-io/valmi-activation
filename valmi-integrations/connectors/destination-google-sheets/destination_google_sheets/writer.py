@@ -8,7 +8,7 @@ from pygsheets import Worksheet
 
 from .buffer import WriteBufferMixin
 from .spreadsheet import GoogleSheets
-from valmi_lib.valmi_protocol import ValmiSink
+from valmi_connector_lib.valmi_protocol import ValmiSink
 
 
 class GoogleSheetsWriter(WriteBufferMixin):

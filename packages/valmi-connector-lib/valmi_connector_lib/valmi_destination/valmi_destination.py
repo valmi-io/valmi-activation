@@ -32,7 +32,7 @@ from typing import Any, Iterable, List, Mapping
 from airbyte_cdk.destinations import Destination
 from airbyte_cdk.models import AirbyteMessage, Type, AirbyteConnectionStatus, Status
 from abc import abstractmethod
-from valmi_lib.valmi_protocol import ConfiguredValmiDestinationCatalog, ConfiguredValmiCatalog
+from valmi_connector_lib.valmi_protocol import ConfiguredValmiDestinationCatalog, ConfiguredValmiCatalog
 from airbyte_cdk import AirbyteLogger
 
 logger = logging.getLogger("airbyte")

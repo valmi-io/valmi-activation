@@ -28,7 +28,7 @@ import hashlib
 from typing import Any, Mapping, Dict, List
 from airbyte_cdk import AirbyteLogger
 
-from valmi_lib.valmi_protocol import (
+from valmi_connector_lib.valmi_protocol import (
     ValmiStream,
     ConfiguredValmiSink,
     DestinationSyncMode,

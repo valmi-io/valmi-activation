@@ -26,7 +26,7 @@ SOFTWARE.
 import json
 from typing import Any, Dict, Mapping, Union
 from airbyte_cdk import AirbyteLogger
-from valmi_lib.valmi_protocol import ValmiStream, ConfiguredValmiSink
+from valmi_connector_lib.valmi_protocol import ValmiStream, ConfiguredValmiSink
 from .run_time_args import RunTimeArgs
 from airbyte_cdk.sources.streams.http.rate_limiting import user_defined_backoff_handler, default_backoff_handler
 from jsonpath_ng import parse

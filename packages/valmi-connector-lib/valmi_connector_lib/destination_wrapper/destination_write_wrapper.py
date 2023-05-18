@@ -12,11 +12,11 @@ from airbyte_cdk.models import (
 )
 from airbyte_cdk.models.airbyte_protocol import Type, AirbyteStateType
 
-from valmi_lib.valmi_protocol import (
+from valmi_connector_lib.valmi_protocol import (
     ConfiguredValmiDestinationCatalog,
     ConfiguredValmiCatalog,
 )
-from valmi_lib.common.run_time_args import RunTimeArgs
+from valmi_connector_lib.common.run_time_args import RunTimeArgs
 
 HandlerResponseData = namedtuple("HandlerResponseData", ["flushed"])
 
