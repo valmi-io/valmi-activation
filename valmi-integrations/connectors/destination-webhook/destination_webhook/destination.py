@@ -37,7 +37,6 @@ from airbyte_cdk.models import (
 from airbyte_cdk.models.airbyte_protocol import Status
 from .custom_http_sink import CustomHttpSink
 from valmi_connector_lib.valmi_protocol import (
-from valmi_connector_lib.valmi_protocol import (
     ValmiDestinationCatalog,
     ConfiguredValmiDestinationCatalog,
     ConfiguredValmiCatalog,
