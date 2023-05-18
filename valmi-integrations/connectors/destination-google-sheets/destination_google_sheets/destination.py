@@ -70,12 +70,12 @@ class SheetsWriter(DestinationWriteWrapper):
         msg,
         counter,
     ) -> HandlerResponseData:
-        _valmi_meta = msg.record.data['_valmi_meta']
+        # _valmi_meta = msg.record.data['_valmi_meta']
         self.writer.add_to_buffer(msg.record.stream, msg.record.data)
         flushed = self.writer.queue_write_operation(msg.record.stream)
 
         # Google Sheets normalizes record by popping _valmi_meta . So setting it back to record.data
-        msg.record.data['_valmi_meta'] = _valmi_meta
+        # msg.record.data['_valmi_meta'] = _valmi_meta
         return HandlerResponseData(flushed=flushed)
     
     def finalise_message_handling(self):

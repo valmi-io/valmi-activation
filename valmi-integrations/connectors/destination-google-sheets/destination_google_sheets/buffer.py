@@ -41,21 +41,29 @@ class WriteBufferMixin:
         stream = configured_stream.stream
         self.records_buffer[stream.name] = []
 
+        #TODO: can be done much better
+        
         src_fields = list(map(lambda map_obj: (map_obj["stream"], map_obj,), sink.mapping))
         # dst_fields = list(map(lambda map_obj: (map_obj["sink"], map_obj,), sink.mapping))
         headers = []
+        stream_props_used = []
         sorted_stream_keys = sorted(list(stream.json_schema.get("properties").keys()))
         for key in sorted_stream_keys:
             filtered_src_fields = list(filter(lambda x: x[0] == key, src_fields))
             if len(filtered_src_fields) > 0:
                 for src_field_obj in filtered_src_fields:
                     headers.append(src_field_obj[1]["sink"])
+                    stream_props_used.append((src_field_obj[0], src_field_obj[1]["sink"],))
             else:
                 headers.append(key)
+                stream_props_used.append((key, key,))
+
+        sorted_headers = sorted(headers)
+        sorted_stream_props_used = sorted(stream_props_used, key=lambda x: x[1])
 
         self.stream_info[stream.name] = {
-            "headers": headers,
-            "stream_properties": sorted_stream_keys,
+            "headers": sorted_headers,
+            "stream_properties": list(map(lambda x: x[0], sorted_stream_props_used)),
             "is_set": False,
         }
 
@@ -118,11 +126,24 @@ class WriteBufferMixin:
                     { 'id': 123, 'key1': '', 'key2': 'value',   }
                                    ^                          ^
 
-        """
+        """ 
+        data = {}
+
         stream_properties = self.stream_info[stream_name]["stream_properties"]
+        headers = self.stream_info[stream_name]["headers"]
+
+        for idx, prop in enumerate(stream_properties):
+            data[headers[idx]] = record[prop]
+
+        '''
+        These scenarios should not be there for valmi connector
         # undersetting scenario
-        [record.update({key: self.default_missing}) for key in stream_properties if key not in record.keys()]
+        [record.update({headers[idx]: self.default_missing}) for idx, key in enumerate(stream_properties) if key not in record.keys()]
+      
+        self.logger.debug(str(record))
+
         # oversetting scenario
         [record.pop(key) for key in record.copy().keys() if key not in stream_properties]
-
-        return dict(sorted(record.items(), key=lambda x: x[0]))
+        '''
+        self.logger.debug(str(data))
+        return dict(sorted(data.items(), key=lambda x: x[0]))
