@@ -114,7 +114,7 @@ class DestinationWebhook(ValmiDestination):
                     DestinationSyncMode.create,
                 ],
                 field_catalog={
-                    DestinationSyncMode.append.value: basic_field_catalog,
+                    DestinationSyncMode.upsert.value: basic_field_catalog,
                     DestinationSyncMode.mirror.value: basic_field_catalog,
                     DestinationSyncMode.append.value: basic_field_catalog,
                     DestinationSyncMode.update.value: basic_field_catalog,

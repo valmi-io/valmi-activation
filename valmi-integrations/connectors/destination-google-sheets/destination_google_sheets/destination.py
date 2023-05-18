@@ -40,6 +40,7 @@ from valmi_connector_lib.valmi_protocol import (
     ConfiguredValmiCatalog,
     ConfiguredValmiDestinationCatalog,
     DestinationSyncMode,
+    FieldCatalog
 )
 from valmi_connector_lib.valmi_destination import ValmiDestination
 from valmi_connector_lib.destination_wrapper import DestinationWriteWrapper, HandlerResponseData
@@ -99,16 +100,28 @@ class DestinationGoogleSheets(ValmiDestination):
         return sheets_writer.start_message_handling(input_messages)
 
     def discover(self, logger: AirbyteLogger, config: json) -> ValmiDestinationCatalog:
-        sinks = [
+        sinks = []
+        basic_field_catalog = FieldCatalog(
+            json_schema={
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "type": "object",
+                "properties": {},
+            },
+            allow_freeform_fields=True,
+            supported_destination_ids=[],
+        )
+        sinks.append(
             ValmiSink(
-                name="GoogleSheets",
+                name="Google Sheets",
                 id="GoogleSheets",
-                supported_destination_sync_modes=[DestinationSyncMode.upsert],
-                json_schema={},
-                allow_freeform_fields=True,
-                supported_destination_ids_modes=None,
+                supported_destination_sync_modes=[
+                    DestinationSyncMode.upsert
+                ],
+                field_catalog={
+                    DestinationSyncMode.upsert.value: basic_field_catalog
+                },
             )
-        ]
+        )
         return ValmiDestinationCatalog(sinks=sinks)
 
     def check(self, logger: AirbyteLogger, config: Mapping[str, Any]) -> AirbyteConnectionStatus:
