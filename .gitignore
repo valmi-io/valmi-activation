@@ -207,3 +207,6 @@ valmi-integrations/connectors/destination-slack/secrets/.config.json
 valmi-integrations/connectors/destination-template/secrets/.config.json
 valmi-integrations/connectors/destination-hubspot/secrets/.config.json
 valmi-integrations/connectors/destination-stripe/secrets/.config.json
+tags
+.vscode
+.venv

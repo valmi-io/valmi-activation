@@ -30,7 +30,7 @@ from airbyte_cdk import AirbyteLogger
 from airbyte_cdk.destinations import Destination
 from airbyte_cdk.models import AirbyteStateMessage, AirbyteMessage, Status, AirbyteConnectionStatus
 from airbyte_cdk.models.airbyte_protocol import Type, AirbyteStateType
-from valmi_lib.valmi_protocol import (
+from valmi_connector_lib.valmi_protocol import (
     ValmiDestinationCatalog,
     ConfiguredValmiCatalog,
     ConfiguredValmiDestinationCatalog,
@@ -38,7 +38,7 @@ from valmi_lib.valmi_protocol import (
     ValmiSink,
     FieldCatalog,
 )
-from valmi_lib.valmi_destination import ValmiDestination
+from valmi_connector_lib.valmi_destination import ValmiDestination
 from .run_time_args import RunTimeArgs
 
 from datetime import datetime

@@ -12,12 +12,13 @@ from airbyte_cdk.models import (
 )
 from airbyte_cdk.models.airbyte_protocol import Type, AirbyteStateType
 
-from valmi_lib.valmi_protocol import (
+from valmi_connector_lib.valmi_protocol import (
     ConfiguredValmiDestinationCatalog,
     ConfiguredValmiCatalog,
 )
-from valmi_lib.common.run_time_args import RunTimeArgs
+from valmi_connector_lib.common.run_time_args import RunTimeArgs
 
+HandlerResponseData = namedtuple("HandlerResponseData", ["flushed"])
 
 class DestinationWriteWrapper:
     def __init__(
@@ -35,20 +36,20 @@ class DestinationWriteWrapper:
         self.run_time_args = RunTimeArgs.parse_obj(config["run_time_args"] if "run_time_args" in config else {})
 
     @abstractmethod
-    def initialise_message_handling(self):
+    def initialise_message_handling(self) -> None:
         pass
 
     @abstractmethod
-    def handle_message(self, msg, counter):
+    def handle_message(self, msg: AirbyteMessage, counter: int) -> HandlerResponseData:
         pass
 
     @abstractmethod
-    def finalise_message_handling(self):
+    def finalise_message_handling(self) -> None:
         pass
 
-    def start_message_handling(self, input_messages: Iterable[AirbyteMessage]):
-        counter = 0
-        counter_by_type = defaultdict(lambda: 0)
+    def start_message_handling(self, input_messages: Iterable[AirbyteMessage]) -> AirbyteMessage:
+        counter: int = 0
+        counter_by_type: dict[str, int] = defaultdict(lambda: 0)
         chunk_id = 0
         run_time_args = RunTimeArgs.parse_obj(self.config["run_time_args"] if "run_time_args" in self.config else {})
 
@@ -56,7 +57,7 @@ class DestinationWriteWrapper:
         for msg in input_messages:
             now = datetime.now()
             if msg.type == Type.RECORD:
-                handler_response = namedtuple("MessageHandleData", ["flushed"])
+                handler_response = HandlerResponseData(flushed=False)
                 try:
                     handler_response = self.handle_message(msg, counter)
                 except Exception as e:

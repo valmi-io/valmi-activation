@@ -7,7 +7,7 @@ from typing import Any, Mapping
 
 from airbyte_cdk import AirbyteLogger
 from airbyte_cdk.models import AirbyteStream
-from valmi_lib.valmi_protocol import ConfiguredValmiSink
+from valmi_connector_lib.valmi_protocol import ConfiguredValmiSink
 
 
 class WriteBufferMixin:
