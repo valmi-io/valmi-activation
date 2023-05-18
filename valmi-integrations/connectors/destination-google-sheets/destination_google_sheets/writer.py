@@ -85,9 +85,12 @@ class GoogleSheetsWriter(WriteBufferMixin):
         Processing the worksheet happens offline and sync it afterwards to reduce API calls rate
         If rate limits are hit while deduplicating, it will be handeled automatically, the operation continues after backoff.
         """
+        src_fields = list(map(lambda map_obj: (map_obj["stream"], map_obj,), sink.mapping))
+        filtered_src_fields = list(filter(lambda x: x[0] == configured_stream.id_key, src_fields))
+
         primary_key: str = (
-            sink.mapping[configured_stream.id_key]
-            if configured_stream.id_key in sink.mapping
+            filtered_src_fields[0][1]["sink"]
+            if len(filtered_src_fields) > 0
             else configured_stream.id_key
         )
         stream_name: str = configured_stream.stream.name

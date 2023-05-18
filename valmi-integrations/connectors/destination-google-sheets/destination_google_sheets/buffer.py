@@ -31,20 +31,6 @@ class WriteBufferMixin:
         """
         return ""
 
-    def init_buffer_stream(self, configured_stream: AirbyteStream):
-        """
-        Saves important stream's information for later use.
-
-        Particulary, creates the data structure for `records_stream`.
-        Populates `stream_info` placeholder with stream metadata information.
-        """
-        stream = configured_stream.stream
-        self.records_buffer[stream.name] = []
-        self.stream_info[stream.name] = {
-            "headers": sorted(list(stream.json_schema.get("properties").keys())),
-            "is_set": False,
-        }
-
     def init_buffer_sink(self, configured_stream: AirbyteStream, sink: ConfiguredValmiSink):
         """
         Saves important stream's information for later use.
@@ -54,12 +40,22 @@ class WriteBufferMixin:
         """
         stream = configured_stream.stream
         self.records_buffer[stream.name] = []
+
+        src_fields = list(map(lambda map_obj: (map_obj["stream"], map_obj,), sink.mapping))
+        # dst_fields = list(map(lambda map_obj: (map_obj["sink"], map_obj,), sink.mapping))
+        headers = []
+        sorted_stream_keys = sorted(list(stream.json_schema.get("properties").keys()))
+        for key in sorted_stream_keys:
+            filtered_src_fields = list(filter(lambda x: x[0] == key, src_fields))
+            if len(filtered_src_fields) > 0:
+                for src_field_obj in filtered_src_fields:
+                    headers.append(src_field_obj[1]["sink"])
+            else:
+                headers.append(key)
+
         self.stream_info[stream.name] = {
-            "headers": [
-                sink.mapping[key] if key in sink.mapping else key
-                for key in sorted(list(stream.json_schema.get("properties").keys()))
-            ],
-            "stream_properties": sorted(list(stream.json_schema.get("properties").keys())),
+            "headers": headers,
+            "stream_properties": sorted_stream_keys,
             "is_set": False,
         }
 
