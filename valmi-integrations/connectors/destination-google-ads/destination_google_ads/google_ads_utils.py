@@ -27,6 +27,8 @@ import hashlib
 
 from typing import Any, Mapping, Dict, List
 from airbyte_cdk import AirbyteLogger
+from collections import defaultdict
+from time import sleep
 
 from valmi_connector_lib.valmi_protocol import (
     ValmiStream,
@@ -35,7 +37,16 @@ from valmi_connector_lib.valmi_protocol import (
 )
 
 from google.ads.googleads.client import GoogleAdsClient
+from google.ads.googleads.errors import GoogleAdsException
 
+# Number of retries to be run in case of a RateExceededError.
+NUM_RETRIES = 6
+
+# Minimum number of seconds to wait before a retry.
+RETRY_SECONDS = 30
+
+#Number of seconds to wait between `delete` and `create` operations on the same resource.
+OP_RETRY_SECONDS = 5*60
 
 def normalize_and_hash(s:str, remove_all_whitespace:bool) -> str:
     """Normalizes and hashes a string with SHA-256.
@@ -62,14 +73,14 @@ def normalize_and_hash(s:str, remove_all_whitespace:bool) -> str:
     return hashlib.sha256(s.encode()).hexdigest()
 
 class GoogleAdsUtils:
-    max_identifies = 9900 # limit is 10000 for a single job request
+    max_identifiers = 9900 # limit is 10000 for a single job request
 
     def __init__(self, logger: AirbyteLogger, client: GoogleAdsClient) -> None:
         self.logger = logger
         self.client = client
-        self.num_identifiers = 0
-        self.offline_user_data_job_resource_name = None
-        self.operations: Any = []
+        self.num_identifiers: dict[str, int] = defaultdict(lambda: 0)
+        self.offline_user_data_job_resource_names: dict[str, str] = defaultdict(str)
+        self.operations: dict[str, list[Any]] = defaultdict(list)
 
     def get_custom_audience_schema(self) -> Mapping[str, Any]:
         json_schema = {
@@ -282,26 +293,109 @@ class GoogleAdsUtils:
         # Ref: https://developers.google.com/google-ads/api/docs/remarketing/audience-types/customer-match#customer_match_considerations
 
         user_data = self.prepare_user_data_from_record(data)
-        self.num_identifiers += len(user_data.user_identifiers)
-
         self.logger.info(f"Adding user data: {user_data}")
 
         if user_data.user_identifiers:
             operation = self.client.get_type("OfflineUserDataJobOperation")
-            if data["_valmi_meta"]["_valmi_sync_op"] == "delete":
+            sync_op = data["_valmi_meta"]["_valmi_sync_op"]
+            self.num_identifiers[sync_op] += len(user_data.user_identifiers)
+
+            if sync_op == "delete":
                 operation.remove = user_data
             else:
                 operation.create = user_data
-            self.operations.append(operation)
+                #Treating all other operations as create ( operation.create will handle update and insert )
+                sync_op = "create"
 
-            if self.num_identifiers >= self.max_identifies:
+            self.operations[sync_op].append(operation)
+
+            #Check if any of the `delete` or `upsert` operations reaches max_identifiers limit 
+            #we will publish them
+            publish_operations: bool = False
+            for key, value in self.num_identifiers.items():
+                if value >= self.max_identifiers:
+                    publish_operations = True
+                    break
+
+            if publish_operations:
                 self.flush(sink)
-                self.num_identifiers = 0
+                self.num_identifiers = defaultdict(int)
                 return True
 
         return False
 
-    def flush(self, sink: ConfiguredValmiSink, offline_user_data_job_id: Any = None) -> None:
+    def create_offline_user_data_job(self, user_list_resource_name: str, customer_id: str) -> str:
+        """ 
+        Creates new OfflineUserDataJob and returns the resource name of the newly created job.
+
+        Args:
+            user_list_resource_name: User List resource name 
+            customer_id: Customer ID
+
+        Returns:
+            str: offline user data job resource name
+        """
+        # Creates a new offline user data job.
+        offline_user_data_job = self.client.get_type("OfflineUserDataJob")
+        offline_user_data_job.type_ = (
+            self.client.enums.OfflineUserDataJobTypeEnum.CUSTOMER_MATCH_USER_LIST
+        )
+        offline_user_data_job.customer_match_user_list_metadata.user_list = (
+            user_list_resource_name
+        )
+        # Issues a request to create an offline user data job.
+        offline_user_data_job_service_client = self.client.get_service(
+            "OfflineUserDataJobService"
+        )
+        create_offline_user_data_job_response = offline_user_data_job_service_client.create_offline_user_data_job(
+            customer_id=customer_id, job=offline_user_data_job
+        )
+        #Note 
+        #The job resource name looks like this:
+        #   customers/{customer_id}/offlineUserDataJobs/{offline_user_data_update_id}
+
+        offline_user_data_job_resource_name = (
+            create_offline_user_data_job_response.resource_name
+        )
+
+        self.logger.info(
+            "Created an offline user data job with resource name: "
+            f"'{offline_user_data_job_resource_name}'."
+        )
+
+        return offline_user_data_job_resource_name
+
+    def request_offline_user_data_job(
+        self, 
+        customer_id: str, 
+        job_resource_name: str, 
+        operations: list[Any]
+    ) -> None:
+        """Requests offline user data job"""
+        offline_user_data_job_service_client = self.client.get_service(
+            "OfflineUserDataJobService"
+        )
+        # Issues a request to add the operations to the offline user data job.
+
+        # Best Practice: This example only adds a few operations, so it only sends
+        # one AddOfflineUserDataJobOperations request. If your application is adding
+        # a large number of operations, split the operations into batches and send
+        # multiple AddOfflineUserDataJobOperations requests for the SAME job. See
+        # https://developers.google.com/google-ads/api/docs/remarketing/audience-types/customer-match#customer_match_considerations
+        # and https://developers.google.com/google-ads/api/docs/best-practices/quotas#user_data
+        # for more information on the per-request limits.
+        self.logger.info(f"Number of user operations to be created: {len(operations)}")
+        request = self.client.get_type("AddOfflineUserDataJobOperationsRequest")
+        request.resource_name = job_resource_name
+        request.operations = operations
+        request.enable_partial_failure = True
+
+        # Issues a request to add the operations to the offline user data job.
+        response = offline_user_data_job_service_client.add_offline_user_data_job_operations(
+            request=request
+        )
+
+    def flush(self, sink: ConfiguredValmiSink) -> None:
         # Creates the OfflineUserDataJobService client.
         offline_user_data_job_service_client = self.client.get_service(
             "OfflineUserDataJobService"
@@ -312,87 +406,96 @@ class GoogleAdsUtils:
         #It will be in the format : customers/{customer_id}/userLists/{user_list_id}
         customer_id = sink.sink.id.split("/")[1]
 
-        if self.offline_user_data_job_resource_name is not None:
-            # Creates a new offline user data job.
-            offline_user_data_job = self.client.get_type("OfflineUserDataJob")
-            offline_user_data_job.type_ = (
-                self.client.enums.OfflineUserDataJobTypeEnum.CUSTOMER_MATCH_USER_LIST
-            )
-            offline_user_data_job.customer_match_user_list_metadata.user_list = (
-                sink.sink.id
-            )
-            # Issues a request to create an offline user data job.
-            create_offline_user_data_job_response = offline_user_data_job_service_client.create_offline_user_data_job(
-                customer_id=customer_id, job=offline_user_data_job
-            )
-            #Note 
-            #The job resource name looks like this:
-            #   customers/{customer_id}/offlineUserDataJobs/{offline_user_data_update_id}
+        quota_error_enum = self.client.get_type("QuotaErrorEnum").QuotaError
+        resource_exhausted = quota_error_enum.RESOURCE_EXHAUSTED
+        temp_resource_exhausted = quota_error_enum.RESOURCE_TEMPORARILY_EXHAUSTED
 
-            self.logger.info(f"Created offline user data job with resource name: {create_offline_user_data_job_response.resource_name}")
-            offline_user_data_job_id = create_offline_user_data_job_response.resource_name.split("/")[-1]
-            self.offline_user_data_job_resource_name = (
-                create_offline_user_data_job_response.resource_name
-            )
-            self.logger.info(
-                "Created an offline user data job with resource name: "
-                f"'{self.offline_user_data_job_resource_name}'."
-            )
+        #This will be thrown when two or more jobs are running on same user list resource
+        database_error_enum = self.client.get_type("DatabaseErrorEnum").DatabaseError
+        concurrent_modification = database_error_enum.CONCURRENT_MODIFICATION
 
-        # Issues a request to add the operations to the offline user data job.
+        # We will send `delete` and `upsert` operations in separate `OfflineUserDataJob`
+        # Delete actions will be performed first and then `upsert` actions
+        for op in ["delete", "create"]:
+            offline_user_data_job_resource_name = self.offline_user_data_job_resource_names[op]
 
-        # Best Practice: This example only adds a few operations, so it only sends
-        # one AddOfflineUserDataJobOperations request. If your application is adding
-        # a large number of operations, split the operations into batches and send
-        # multiple AddOfflineUserDataJobOperations requests for the SAME job. See
-        # https://developers.google.com/google-ads/api/docs/remarketing/audience-types/customer-match#customer_match_considerations
-        # and https://developers.google.com/google-ads/api/docs/best-practices/quotas#user_data
-        # for more information on the per-request limits.
-        self.logger.info(f"Number of user operations to be created: {len(self.operations)}")
-        request = self.client.get_type("AddOfflineUserDataJobOperationsRequest")
-        request.resource_name = self.offline_user_data_job_resource_name
-        request.operations = self.operations
-        request.enable_partial_failure = True
-
-        # Issues a request to add the operations to the offline user data job.
-        response = offline_user_data_job_service_client.add_offline_user_data_job_operations(
-            request=request
-        )
-
-        # Prints the status message if any partial failure error is returned.
-        # Note: the details of each partial failure error are not printed here.
-        # Refer to the error_handling/handle_partial_failure.py example to learn
-        # more.
-        # Extracts the partial failure from the response status.
-        partial_failure = getattr(response, "partial_failure_error", None)
-        if getattr(partial_failure, "code", None) != 0:
-            error_details = getattr(partial_failure, "details", [])
-            for error_detail in error_details:
-                failure_message = self.client.get_type("GoogleAdsFailure")
-                # Retrieve the class definition of the GoogleAdsFailure instance
-                # in order to use the "deserialize" class method to parse the
-                # error_detail string into a protobuf message object.
-                failure_object = type(failure_message).deserialize(
-                    error_detail.value
+            if not offline_user_data_job_resource_name:
+                offline_user_data_job_resource_name = self.create_offline_user_data_job_response(
+                    sink.sink.id, customer_id
                 )
+                self.offline_user_data_job_resource_names[op] = offline_user_data_job_resource_name
 
-                for error in failure_object.errors:
-                    self.logger.info(
-                        "A partial failure at index "
-                        f"{error.location.field_path_elements[0].index} occurred.\n"
-                        f"Error message: {error.message}\n"
-                        f"Error code: {error.error_code}"
-                    )
+            wait_to_perform_next_operation = True
+            try:
+                retry_count = 0
+                retry_seconds = RETRY_SECONDS
 
-        self.logger.info("The operations are added to the offline user data job.")
+                while retry_count < NUM_RETRIES:
+                    try:
+                        job_operations = self.operations[op]
+                        if not job_operations:
+                            wait_to_perform_next_operation = False
+                            break
 
-        # Issues a request to run the offline user data job for executing all
-        # added operations.
-        offline_user_data_job_service_client.run_offline_user_data_job(
-            resource_name=self.offline_user_data_job_resource_name
-        )
+                        self.request_offline_user_data_job(
+                            customer_id, offline_user_data_job_resource_name, job_operations
+                        )
+                        self.operations[op] = []
 
-        self.check_job_status(customer_id)
+                        # Issues a request to run the offline user data job for executing all
+                        # added operations.
+                        offline_user_data_job_service_client.run_offline_user_data_job(
+                            resource_name=offline_user_data_job_resource_name
+                        )
+
+                        self.check_job_status(customer_id)
+
+                        break
+                    except GoogleAdsException as ex:
+                        retrying = False
+                        for googleads_error in ex.failure.errors:
+                            # Checks if any of the errors are
+                            # QuotaError.RESOURCE_EXHAUSTED or
+                            # QuotaError.RESOURCE_TEMPORARILY_EXHAUSTED or
+                            # DatabaseError.CONCURRENT_MODIFICATION
+                            quota_error = googleads_error.error_code.quota_error
+                            database_error = googleads_error.error_code.database_error
+
+                            if (
+                                quota_error == resource_exhausted
+                                or quota_error == temp_resource_exhausted
+                                or database_error == concurrent_modification
+                            ):
+                                self.logger.info(
+                                    "Received rate exceeded error/concurrent modification error, retry after"
+                                    f"{retry_seconds} seconds."
+                                )
+                                sleep(retry_seconds)
+                                retrying = True
+                                retry_count += 1
+                                # Here exponential backoff is employed to ensure
+                                # the account doesn't get rate limited by making
+                                # too many requests too quickly. This increases the
+                                # time to wait between requests by a factor of 2.
+                                retry_seconds *= 2
+                                break
+                        # Bubbles up when there is not a RateExceededError
+                        if not retrying:
+                            raise ex
+                    finally:
+                        if retry_count == NUM_RETRIES:
+                            raise Exception(
+                                "Could not recover after making "
+                                f"{retry_count} attempts."
+                            )
+            except Exception as ex:
+                # Prints any unhandled exception and bubbles up.
+                self.logger.info(f"Failed to validate keywords: {ex}")
+                raise ex
+
+            if wait_to_perform_next_operation:
+                self.logger.info("Waiting for {OP_RETRY_SECONDS} seconds before performing next operation")
+                sleep(OP_RETRY_SECONDS)
 
     def check_job_status(self, customer_id):
         """Retrieves, checks, and prints the status of the offline user data job.
