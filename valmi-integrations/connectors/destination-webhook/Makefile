@@ -3,4 +3,6 @@ version := $(shell cat ${file})
 .PHONY: build_docker
 build_docker: 
 	docker build . -t valmiio/destination-webhook:${version} --build-arg VERSION=${version}
+build_docker_no_cache:
+	docker build . -t valmiio/destination-webhook:${version} --build-arg VERSION=${version} --no-cache
 
