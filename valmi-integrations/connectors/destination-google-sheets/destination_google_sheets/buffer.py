@@ -41,9 +41,17 @@ class WriteBufferMixin:
         stream = configured_stream.stream
         self.records_buffer[stream.name] = []
 
-        #TODO: can be done much better
-        
-        src_fields = list(map(lambda map_obj: (map_obj["stream"], map_obj,), sink.mapping))
+        # TODO: can be done much better
+
+        src_fields = list(
+            map(
+                lambda map_obj: (
+                    map_obj["stream"],
+                    map_obj,
+                ),
+                sink.mapping,
+            )
+        )
         # dst_fields = list(map(lambda map_obj: (map_obj["sink"], map_obj,), sink.mapping))
         headers = []
         stream_props_used = []
@@ -53,10 +61,20 @@ class WriteBufferMixin:
             if len(filtered_src_fields) > 0:
                 for src_field_obj in filtered_src_fields:
                     headers.append(src_field_obj[1]["sink"])
-                    stream_props_used.append((src_field_obj[0], src_field_obj[1]["sink"],))
+                    stream_props_used.append(
+                        (
+                            src_field_obj[0],
+                            src_field_obj[1]["sink"],
+                        )
+                    )
             else:
                 headers.append(key)
-                stream_props_used.append((key, key,))
+                stream_props_used.append(
+                    (
+                        key,
+                        key,
+                    )
+                )
 
         sorted_headers = sorted(headers)
         sorted_stream_props_used = sorted(stream_props_used, key=lambda x: x[1])
@@ -126,7 +144,7 @@ class WriteBufferMixin:
                     { 'id': 123, 'key1': '', 'key2': 'value',   }
                                    ^                          ^
 
-        """ 
+        """
         data = {}
 
         stream_properties = self.stream_info[stream_name]["stream_properties"]
@@ -135,7 +153,7 @@ class WriteBufferMixin:
         for idx, prop in enumerate(stream_properties):
             data[headers[idx]] = record[prop]
 
-        '''
+        """
         These scenarios should not be there for valmi connector
         # undersetting scenario
         [record.update({headers[idx]: self.default_missing}) for idx, key in enumerate(stream_properties) if key not in record.keys()]
@@ -144,6 +162,6 @@ class WriteBufferMixin:
 
         # oversetting scenario
         [record.pop(key) for key in record.copy().keys() if key not in stream_properties]
-        '''
-        self.logger.debug(str(data))
+        """
+        # self.logger.debug(str(data))
         return dict(sorted(data.items(), key=lambda x: x[0]))
