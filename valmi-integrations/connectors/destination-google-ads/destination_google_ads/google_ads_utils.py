@@ -416,11 +416,13 @@ class GoogleAdsUtils:
 
         # We will send `delete` and `upsert` operations in separate `OfflineUserDataJob`
         # Delete actions will be performed first and then `upsert` actions
-        for op in ["delete", "create"]:
+        ops = ["delete", "create"]
+        for op in ops:
+            self.logger.info(f"{len(self.operations[op])} Operations for {op}")
             offline_user_data_job_resource_name = self.offline_user_data_job_resource_names[op]
 
             if not offline_user_data_job_resource_name:
-                offline_user_data_job_resource_name = self.create_offline_user_data_job_response(
+                offline_user_data_job_resource_name = self.create_offline_user_data_job(
                     sink.sink.id, customer_id
                 )
                 self.offline_user_data_job_resource_names[op] = offline_user_data_job_resource_name
@@ -433,7 +435,7 @@ class GoogleAdsUtils:
                 while retry_count < NUM_RETRIES:
                     try:
                         job_operations = self.operations[op]
-                        if not job_operations:
+                        if not len(job_operations):
                             wait_to_perform_next_operation = False
                             break
 
@@ -448,7 +450,7 @@ class GoogleAdsUtils:
                             resource_name=offline_user_data_job_resource_name
                         )
 
-                        self.check_job_status(customer_id)
+                        self.check_job_status(customer_id, offline_user_data_job_resource_name)
 
                         break
                     except GoogleAdsException as ex:
@@ -493,11 +495,12 @@ class GoogleAdsUtils:
                 self.logger.info(f"Failed to validate keywords: {ex}")
                 raise ex
 
-            if wait_to_perform_next_operation:
-                self.logger.info("Waiting for {OP_RETRY_SECONDS} seconds before performing next operation")
+            #Dont wait after last operation
+            if op != ops[-1] and wait_to_perform_next_operation:
+                self.logger.info(f"Waiting for {OP_RETRY_SECONDS} seconds before performing next operation")
                 sleep(OP_RETRY_SECONDS)
 
-    def check_job_status(self, customer_id):
+    def check_job_status(self, customer_id, offline_user_data_job_resource_name):
         """Retrieves, checks, and prints the status of the offline user data job.
     
         If the job is completed successfully, information about the user list is
@@ -520,7 +523,7 @@ class GoogleAdsUtils:
               offline_user_data_job.customer_match_user_list_metadata.user_list
             FROM offline_user_data_job
             WHERE offline_user_data_job.resource_name =
-              '{self.offline_user_data_job_resource_name}'
+              '{offline_user_data_job_resource_name}'
             LIMIT 1"""
     
         # Issues a search request using streaming.
