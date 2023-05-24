@@ -40,12 +40,12 @@ from valmi_connector_lib.valmi_protocol import (
 from valmi_connector_lib.valmi_destination import ValmiDestination
 import stripe
 from valmi_connector_lib.destination_wrapper.destination_write_wrapper import DestinationWriteWrapper, HandlerResponseData
-import stripe_utils
+from .stripe_utils import StripeUtils
 
 
 class StripeWriter(DestinationWriteWrapper):
     def initialise_message_handling(self):
-        pass
+        self.stripe_utils = StripeUtils(self.config, self.run_time_args)
 
     def handle_message(
         self,
