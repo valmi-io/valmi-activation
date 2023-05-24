@@ -54,13 +54,13 @@ class StripeWriter(DestinationWriteWrapper):
     ) -> HandlerResponseData:
        
         if msg.record.data["_valmi_meta"]["_valmi_sync_op"] == "upsert":
-            stripe_utils.upsert(
+            self.stripe_utils.upsert(
                 msg.record,
                 configured_stream=self.configured_catalog.streams[0],
                 sink=self.configured_destination_catalog.sinks[0],
             )
         elif msg.record.data["_valmi_meta"]["_valmi_sync_op"] == "update":
-            stripe_utils.update(
+            self.stripe_utils.update(
                 msg.record,
                 configured_stream=self.configured_catalog.streams[0],
                 sink=self.configured_destination_catalog.sinks[0],
@@ -69,10 +69,7 @@ class StripeWriter(DestinationWriteWrapper):
         return HandlerResponseData(flushed=True)
     
     def finalise_message_handling(self):
-        # if there are any records left in buffer
-        self.writer.write_whats_left()
-        # deduplicating records for `upsert` mode
-        self.writer.deduplicate_records(self.configured_catalog.streams[0], self.configured_destination_catalog.sinks[0])
+        pass
 
 
 class DestinationStripe(ValmiDestination):
