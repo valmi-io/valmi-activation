@@ -28,8 +28,7 @@ from typing import Any, Iterable, Mapping
 
 from airbyte_cdk import AirbyteLogger
 from airbyte_cdk.destinations import Destination
-from airbyte_cdk.models import AirbyteStateMessage, AirbyteMessage, Status, AirbyteConnectionStatus
-from airbyte_cdk.models.airbyte_protocol import Type, AirbyteStateType
+from airbyte_cdk.models import AirbyteMessage, Status, AirbyteConnectionStatus
 from valmi_connector_lib.valmi_protocol import (
     ValmiDestinationCatalog,
     ConfiguredValmiCatalog,
@@ -39,11 +38,41 @@ from valmi_connector_lib.valmi_protocol import (
     FieldCatalog,
 )
 from valmi_connector_lib.valmi_destination import ValmiDestination
-from .run_time_args import RunTimeArgs
-
-from datetime import datetime
-from .stripe_utils import StripeUtils
 import stripe
+from valmi_connector_lib.destination_wrapper.destination_write_wrapper import DestinationWriteWrapper, HandlerResponseData
+import stripe_utils
+
+
+class StripeWriter(DestinationWriteWrapper):
+    def initialise_message_handling(self):
+        pass
+
+    def handle_message(
+        self,
+        msg,
+        counter,
+    ) -> HandlerResponseData:
+       
+        if msg.record.data["_valmi_meta"]["_valmi_sync_op"] == "upsert":
+            stripe_utils.upsert(
+                msg.record,
+                configured_stream=self.configured_catalog.streams[0],
+                sink=self.configured_destination_catalog.sinks[0],
+            )
+        elif msg.record.data["_valmi_meta"]["_valmi_sync_op"] == "update":
+            stripe_utils.update(
+                msg.record,
+                configured_stream=self.configured_catalog.streams[0],
+                sink=self.configured_destination_catalog.sinks[0],
+            )
+
+        return HandlerResponseData(flushed=True)
+    
+    def finalise_message_handling(self):
+        # if there are any records left in buffer
+        self.writer.write_whats_left()
+        # deduplicating records for `upsert` mode
+        self.writer.deduplicate_records(self.configured_catalog.streams[0], self.configured_destination_catalog.sinks[0])
 
 
 class DestinationStripe(ValmiDestination):
@@ -63,76 +92,9 @@ class DestinationStripe(ValmiDestination):
     ) -> Iterable[AirbyteMessage]:
         # Start handling messages
 
-        counter = 0
-        counter_by_type = {}
-        chunk_id = 0
-        run_time_args = RunTimeArgs.parse_obj(config["run_time_args"] if "run_time_args" in config else {})
-
-        counter_by_type["upsert"] = 0
-        counter_by_type["update"] = 0
-
-        stripe_utils = StripeUtils(config=config, run_time_args=run_time_args)
-
-        for message in input_messages:
-            now = datetime.now()
-
-            if message.type == Type.RECORD:
-                record = message.record
-
-                if message.record.data["_valmi_meta"]["_valmi_sync_op"] == "upsert":
-                    stripe_utils.upsert(
-                        record,
-                        configured_stream=configured_catalog.streams[0],
-                        sink=configured_destination_catalog.sinks[0],
-                    )
-                elif message.record.data["_valmi_meta"]["_valmi_sync_op"] == "update":
-                    stripe_utils.update(
-                        record,
-                        configured_stream=configured_catalog.streams[0],
-                        sink=configured_destination_catalog.sinks[0],
-                    )
-
-                counter = counter + 1
-
-                if message.record.data["_valmi_meta"]["_valmi_sync_op"] not in counter_by_type:
-                    counter_by_type[message.record.data["_valmi_meta"]["_valmi_sync_op"]] = 0
-
-                counter_by_type[message.record.data["_valmi_meta"]["_valmi_sync_op"]] = (
-                    counter_by_type[message.record.data["_valmi_meta"]["_valmi_sync_op"]] + 1
-                )
-
-                if counter % run_time_args.chunk_size == 0:
-                    yield AirbyteMessage(
-                        type=Type.STATE,
-                        state=AirbyteStateMessage(
-                            type=AirbyteStateType.STREAM,
-                            data={
-                                "records_delivered": counter_by_type,
-                                "chunk_id": chunk_id,
-                                "finished": False,
-                            },
-                        ),
-                    )
-                    if counter % run_time_args.chunk_size == 0:
-                        counter_by_type.clear()
-                        chunk_id = chunk_id + 1
-
-                if (datetime.now() - now).seconds > 5:
-                    logger.info("A log every 5 seconds - is this required??")
-
-        # Sync completed - final state message
-        yield AirbyteMessage(
-            type=Type.STATE,
-            state=AirbyteStateMessage(
-                type=AirbyteStateType.STREAM,
-                data={
-                    "records_delivered": counter_by_type,
-                    "chunk_id": chunk_id,
-                    "finished": True,
-                },
-            ),
-        )
-
+        stripe_writer = StripeWriter(logger, config, configured_catalog, configured_destination_catalog, None)
+        return stripe_writer.start_message_handling(input_messages)
+ 
     def discover(self, logger: AirbyteLogger, config: json) -> ValmiDestinationCatalog:
         sinks = []
         sinks.append(
