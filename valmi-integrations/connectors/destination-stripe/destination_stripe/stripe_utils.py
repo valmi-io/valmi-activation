@@ -26,7 +26,8 @@ SOFTWARE.
 import json
 from typing import Any, Dict, Mapping, Optional, Union
 from airbyte_cdk import AirbyteLogger
-import requests
+from requests import HTTPError
+from requests_cache import Request, Response
 from valmi_connector_lib.valmi_protocol import ValmiStream, ConfiguredValmiSink
 from valmi_connector_lib.common.run_time_args import RunTimeArgs
 from airbyte_cdk.sources.streams.http.rate_limiting import user_defined_backoff_handler, default_backoff_handler
@@ -62,33 +63,55 @@ class StripeUtils:
                 # mapped_data[v] = data[k]
         return mapped_data
 
+    def upsert(self, record, configured_stream: ValmiStream, sink: ConfiguredValmiSink):
+        self.logger.debug(json.dumps(self.make_customer_object(record.data, configured_stream, sink)))
+        self.make_request(self.make_customer_object(record.data, configured_stream, sink))
+
+    def update(self, record, configured_stream: ValmiStream, sink: ConfiguredValmiSink):
+        self.logger.debug(json.dumps(self.make_customer_object(record.data, configured_stream, sink)))
+        self.make_request(self.make_customer_object(record.data, configured_stream, sink))
+    
+    def make_request(self, request_obj):
+        self.max_tries = self.max_retries
+        if self.max_tries is not None:
+            max_tries = max(0, self.max_tries) + 1
+
+        user_backoff_handler = user_defined_backoff_handler(max_tries=max_tries)(self._customer_query)
+        backoff_handler = default_backoff_handler(max_tries=max_tries, factor=self.retry_factor)
+        return backoff_handler(user_backoff_handler)(request_obj)
+
     def _customer_query(self, request_obj):
+        dummy_http_request = Request()
+        dummy_http_response = Response()
+        error_message = ""
         exc = None
         try:
-            response = stripe.Customer.create(api_key=self.api_key, **request_obj)
-            return response
+            return stripe.Customer.create(api_key=self.api_key, **request_obj)
         except StripeError as e:
-            self.logger.error(e)
-            exc = e
+            error_message = str(e)
+            self.logger.error(error_message)
+            if e.http_status:
+                dummy_http_response.status_code = e.http_status
+            else:
+                dummy_http_response.status_code = 500  # Assuming connect error
+            exc = HTTPError(response=dummy_http_response)
+
         if self.should_retry(exc):
-            custom_backoff_time = self.backoff_time(response)
-            error_message = self.error_message(response)
+            custom_backoff_time = self.backoff_time()
             if custom_backoff_time:
                 raise UserDefinedBackoffException(
-                    backoff=custom_backoff_time, request=None, response=None, error_message=error_message
+                    backoff=custom_backoff_time, request=dummy_http_request,
+                    response=dummy_http_response, error_message=error_message
                 )
             else:
-                raise DefaultBackoffException(request=None, response=None, error_message=error_message)
+                raise DefaultBackoffException(request=dummy_http_request,
+                                              response=dummy_http_response, error_message=error_message)
         elif self.raise_on_http_errors:
             # Raise any HTTP exceptions that happened in case there were unexpected ones
-            try:
-                response.raise_for_status()
-            except requests.HTTPError as exc:
-                self.logger.error(response.text)
-                raise exc
-  
+            self.raise_for_status(exc)
         pass
 
+    ### Retry behavior Logic used by the backoff closures ###
     @property
     def raise_on_http_errors(self) -> bool:
         """
@@ -104,7 +127,7 @@ class StripeUtils:
     def retry_factor(self) -> float:
         return 5
     
-    def error_message(self) -> str:
+    def error_message(self, http_error: HTTPError) -> str:
         """
         Override this method to specify a custom error message which can incorporate the HTTP response received
 
@@ -121,7 +144,7 @@ class StripeUtils:
         """
         return None
 
-    def should_retry(self, stripe_error: StripeError) -> bool:
+    def should_retry(self, http_error: HTTPError) -> bool:
         """
         Override to set different conditions for backoff based on the response from the server.
 
@@ -131,9 +154,9 @@ class StripeUtils:
 
         Unexpected but transient exceptions (connection timeout, DNS resolution failed, etc..) are retried by default.
         """
-        return stripe_error.http_status == 429 or 500 <= stripe_error.http_status < 600
+        return http_error.response.status_code == 429 or 500 <= http_error.response.status_code < 600
 
-    def raise_for_status(self, stripe_error: StripeError):
+    def raise_for_status(self,  http_error: HTTPError):
         """Raises :class:`HTTPError`, if one occurred."""
         '''
         http_error_msg = ""
@@ -162,27 +185,4 @@ class StripeUtils:
         if http_error_msg:
             raise HTTPError(http_error_msg, response=self)
         '''
-        raise stripe_error
-    
-    def make_request(self, request_obj):
-        self.max_tries = self.max_retries
-        if self.max_tries is not None:
-            max_tries = max(0, self.max_tries) + 1
-
-        user_backoff_handler = user_defined_backoff_handler(max_tries=max_tries)(self._customer_query)
-        backoff_handler = default_backoff_handler(max_tries=max_tries, factor=self.retry_factor)
-        return backoff_handler(user_backoff_handler)(request_obj)
-
-    def upsert(self, record, configured_stream: ValmiStream, sink: ConfiguredValmiSink):
-        self.logger.debug(json.dumps(self.make_customer_object(record.data, configured_stream, sink)))
-        self.make_request(self.make_customer_object(record.data, configured_stream, sink))
-
-    def update(self, record, configured_stream: ValmiStream, sink: ConfiguredValmiSink):
-        self.logger.debug(json.dumps(self.make_customer_object(record.data, configured_stream, sink)))
-        self.make_request(self.make_customer_object(record.data, configured_stream, sink))
-
-
-# problem by problem
-# 2. upsert 
-# 3. update
-
+        raise http_error
