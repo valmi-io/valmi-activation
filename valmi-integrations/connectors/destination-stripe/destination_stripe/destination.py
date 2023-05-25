@@ -53,20 +53,28 @@ class StripeWriter(DestinationWriteWrapper):
         counter,
     ) -> HandlerResponseData:
        
+        metrics = {}
         if msg.record.data["_valmi_meta"]["_valmi_sync_op"] == "upsert":
-            self.stripe_utils.upsert(
+            obj = self.stripe_utils.upsert(
                 msg.record,
                 configured_stream=self.configured_catalog.streams[0],
                 sink=self.configured_destination_catalog.sinks[0],
             )
+            if obj:
+                metrics['upsert-ed'] = 1
+            
         elif msg.record.data["_valmi_meta"]["_valmi_sync_op"] == "update":
-            self.stripe_utils.update(
+            obj = self.stripe_utils.update(
                 msg.record,
                 configured_stream=self.configured_catalog.streams[0],
                 sink=self.configured_destination_catalog.sinks[0],
             )
+            if obj:
+                metrics['updated'] = 1
+            else:
+                metrics['ignored'] = 1
 
-        return HandlerResponseData(flushed=True)
+        return HandlerResponseData(flushed=True, metrics=metrics)
     
     def finalise_message_handling(self):
         pass

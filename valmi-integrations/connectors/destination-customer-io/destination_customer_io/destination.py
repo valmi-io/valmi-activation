@@ -30,24 +30,49 @@ from airbyte_cdk import AirbyteLogger
 from airbyte_cdk.destinations import Destination
 from airbyte_cdk.models import (
     AirbyteConnectionStatus,
-    AirbyteStateMessage,
     AirbyteMessage,
 )
-from airbyte_cdk.models.airbyte_protocol import Status, Type, AirbyteStateType
+from airbyte_cdk.models.airbyte_protocol import Status
 from valmi_connector_lib.valmi_protocol import (
     ValmiDestinationCatalog,
     ValmiSink,
     ConfiguredValmiCatalog,
     ConfiguredValmiDestinationCatalog,
     DestinationSyncMode,
+    FieldCatalog
 )
 from valmi_connector_lib.valmi_destination import ValmiDestination
-from .run_time_args import RunTimeArgs
 
 from customerio import Regions
-from datetime import datetime
+from valmi_connector_lib.destination_wrapper.destination_write_wrapper import DestinationWriteWrapper, HandlerResponseData
 
 from .customer_io_utils import CustomerIOExt, get_region
+
+
+class CustomerIOWriter(DestinationWriteWrapper):
+    def initialise_message_handling(self):
+        self.cio = CustomerIOExt(
+            self.run_time_args,
+            self.config["tracking_site_id"],
+            self.config["tracking_api_key"],
+            region=Regions.US
+            if get_region(self.config["tracking_site_id"], self.config["tracking_api_key"]).lower() == "us"
+            else Regions.EU,
+            url_prefix="/api/v2",
+        )
+        
+    def handle_message(
+        self,
+        msg,
+        counter,
+    ) -> HandlerResponseData:
+        
+        # metrics = {}
+        flushed = self.cio.add_to_queue(msg.record.data, configured_stream=self.configured_catalog.streams[0], sink=self.configured_destination_catalog.sinks[0])
+        return HandlerResponseData(flushed=flushed)
+    
+    def finalise_message_handling(self):
+        self.cio.flush()
 
 
 class DestinationCustomerIO(ValmiDestination):
@@ -64,79 +89,35 @@ class DestinationCustomerIO(ValmiDestination):
         input_messages: Iterable[AirbyteMessage],
         # state: Dict[str, any],
     ) -> Iterable[AirbyteMessage]:
-        counter = 0
-        chunk_id = 0
-        run_time_args = RunTimeArgs.parse_obj(config["run_time_args"] if "run_time_args" in config else {})
 
-        cio = CustomerIOExt(
-            run_time_args,
-            config["tracking_site_id"],
-            config["tracking_api_key"],
-            region=Regions.US
-            if get_region(config["tracking_site_id"], config["tracking_api_key"]).lower() == "us"
-            else Regions.EU,
-            url_prefix="/api/v2",
-        )
-        for message in input_messages:
-            now = datetime.now()
-
-            if message.type == Type.RECORD:
-                record = message.record
-                flushed = cio.add_to_queue(
-                    record.data,
-                    configured_stream=configured_catalog.streams[0],
-                    sink=configured_destination_catalog.sinks[0],
-                )
-
-                counter = counter + 1
-                if flushed or counter % run_time_args.chunk_size == 0:
-                    yield AirbyteMessage(
-                        type=Type.STATE,
-                        state=AirbyteStateMessage(
-                            type=AirbyteStateType.STREAM,
-                            data={
-                                "records_delivered": {DestinationSyncMode.upsert: counter},
-                                "chunk_id": chunk_id,
-                                "finished": False,
-                            },
-                        ),
-                    )
-                    if counter % run_time_args.chunk_size == 0:
-                        chunk_id = chunk_id + 1
-
-                if (datetime.now() - now).seconds > 5:
-                    logger.info("A log every 5 seconds - is this required??")
-
-        cio.flush()
-        # Sync completed - final state message
-        yield AirbyteMessage(
-            type=Type.STATE,
-            state=AirbyteStateMessage(
-                type=AirbyteStateType.STREAM,
-                data={
-                    "records_delivered": {DestinationSyncMode.upsert: counter},
-                    "chunk_id": chunk_id,
-                    "finished": True,
-                },
-            ),
-        )
-
-    # TODO: need to do supported_destination_ids_modes= get_id_keys_with_supported_sync_modes(),
+        customer_io_writer = CustomerIOWriter(logger, config, configured_catalog, configured_destination_catalog, None)
+        return customer_io_writer.start_message_handling(input_messages)
+ 
     def discover(self, logger: AirbyteLogger, config: json) -> ValmiDestinationCatalog:
-        sinks = [
+
+        sinks = []
+        sinks.append(
             ValmiSink(
                 name="Person",
+                id="Person",
                 supported_destination_sync_modes=[DestinationSyncMode.upsert],
-                json_schema={},
-                allow_freeform_fields=True,
-            ),
-            ValmiSink(
-                name="Device",
-                supported_destination_sync_modes=[DestinationSyncMode.upsert],
-                json_schema={},
-                allow_freeform_fields=True,
-            ),
-        ]
+                field_catalog={
+                    DestinationSyncMode.upsert.value: FieldCatalog(
+                        json_schema={
+                            "$schema": "http://json-schema.org/draft-07/schema#",
+                            "type": "object",
+                            "properties": {
+                                "id": {"type": "string"},
+                                "email": {"type": "string"},
+                                "cio_id": {"type": "string"},
+                            },
+                        },
+                        allow_freeform_fields=True,
+                        supported_destination_ids=["id", "email", "cio_id"],
+                    )
+                },
+            )
+        )
         return ValmiDestinationCatalog(sinks=sinks)
 
     def check(self, logger: AirbyteLogger, config: Mapping[str, Any]) -> AirbyteConnectionStatus:
