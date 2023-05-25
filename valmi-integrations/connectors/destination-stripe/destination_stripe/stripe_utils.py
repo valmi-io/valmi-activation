@@ -28,12 +28,12 @@ from typing import Any, Dict, Mapping, Optional, Union
 from airbyte_cdk import AirbyteLogger
 from requests import HTTPError
 from requests_cache import Request, Response
+import stripe
 from valmi_connector_lib.valmi_protocol import ValmiStream, ConfiguredValmiSink
 from valmi_connector_lib.common.run_time_args import RunTimeArgs
 from airbyte_cdk.sources.streams.http.rate_limiting import user_defined_backoff_handler, default_backoff_handler
 from airbyte_cdk.sources.streams.http.exceptions import DefaultBackoffException, UserDefinedBackoffException
 from jsonpath_ng import parse
-import stripe
 from stripe.error import StripeError
 
 
@@ -65,28 +65,50 @@ class StripeUtils:
 
     def upsert(self, record, configured_stream: ValmiStream, sink: ConfiguredValmiSink):
         self.logger.debug(json.dumps(self.make_customer_object(record.data, configured_stream, sink)))
-        self.make_request(self.make_customer_object(record.data, configured_stream, sink))
+        self.make_request("upsert", self.make_customer_object(record.data, configured_stream, sink))
 
     def update(self, record, configured_stream: ValmiStream, sink: ConfiguredValmiSink):
         self.logger.debug(json.dumps(self.make_customer_object(record.data, configured_stream, sink)))
-        self.make_request(self.make_customer_object(record.data, configured_stream, sink))
+        self.make_request("update", self.make_customer_object(record.data, configured_stream, sink))
     
-    def make_request(self, request_obj):
+    def make_request(self, op, request_obj):
         self.max_tries = self.max_retries
         if self.max_tries is not None:
             max_tries = max(0, self.max_tries) + 1
 
         user_backoff_handler = user_defined_backoff_handler(max_tries=max_tries)(self._customer_query)
         backoff_handler = default_backoff_handler(max_tries=max_tries, factor=self.retry_factor)
-        return backoff_handler(user_backoff_handler)(request_obj)
+        return backoff_handler(user_backoff_handler)(op, request_obj)
 
-    def _customer_query(self, request_obj):
+    def _perform_upsert(self, request_obj):
+        # check for existence
+        customer_objs = stripe.Customer.list(api_key=self.api_key, email=request_obj["email"])
+        self.logger.debug(str(customer_objs))
+        if len(customer_objs.data) > 0:
+            # just update the first object.
+            return stripe.Customer.modify(api_key=self.api_key, sid=customer_objs.data[0]["id"], **request_obj)
+        else:
+            # not found, create the object.
+            self.logger.debug("Customer not found")
+            return stripe.Customer.create(api_key=self.api_key, **request_obj)
+    
+    def _perform_update(self, request_obj):
+        # check for existence
+        customer_objs = stripe.Customer.list(api_key=self.api_key, email=request_obj["email"])
+        if len(customer_objs) > 0:
+            # just update the first object.
+            return stripe.Customer.modify(api_key=self.api_key, sid=customer_objs.data[0]["id"], **request_obj)
+
+    def _customer_query(self, op, request_obj):
         dummy_http_request = Request()
         dummy_http_response = Response()
         error_message = ""
         exc = None
         try:
-            return stripe.Customer.create(api_key=self.api_key, **request_obj)
+            if op == 'upsert':
+                return self._perform_upsert(request_obj)
+            elif op == 'update':
+                return self._perform_update(request_obj)
         except StripeError as e:
             error_message = str(e)
             self.logger.error(error_message)
@@ -156,7 +178,7 @@ class StripeUtils:
         """
         return http_error.response.status_code == 429 or 500 <= http_error.response.status_code < 600
 
-    def raise_for_status(self,  http_error: HTTPError):
+    def raise_for_status(self, http_error: HTTPError):
         """Raises :class:`HTTPError`, if one occurred."""
         '''
         http_error_msg = ""
