@@ -11,6 +11,7 @@ from valmi_connector_lib.common.run_time_args import RunTimeArgs
 from requests.auth import HTTPBasicAuth
 from valmi_connector_lib.common.metrics import get_metric_type
 
+
 def get_region(site_id: str, tracking_api_key: str):
     conn = requests.get(
         "https://track.customer.io/api/v1/accounts/region", auth=HTTPBasicAuth(site_id, tracking_api_key)
@@ -37,7 +38,7 @@ class CustomerIOExt(CustomerIO):
         obj = {}
         obj["type"] = "person"
         obj["action"] = "identify"
-        #obj["identifiers"] = {"id": str(data[configured_stream.id_key]) if counter % 2 == 0 else 2}  # TODO: take the id type from UI
+        # obj["identifiers"] = {"id": str(data[configured_stream.id_key]) if counter % 2 == 0 else 2}  # TODO: take the id type from UI
         obj["identifiers"] = {"id": str(data[configured_stream.id_key])}  # TODO: take the id type from UI
         mapped_data = self.map_data(sink.mapping, self._sanitize(data))
         obj["attributes"] = mapped_data
@@ -53,18 +54,38 @@ class CustomerIOExt(CustomerIO):
         return mapped_data
 
     def add_to_queue(self, counter, msg, configured_stream: ValmiStream, sink: ConfiguredValmiSink) -> bool:
+        is_flush_forced = False
+        if (counter) % self.run_time_args.chunk_size == 0:
+            # Chunk Boundary - Flush needs to be forced
+            is_flush_forced = True
+
         obj = self.make_person_object(counter, msg.record.data, configured_stream=configured_stream, sink=sink)
         s = json.dumps(obj)
-       
+
+        can_accommodate_new_obj = True
+        if self.written_len + len(s) + 1 > self.max_buffer_len:
+            can_accommodate_new_obj = False
+
         sync_op = sink.destination_sync_mode.value
 
         flushed = False
-        metrics = {}
+        metrics = {get_metric_type(sync_op): 0}
         rejected_records = []
-        if self.written_len + len(s) + 1 > self.max_buffer_len or (counter) % self.run_time_args.chunk_size == 0:
+
+        if not can_accommodate_new_obj:
             metrics, rejected_records = self.flush(sync_op)
             flushed = True
-    
+
+        if is_flush_forced and can_accommodate_new_obj:
+            if not self.first_in_batch:
+                self.buffer.write(",")
+            self.messages.append(msg.record)
+            self.buffer.write(s)
+            self.written_len = self.written_len + len(s) + 1
+            metrics, rejected_records = self.flush(sync_op)
+            flushed = True
+            return flushed, metrics, rejected_records
+
         if not self.first_in_batch:
             self.buffer.write(",")
 
@@ -72,8 +93,13 @@ class CustomerIOExt(CustomerIO):
         self.messages.append(msg.record)
         self.buffer.write(s)
 
-        self.written_len = self.written_len + len(s) + 1
-
+        if is_flush_forced:
+            new_metrics, new_rejected_records = self.flush(sync_op)
+            flushed = True
+            metrics = {
+                get_metric_type(sync_op): metrics[get_metric_type(sync_op)] + new_metrics[get_metric_type(sync_op)]
+            }
+            rejected_records = rejected_records.extend(new_rejected_records)
         return flushed, metrics, rejected_records
 
     def generate_rejected_message_from_record(self, record, error):
@@ -90,25 +116,31 @@ class CustomerIOExt(CustomerIO):
     def flush(self, sync_op):
         if not self.first_in_batch:  # TODO: check if any records are added. Use a nice name
             self.buffer.write("]}")
+            payload = self.buffer.getvalue()
+            # self.logger.debug(payload)
             response = self.http_sink.send(
                 method="POST",
                 url=self.get_batch_query_string(),
-                data=self.buffer.getvalue(),
+                data=payload,
                 headers={"Content-Type": "application/json"},
                 auth=(self.site_id, self.api_key),
             )
             if response.status_code == 207:
-                # Some records failed. 
-                metrics = {get_metric_type(sync_op): len(self.messages) - len(response.json()["errors"]),
-                           get_metric_type("reject"): len(response.json()["errors"])}
-                rejected_records = [self.generate_rejected_message_from_record
-                                    (self.messages[error["batch_index"]], error)
-                                    for error in response.json()["errors"]]
+                # Some records failed.
+                metrics = {
+                    get_metric_type(sync_op): len(self.messages) - len(response.json()["errors"]),
+                    get_metric_type("reject"): len(response.json()["errors"]),
+                }
+                rejected_records = [
+                    self.generate_rejected_message_from_record(self.messages[error["batch_index"]], error)
+                    for error in response.json()["errors"]
+                ]
             else:
                 metrics = {get_metric_type(sync_op): len(self.messages)}
                 rejected_records = []
-            
-            self.logger.debug(response.text)
+
+            # self.logger.debug(response.text)
+            self.buffer = StringIO()
             self.written_len = self.buffer.write('{"batch":[')
             self.first_in_batch = True
             self.messages.clear()
