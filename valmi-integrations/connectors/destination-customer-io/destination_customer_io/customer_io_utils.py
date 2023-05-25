@@ -6,7 +6,7 @@ from io import StringIO
 from valmi_connector_lib.valmi_protocol import ValmiStream, ConfiguredValmiSink
 import json
 from .http_sink import HttpSink
-from .run_time_args import RunTimeArgs
+from valmi_connector_lib.common.run_time_args import RunTimeArgs
 
 
 def get_region(site_id: str, tracking_api_key: str):

@@ -63,11 +63,11 @@ class StripeUtils:
         return mapped_data
 
     def upsert(self, record, configured_stream: ValmiStream, sink: ConfiguredValmiSink):
-        self.make_request("upsert", self.make_customer_object(record.data, configured_stream, sink))
+        return self.make_request("upsert", self.make_customer_object(record.data, configured_stream, sink))
 
     def update(self, record, configured_stream: ValmiStream, sink: ConfiguredValmiSink):
-        self.make_request("update", self.make_customer_object(record.data, configured_stream, sink))
-    
+        return self.make_request("update", self.make_customer_object(record.data, configured_stream, sink))
+
     def make_request(self, op, request_obj):
         self.max_tries = self.max_retries
         if self.max_tries is not None:
@@ -87,13 +87,14 @@ class StripeUtils:
             # not found, create the object.
             self.logger.debug("Customer not found")
             return stripe.Customer.create(api_key=self.api_key, **request_obj)
-    
+
     def _perform_update(self, request_obj):
         # check for existence
         customer_objs = stripe.Customer.list(api_key=self.api_key, email=request_obj["email"])
         if customer_objs and len(customer_objs.data) > 0:
             # just update the first object.
             return stripe.Customer.modify(api_key=self.api_key, sid=customer_objs.data[0]["id"], **request_obj)
+        return None
 
     def _customer_query(self, op, request_obj):
         dummy_http_request = Request()
@@ -101,9 +102,9 @@ class StripeUtils:
         error_message = ""
         exc = None
         try:
-            if op == 'upsert':
+            if op == "upsert":
                 return self._perform_upsert(request_obj)
-            elif op == 'update':
+            elif op == "update":
                 return self._perform_update(request_obj)
         except StripeError as e:
             error_message = str(e)
@@ -118,12 +119,15 @@ class StripeUtils:
             custom_backoff_time = self.backoff_time()
             if custom_backoff_time:
                 raise UserDefinedBackoffException(
-                    backoff=custom_backoff_time, request=dummy_http_request,
-                    response=dummy_http_response, error_message=error_message
+                    backoff=custom_backoff_time,
+                    request=dummy_http_request,
+                    response=dummy_http_response,
+                    error_message=error_message,
                 )
             else:
-                raise DefaultBackoffException(request=dummy_http_request,
-                                              response=dummy_http_response, error_message=error_message)
+                raise DefaultBackoffException(
+                    request=dummy_http_request, response=dummy_http_response, error_message=error_message
+                )
         elif self.raise_on_http_errors:
             # Raise any HTTP exceptions that happened in case there were unexpected ones
             self.raise_for_status(exc)
@@ -144,7 +148,7 @@ class StripeUtils:
     @property
     def retry_factor(self) -> float:
         return 5
-    
+
     def error_message(self, http_error: HTTPError) -> str:
         """
         Override this method to specify a custom error message which can incorporate the HTTP response received
@@ -176,7 +180,7 @@ class StripeUtils:
 
     def raise_for_status(self, http_error: HTTPError):
         """Raises :class:`HTTPError`, if one occurred."""
-        '''
+        """
         http_error_msg = ""
         if isinstance(self.reason, bytes):
             # We attempt to decode utf-8 first because some servers
@@ -202,5 +206,5 @@ class StripeUtils:
 
         if http_error_msg:
             raise HTTPError(http_error_msg, response=self)
-        '''
+        """
         raise http_error

@@ -18,7 +18,7 @@ from valmi_connector_lib.valmi_protocol import (
 )
 from valmi_connector_lib.common.run_time_args import RunTimeArgs
 
-HandlerResponseData = namedtuple("HandlerResponseData", ["flushed"])
+HandlerResponseData = namedtuple("HandlerResponseData", ["flushed", "metrics"])
 
 class DestinationWriteWrapper:
     def __init__(
@@ -57,7 +57,8 @@ class DestinationWriteWrapper:
         for msg in input_messages:
             now = datetime.now()
             if msg.type == Type.RECORD:
-                handler_response = HandlerResponseData(flushed=False)
+                sync_op = msg.record.data["_valmi_meta"]["_valmi_sync_op"]
+                handler_response = HandlerResponseData(flushed=False, metrics=None)
                 try:
                     handler_response = self.handle_message(msg, counter)
                 except Exception as e:
@@ -72,8 +73,12 @@ class DestinationWriteWrapper:
                     return
 
                 counter = counter + 1
-                sync_op = msg.record.data["_valmi_meta"]["_valmi_sync_op"]
-                counter_by_type[sync_op] = counter_by_type[sync_op] + 1
+
+                if not handler_response.metrics:
+                    handler_response.metrics = {sync_op: 1}
+
+                for op, metric in handler_response.metrics.items():
+                    counter_by_type[op] = counter_by_type[op] + metric
 
                 commit_state = False
                 if handler_response.flushed:
