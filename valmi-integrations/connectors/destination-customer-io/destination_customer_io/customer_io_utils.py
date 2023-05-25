@@ -9,7 +9,7 @@ import json
 from .http_sink import HttpSink
 from valmi_connector_lib.common.run_time_args import RunTimeArgs
 from requests.auth import HTTPBasicAuth
-
+from valmi_connector_lib.common.metrics import get_metric_type
 
 def get_region(site_id: str, tracking_api_key: str):
     conn = requests.get(
@@ -37,7 +37,8 @@ class CustomerIOExt(CustomerIO):
         obj = {}
         obj["type"] = "person"
         obj["action"] = "identify"
-        obj["identifiers"] = {"id": str(data[configured_stream.id_key]) if counter % 2 == 0 else 2}  # TODO: take the id type from UI
+        #obj["identifiers"] = {"id": str(data[configured_stream.id_key]) if counter % 2 == 0 else 2}  # TODO: take the id type from UI
+        obj["identifiers"] = {"id": str(data[configured_stream.id_key])}  # TODO: take the id type from UI
         mapped_data = self.map_data(sink.mapping, self._sanitize(data))
         obj["attributes"] = mapped_data
         return obj
@@ -55,10 +56,11 @@ class CustomerIOExt(CustomerIO):
         obj = self.make_person_object(counter, msg.record.data, configured_stream=configured_stream, sink=sink)
         s = json.dumps(obj)
        
-        sync_op = msg.record.data["_valmi_meta"]["_valmi_sync_op"]
+        sync_op = sink.destination_sync_mode.value
 
         flushed = False
-        metrics = {sync_op: 0}
+        metrics = {}
+        rejected_records = []
         if self.written_len + len(s) + 1 > self.max_buffer_len or (counter) % self.run_time_args.chunk_size == 0:
             metrics, rejected_records = self.flush(sync_op)
             flushed = True
@@ -78,6 +80,7 @@ class CustomerIOExt(CustomerIO):
         return ValmiRejectedRecordMessage(
             stream=record.stream,
             data=record.data,
+            rejected=True,
             rejection_message=f'reason: {error["reason"]} -  fields: {error["field"]} - message: {error["message"]}',
             rejection_code=207,
             rejection_metadata=error,
@@ -96,13 +99,13 @@ class CustomerIOExt(CustomerIO):
             )
             if response.status_code == 207:
                 # Some records failed. 
-                metrics = {sync_op: len(self.messages) - len(response.json()["errors"]),
-                           "reject": len(response.json()["errors"])}
+                metrics = {get_metric_type(sync_op): len(self.messages) - len(response.json()["errors"]),
+                           get_metric_type("reject"): len(response.json()["errors"])}
                 rejected_records = [self.generate_rejected_message_from_record
                                     (self.messages[error["batch_index"]], error)
                                     for error in response.json()["errors"]]
             else:
-                metrics = {sync_op: len(self.messages)}
+                metrics = {get_metric_type(sync_op): len(self.messages)}
                 rejected_records = []
             
             self.logger.debug(response.text)
