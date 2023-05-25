@@ -39,7 +39,9 @@ class CustomerIOExt(CustomerIO):
 
     def map_data(self, mapping: Dict[str, str], data: Dict[str, Any]):
         mapped_data = {}
-        for k, v in mapping.items():
+        for item in mapping:
+            k = item["stream"]
+            v = item["sink"]
             if k in data:
                 mapped_data[v] = data[k]
         return mapped_data
@@ -64,13 +66,14 @@ class CustomerIOExt(CustomerIO):
         if not self.first_in_batch:  # TODO: check if any records are added. Use a nice name
             self.buffer.write("]}")
             self.logger.debug(self.buffer.getvalue())
-            self.http_sink.send(
+            response = self.http_sink.send(
                 method="POST",
                 url=self.get_batch_query_string(),
                 data=self.buffer.getvalue(),
                 headers={"Content-Type": "application/json"},
                 auth=(self.site_id, self.api_key),
             )
+            self.logger.debug(response.text)
             self.written_len = self.buffer.write('{"batch":[')
             self.first_in_batch = True
 
