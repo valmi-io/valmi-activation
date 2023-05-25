@@ -7,15 +7,14 @@ from valmi_connector_lib.valmi_protocol import ValmiStream, ConfiguredValmiSink
 import json
 from .http_sink import HttpSink
 from valmi_connector_lib.common.run_time_args import RunTimeArgs
+from requests.auth import HTTPBasicAuth
 
 
 def get_region(site_id: str, tracking_api_key: str):
-    headers = {"Authorization": f"Basic {site_id}:{tracking_api_key}"}
-
-    conn = requests.get("https://track.customer.io/api/v1/accounts/region", headers=headers)
-    if conn.text is None:
+    conn = requests.get("https://track.customer.io/api/v1/accounts/region", auth=HTTPBasicAuth(site_id, tracking_api_key))
+    if conn.text is None or conn.json() is None or "region" not in conn.json():
         raise Exception("Could not get region with provided credentials")
-    return conn.text
+    return conn.json()["region"]
 
 
 class CustomerIOExt(CustomerIO):
@@ -40,7 +39,9 @@ class CustomerIOExt(CustomerIO):
 
     def map_data(self, mapping: Dict[str, str], data: Dict[str, Any]):
         mapped_data = {}
-        for k, v in mapping.items():
+        for item in mapping:
+            k = item["stream"]
+            v = item["sink"]
             if k in data:
                 mapped_data[v] = data[k]
         return mapped_data
@@ -65,13 +66,14 @@ class CustomerIOExt(CustomerIO):
         if not self.first_in_batch:  # TODO: check if any records are added. Use a nice name
             self.buffer.write("]}")
             self.logger.debug(self.buffer.getvalue())
-            self.http_sink.send(
+            response = self.http_sink.send(
                 method="POST",
                 url=self.get_batch_query_string(),
                 data=self.buffer.getvalue(),
                 headers={"Content-Type": "application/json"},
                 auth=(self.site_id, self.api_key),
             )
+            self.logger.debug(response.text)
             self.written_len = self.buffer.write('{"batch":[')
             self.first_in_batch = True
 
