@@ -124,7 +124,7 @@ class DestinationCustomerIO(ValmiDestination):
         try:
             logger.debug(get_region(config["tracking_site_id"], config["tracking_api_key"]))
             cio = CustomerIOExt(
-                run_time_args=None,
+                run_time_args=None,     
                 site_id=config["tracking_site_id"],
                 api_key=config["tracking_api_key"],
                 region=Regions.US
