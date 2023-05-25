@@ -14,11 +14,13 @@ from airbyte_cdk.models.airbyte_protocol import Type, AirbyteStateType
 
 from valmi_connector_lib.valmi_protocol import (
     ConfiguredValmiDestinationCatalog,
-    ConfiguredValmiCatalog,
+    ConfiguredValmiCatalog
 )
 from valmi_connector_lib.common.run_time_args import RunTimeArgs
 
-HandlerResponseData = namedtuple("HandlerResponseData", ["flushed", "metrics"], defaults=(False, {}))
+HandlerResponseData = namedtuple(
+    "HandlerResponseData", ["flushed", "metrics", "rejected_records"], defaults=(False, {}, [])
+)
 
 
 class DestinationWriteWrapper:
@@ -45,7 +47,7 @@ class DestinationWriteWrapper:
         pass
 
     @abstractmethod
-    def finalise_message_handling(self) -> None:
+    def finalise_message_handling(self) -> HandlerResponseData:
         pass
 
     def start_message_handling(self, input_messages: Iterable[AirbyteMessage]) -> AirbyteMessage:
@@ -58,9 +60,17 @@ class DestinationWriteWrapper:
         for msg in input_messages:
             now = datetime.now()
             if msg.type == Type.RECORD:
+                counter = counter + 1
+
                 handler_response = HandlerResponseData()
                 try:
                     handler_response = self.handle_message(msg, counter)
+                    if handler_response.rejected_records:
+                        for rejected_record in handler_response.rejected_records:
+                            yield AirbyteMessage(
+                                type=Type.RECORD,
+                                rejected_record=rejected_record,
+                            )
                 except Exception as e:
                     yield AirbyteMessage(
                         type=Type.TRACE,
@@ -72,8 +82,6 @@ class DestinationWriteWrapper:
                     )
                     return
 
-                counter = counter + 1
-
                 sync_op = msg.record.data["_valmi_meta"]["_valmi_sync_op"]
                 if not handler_response.metrics:
                     handler_response = handler_response._replace(metrics={sync_op: 1})
@@ -81,13 +89,13 @@ class DestinationWriteWrapper:
                 for op, metric in handler_response.metrics.items():
                     counter_by_type[op] = counter_by_type[op] + metric
 
+                # Commit state only when chunk is finished processing. Flushes are guaranteed for every chunk end, but could be more frequent and even per record for some record
                 commit_state = False
-                if handler_response.flushed:
+                if counter % run_time_args.chunk_size == 0:
                     commit_state = True
 
-                if (
-                    handler_response.flushed and counter % run_time_args.records_per_metric == 0
-                ) or counter % run_time_args.chunk_size == 0:
+                # Aggregate metrics for the current chunk_id and publish
+                if counter % run_time_args.records_per_metric == 0 or counter % run_time_args.chunk_size == 0:
                     yield AirbyteMessage(
                         type=Type.STATE,
                         state=AirbyteStateMessage(
@@ -108,7 +116,18 @@ class DestinationWriteWrapper:
                 if (datetime.now() - now).seconds > 5:
                     self.logger.info("A log every 5 seconds - is this required??")
 
-        self.finalise_message_handling()
+        handler_response = self.finalise_message_handling()
+        if handler_response and handler_response.rejected_records:
+            for rejected_record in handler_response.rejected_records:
+                yield AirbyteMessage(
+                    type=Type.RECORD,
+                    rejected_record=rejected_record,
+                )
+
+        if handler_response:
+            for op, metric in handler_response.metrics.items():
+                counter_by_type[op] = counter_by_type[op] + metric
+
         # Sync completed - final state message
         yield AirbyteMessage(
             type=Type.STATE,
