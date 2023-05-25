@@ -106,6 +106,13 @@ class StripeUtils:
                 return self._perform_upsert(request_obj)
             elif op == "update":
                 return self._perform_update(request_obj)
+        except stripe.error.InvalidRequestError as e:
+            ## HANDLE Rejected sample request due to invalid request error.
+            pass
+        except stripe.error.RateLimitError as e:
+            error_message = str(e)
+            self.logger.error(error_message)
+            dummy_http_response.status_code = 429
         except StripeError as e:
             error_message = str(e)
             self.logger.error(error_message)

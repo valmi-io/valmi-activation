@@ -39,7 +39,10 @@ from valmi_connector_lib.valmi_protocol import (
 )
 from valmi_connector_lib.valmi_destination import ValmiDestination
 import stripe
-from valmi_connector_lib.destination_wrapper.destination_write_wrapper import DestinationWriteWrapper, HandlerResponseData
+from valmi_connector_lib.destination_wrapper.destination_write_wrapper import (
+    DestinationWriteWrapper,
+    HandlerResponseData,
+)
 from .stripe_utils import StripeUtils
 
 
@@ -52,7 +55,7 @@ class StripeWriter(DestinationWriteWrapper):
         msg,
         counter,
     ) -> HandlerResponseData:
-       
+        # TODO : handle rejected records and metric type strings.
         metrics = {}
         if msg.record.data["_valmi_meta"]["_valmi_sync_op"] == "upsert":
             obj = self.stripe_utils.upsert(
@@ -61,8 +64,8 @@ class StripeWriter(DestinationWriteWrapper):
                 sink=self.configured_destination_catalog.sinks[0],
             )
             if obj:
-                metrics['upsert-ed'] = 1
-            
+                metrics["upsert-ed"] = 1
+
         elif msg.record.data["_valmi_meta"]["_valmi_sync_op"] == "update":
             obj = self.stripe_utils.update(
                 msg.record,
@@ -70,12 +73,12 @@ class StripeWriter(DestinationWriteWrapper):
                 sink=self.configured_destination_catalog.sinks[0],
             )
             if obj:
-                metrics['updated'] = 1
+                metrics["updated"] = 1
             else:
-                metrics['ignored'] = 1
+                metrics["ignored"] = 1
 
         return HandlerResponseData(flushed=True, metrics=metrics)
-    
+
     def finalise_message_handling(self):
         pass
 
@@ -99,7 +102,7 @@ class DestinationStripe(ValmiDestination):
 
         stripe_writer = StripeWriter(logger, config, configured_catalog, configured_destination_catalog, None)
         return stripe_writer.start_message_handling(input_messages)
- 
+
     def discover(self, logger: AirbyteLogger, config: json) -> ValmiDestinationCatalog:
         sinks = []
         sinks.append(

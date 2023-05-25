@@ -45,7 +45,6 @@ from valmi_connector_lib.valmi_destination import ValmiDestination
 
 from customerio import Regions
 from valmi_connector_lib.destination_wrapper.destination_write_wrapper import DestinationWriteWrapper, HandlerResponseData
-from valmi_connector_lib.common.metrics import get_metric_type
 from .customer_io_utils import CustomerIOExt, get_region
 
 
@@ -66,13 +65,12 @@ class CustomerIOWriter(DestinationWriteWrapper):
         msg,
         counter,
     ) -> HandlerResponseData:
-         
-        sync_op = msg.record.data["_valmi_meta"]["_valmi_sync_op"]
-        flushed = self.cio.add_to_queue(msg.record.data, configured_stream=self.configured_catalog.streams[0], sink=self.configured_destination_catalog.sinks[0])
-        return HandlerResponseData(flushed=flushed, metrics={get_metric_type(sync_op=sync_op): 1})
+        flushed, metrics, rejected_records = self.cio.add_to_queue(counter, msg, configured_stream=self.configured_catalog.streams[0], sink=self.configured_destination_catalog.sinks[0])
+        return HandlerResponseData(flushed=flushed, metrics=metrics, rejected_records=rejected_records)
     
-    def finalise_message_handling(self):
-        self.cio.flush()
+    def finalise_message_handling(self) -> HandlerResponseData:
+        flushed, metrics, rejected_records = self.cio.flush()
+        return HandlerResponseData(flushed=flushed, metrics=metrics, rejected_records=rejected_records)
 
 
 class DestinationCustomerIO(ValmiDestination):
