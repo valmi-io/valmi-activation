@@ -1,5 +1,5 @@
 from typing import Optional
-from pydantic import BaseModel, UUID4
+from pydantic import BaseModel, UUID4, Extra
 from datetime import datetime
 
 
@@ -29,3 +29,6 @@ class SyncCurrentRunArgs(BaseModel):
     chunk_id: int
     records_per_metric: int
     previous_run_status: str
+
+    class Config:
+        extra = Extra.allow

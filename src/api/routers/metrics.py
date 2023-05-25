@@ -53,7 +53,7 @@ async def create_metric(
     return GenericResponse()
 
 
-@router.get("/syncs/{sync_id}/runs/{run_id/metrics", response_model=dict[str, Any])
+@router.get("/syncs/{sync_id}/runs/{run_id}/metrics", response_model=dict[str, Any])
 async def get_metrics(
     sync_id: UUID4, run_id: UUID4, metric_service: MetricsService = Depends(get_metrics_service)
 ) -> dict[str, Any]:

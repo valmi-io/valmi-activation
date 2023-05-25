@@ -129,3 +129,6 @@ class SyncsService(BaseService[SyncSchedule, SyncScheduleCreate, Any]):
             )
             .all()
         )
+
+    def get_sync(self, sync_id) -> SyncSchedule:
+        return self.db_session.query(self.model).filter(SyncSchedule.sync_id == sync_id).first()

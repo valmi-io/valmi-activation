@@ -22,6 +22,7 @@ class SyncRunCreate(SyncRunBase):
     status: str
     metrics: Optional[Dict]
     extra: Optional[Dict]
+    run_time_args: Optional[Dict]
 
 
 class SyncRun(SyncRunCreate):
@@ -33,3 +34,8 @@ class SyncRun(SyncRunCreate):
 
 class ConnectorSynchronization(BaseModel):
     abort_required: bool
+
+
+class SyncRunTimeArgs(BaseModel):
+    run_time_args: Dict
+

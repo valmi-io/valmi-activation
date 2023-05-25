@@ -61,6 +61,14 @@ class ProcStdoutHandlerThread(threading.Thread):
                         continue
                     print(line)
                     json_record = json.loads(line)
+
+                    # We want to check abort status after every chunk,
+                    # STATE record is written after every chunk
+                    if json_record["type"] == "STATE":
+                        if self.engine.abort_required():
+                            self.proc.kill()
+                            os._exit(0)
+
                     if json_record["type"] not in record_types:
                         handlers["default"].handle(json_record)
                     else:
