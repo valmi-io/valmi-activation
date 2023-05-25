@@ -7,15 +7,14 @@ from valmi_connector_lib.valmi_protocol import ValmiStream, ConfiguredValmiSink
 import json
 from .http_sink import HttpSink
 from valmi_connector_lib.common.run_time_args import RunTimeArgs
+from requests.auth import HTTPBasicAuth
 
 
 def get_region(site_id: str, tracking_api_key: str):
-    headers = {"Authorization": f"Basic {site_id}:{tracking_api_key}"}
-
-    conn = requests.get("https://track.customer.io/api/v1/accounts/region", headers=headers)
-    if conn.text is None:
+    conn = requests.get("https://track.customer.io/api/v1/accounts/region", auth=HTTPBasicAuth(site_id, tracking_api_key))
+    if conn.text is None or conn.json() is None or "region" not in conn.json():
         raise Exception("Could not get region with provided credentials")
-    return conn.text
+    return conn.json()["region"]
 
 
 class CustomerIOExt(CustomerIO):

@@ -210,3 +210,4 @@ valmi-integrations/connectors/destination-stripe/secrets/.config.json
 tags
 .vscode
 .venv
+valmi-integrations/connectors/destination-customer-io/secrets/.config.json
