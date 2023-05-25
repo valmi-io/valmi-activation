@@ -125,7 +125,7 @@ class CustomerIOExt(CustomerIO):
                 headers={"Content-Type": "application/json"},
                 auth=(self.site_id, self.api_key),
             )
-            if response.status_code == 207:
+            if response.status_code in (207, 400):
                 # Some records failed.
                 metrics = {
                     get_metric_type(sync_op): len(self.messages) - len(response.json()["errors"]),
