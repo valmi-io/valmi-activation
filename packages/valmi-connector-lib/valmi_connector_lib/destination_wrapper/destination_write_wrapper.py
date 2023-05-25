@@ -18,7 +18,8 @@ from valmi_connector_lib.valmi_protocol import (
 )
 from valmi_connector_lib.common.run_time_args import RunTimeArgs
 
-HandlerResponseData = namedtuple("HandlerResponseData", ["flushed", "metrics"])
+HandlerResponseData = namedtuple("HandlerResponseData", ["flushed", "metrics"], defaults=(False, {}))
+
 
 class DestinationWriteWrapper:
     def __init__(
@@ -57,8 +58,7 @@ class DestinationWriteWrapper:
         for msg in input_messages:
             now = datetime.now()
             if msg.type == Type.RECORD:
-                sync_op = msg.record.data["_valmi_meta"]["_valmi_sync_op"]
-                handler_response = HandlerResponseData(flushed=False, metrics=None)
+                handler_response = HandlerResponseData()
                 try:
                     handler_response = self.handle_message(msg, counter)
                 except Exception as e:
@@ -74,8 +74,9 @@ class DestinationWriteWrapper:
 
                 counter = counter + 1
 
+                sync_op = msg.record.data["_valmi_meta"]["_valmi_sync_op"]
                 if not handler_response.metrics:
-                    handler_response.metrics = {sync_op: 1}
+                    handler_response = handler_response._replace(metrics={sync_op: 1})
 
                 for op, metric in handler_response.metrics.items():
                     counter_by_type[op] = counter_by_type[op] + metric
@@ -84,7 +85,9 @@ class DestinationWriteWrapper:
                 if handler_response.flushed:
                     commit_state = True
 
-                if handler_response.flushed or counter % run_time_args.chunk_size == 0:
+                if (
+                    handler_response.flushed and counter % run_time_args.records_per_metric == 0
+                ) or counter % run_time_args.chunk_size == 0:
                     yield AirbyteMessage(
                         type=Type.STATE,
                         state=AirbyteStateMessage(

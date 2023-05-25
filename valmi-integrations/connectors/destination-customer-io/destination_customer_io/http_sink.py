@@ -2,7 +2,7 @@ from typing import Any, Iterable, List, Mapping, Optional, Union
 from airbyte_cdk.sources.streams.http.http import HttpStream
 from requests import Request, Session
 import requests
-from .run_time_args import RunTimeArgs
+from valmi_connector_lib.common.run_time_args import RunTimeArgs
 
 
 class UnsupportedMethodException(Exception):

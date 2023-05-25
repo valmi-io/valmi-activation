@@ -115,7 +115,7 @@ class Engine(NullEngine):
         return r.json()
 
     def metric(self, commit=False):
-        self.metric_ext({"success": self.connector_state.records_in_chunk}, commit=commit)
+        self.metric_ext({"succeeded": self.connector_state.records_in_chunk}, commit=commit)
 
     def metric_ext(self, metric_json, commit=False):
         print("Sending metric")

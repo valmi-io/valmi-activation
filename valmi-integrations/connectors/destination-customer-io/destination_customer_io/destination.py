@@ -39,6 +39,7 @@ from valmi_connector_lib.valmi_protocol import (
     ConfiguredValmiCatalog,
     ConfiguredValmiDestinationCatalog,
     DestinationSyncMode,
+    FieldCatalog
 )
 from valmi_connector_lib.valmi_destination import ValmiDestination
 
@@ -65,7 +66,8 @@ class CustomerIOWriter(DestinationWriteWrapper):
         msg,
         counter,
     ) -> HandlerResponseData:
-       
+        
+        # metrics = {}
         flushed = self.cio.add_to_queue(msg.record.data, configured_stream=self.configured_catalog.streams[0], sink=self.configured_destination_catalog.sinks[0])
         return HandlerResponseData(flushed=flushed)
     
@@ -92,20 +94,30 @@ class DestinationCustomerIO(ValmiDestination):
         return customer_io_writer.start_message_handling(input_messages)
  
     def discover(self, logger: AirbyteLogger, config: json) -> ValmiDestinationCatalog:
-        sinks = [
+
+        sinks = []
+        sinks.append(
             ValmiSink(
                 name="Person",
+                id="Person",
                 supported_destination_sync_modes=[DestinationSyncMode.upsert],
-                json_schema={},
-                allow_freeform_fields=True,
-            ),
-            ValmiSink(
-                name="Device",
-                supported_destination_sync_modes=[DestinationSyncMode.upsert],
-                json_schema={},
-                allow_freeform_fields=True,
-            ),
-        ]
+                field_catalog={
+                    DestinationSyncMode.upsert.value: FieldCatalog(
+                        json_schema={
+                            "$schema": "http://json-schema.org/draft-07/schema#",
+                            "type": "object",
+                            "properties": {
+                                "id": {"type": "string"},
+                                "email": {"type": "string"},
+                                "cio_id": {"type": "string"},
+                            },
+                        },
+                        allow_freeform_fields=True,
+                        supported_destination_ids=["id", "email", "cio_id"],
+                    )
+                },
+            )
+        )
         return ValmiDestinationCatalog(sinks=sinks)
 
     def check(self, logger: AirbyteLogger, config: Mapping[str, Any]) -> AirbyteConnectionStatus:
