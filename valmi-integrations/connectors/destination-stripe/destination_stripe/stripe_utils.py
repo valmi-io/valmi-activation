@@ -23,7 +23,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import json
 from typing import Any, Dict, Mapping, Optional, Union
 from airbyte_cdk import AirbyteLogger
 from requests import HTTPError
@@ -64,11 +63,9 @@ class StripeUtils:
         return mapped_data
 
     def upsert(self, record, configured_stream: ValmiStream, sink: ConfiguredValmiSink):
-        self.logger.debug(json.dumps(self.make_customer_object(record.data, configured_stream, sink)))
         self.make_request("upsert", self.make_customer_object(record.data, configured_stream, sink))
 
     def update(self, record, configured_stream: ValmiStream, sink: ConfiguredValmiSink):
-        self.logger.debug(json.dumps(self.make_customer_object(record.data, configured_stream, sink)))
         self.make_request("update", self.make_customer_object(record.data, configured_stream, sink))
     
     def make_request(self, op, request_obj):
@@ -83,8 +80,7 @@ class StripeUtils:
     def _perform_upsert(self, request_obj):
         # check for existence
         customer_objs = stripe.Customer.list(api_key=self.api_key, email=request_obj["email"])
-        self.logger.debug(str(customer_objs))
-        if len(customer_objs.data) > 0:
+        if customer_objs and len(customer_objs.data) > 0:
             # just update the first object.
             return stripe.Customer.modify(api_key=self.api_key, sid=customer_objs.data[0]["id"], **request_obj)
         else:
@@ -95,7 +91,7 @@ class StripeUtils:
     def _perform_update(self, request_obj):
         # check for existence
         customer_objs = stripe.Customer.list(api_key=self.api_key, email=request_obj["email"])
-        if len(customer_objs) > 0:
+        if customer_objs and len(customer_objs.data) > 0:
             # just update the first object.
             return stripe.Customer.modify(api_key=self.api_key, sid=customer_objs.data[0]["id"], **request_obj)
 
