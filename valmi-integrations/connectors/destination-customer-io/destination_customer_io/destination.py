@@ -69,8 +69,10 @@ class CustomerIOWriter(DestinationWriteWrapper):
         return HandlerResponseData(flushed=flushed, metrics=metrics, rejected_records=rejected_records)
     
     def finalise_message_handling(self) -> HandlerResponseData:
-        flushed, metrics, rejected_records = self.cio.flush()
-        return HandlerResponseData(flushed=flushed, metrics=metrics, rejected_records=rejected_records)
+        sync_op = self.configured_destination_catalog.sinks[0].destination_sync_mode.value
+
+        metrics, rejected_records = self.cio.flush(sync_op)
+        return HandlerResponseData(flushed=True, metrics=metrics, rejected_records=rejected_records)
 
 
 class DestinationCustomerIO(ValmiDestination):
