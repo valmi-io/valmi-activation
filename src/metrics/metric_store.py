@@ -165,7 +165,8 @@ class Metrics:
             inserts.append(f"('{sync_id}', '{connector_id}', '{run_id}', {chunk_id},'{metric_type}',{count},'{now}')")
 
         print(inserts)
-        self.con.sql(f"INSERT INTO {METRICS_TABLE} VALUES {','.join(inserts)}")
+        if inserts:
+            self.con.sql(f"INSERT INTO {METRICS_TABLE} VALUES {','.join(inserts)}")
 
     def get_samples(self, sync_id: UUID4, run_id: UUID4):
         # get the samples from the intermediate store
