@@ -122,9 +122,11 @@ class DestinationCustomerIO(ValmiDestination):
 
     def check(self, logger: AirbyteLogger, config: Mapping[str, Any]) -> AirbyteConnectionStatus:
         try:
+            logger.debug(get_region(config["tracking_site_id"], config["tracking_api_key"]))
             cio = CustomerIOExt(
-                config["tracking_site_id"],
-                config["tracking_api_key"],
+                run_time_args=None,
+                site_id=config["tracking_site_id"],
+                api_key=config["tracking_api_key"],
                 region=Regions.US
                 if get_region(config["tracking_site_id"], config["tracking_api_key"]).lower() == "us"
                 else Regions.EU,
