@@ -30,6 +30,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 
 from metastore.models import SyncSchedule, SyncRun
+from metastore.session import acquire_lock
 from api.schemas import SyncScheduleCreate, SyncRunCreate
 from sqlalchemy.dialects.postgresql import INTERVAL
 from sqlalchemy.sql.functions import concat
@@ -87,45 +88,54 @@ class SyncsService(BaseService[SyncSchedule, SyncScheduleCreate, Any]):
                 raise e
 
     def update_sync_and_create_run(self, sync: SyncSchedule, run: SyncRunCreate) -> None:
-        db_obj: SyncRun = SyncRun(**run.dict())
-        self.db_session.add(db_obj)
-        try:
-            self.db_session.commit()
-        except sqlalchemy.exc.IntegrityError as e:
-            self.db_session.rollback()
-            if "duplicate key" in str(e):
-                raise HTTPException(status_code=409, detail="Conflict Error")
-            else:
-                raise e
+        with acquire_lock(self.db_session):
+            db_obj: SyncRun = SyncRun(**run.dict())
+            self.db_session.add(db_obj)
+            try:
+                self.db_session.commit()
+            except sqlalchemy.exc.IntegrityError as e:
+                self.db_session.rollback()
+                if "duplicate key" in str(e):
+                    raise HTTPException(status_code=409, detail="Conflict Error")
+                else:
+                    raise e
 
     def update_sync_and_run(self, sync: SyncSchedule, run: SyncRun) -> None:
-        try:
-            self.db_session.commit()
-        except Exception as e:
-            raise e
+        with acquire_lock(self.db_session):
+            try:
+                self.db_session.commit()
+            except Exception as e:
+                raise e
 
     def get_syncs_to_run(self) -> List[SyncSchedule]:
-        return (
-            self.db_session.query(self.model)
-            .filter(
-                or_(
-                    and_(
-                        SyncSchedule.status == SyncConfigStatus.ACTIVE,
-                        or_(
-                            SyncSchedule.run_status == SyncStatus.FAILED,
-                            SyncSchedule.run_status == SyncStatus.RUNNING,
-                            SyncSchedule.run_status == SyncStatus.SCHEDULED,
-                            and_(
-                                (datetime.now() - SyncSchedule.last_run_at)
-                                >= SyncSchedule.run_interval * func.cast(concat(1, " millisecond"), INTERVAL),
-                                SyncSchedule.run_status == SyncStatus.STOPPED,
+        with acquire_lock(self.db_session):
+            return (
+                self.db_session.query(self.model)
+                .filter(
+                    or_(
+                        and_(
+                            SyncSchedule.status == SyncConfigStatus.ACTIVE,
+                            or_(
+                                SyncSchedule.run_status == SyncStatus.FAILED,
+                                SyncSchedule.run_status == SyncStatus.RUNNING,
+                                SyncSchedule.run_status == SyncStatus.SCHEDULED,
+                                SyncSchedule.run_status == SyncStatus.ABORTING,
+                                and_(
+                                    (datetime.now() - SyncSchedule.last_run_at)
+                                    >= SyncSchedule.run_interval * func.cast(concat(1, " millisecond"), INTERVAL),
+                                    SyncSchedule.run_status == SyncStatus.STOPPED,
+                                ),
                             ),
                         ),
-                    ),
-                    and_(
-                        SyncSchedule.status != SyncConfigStatus.ACTIVE, SyncSchedule.run_status == SyncStatus.RUNNING
-                    ),
+                        and_(
+                            SyncSchedule.status != SyncConfigStatus.ACTIVE,
+                            SyncSchedule.run_status == SyncStatus.RUNNING
+                        ),
+                    )
                 )
+                .all()
             )
-            .all()
-        )
+
+    def get_sync(self, sync_id) -> SyncSchedule:
+        with acquire_lock(self.db_session):
+            return self.db_session.query(self.model).filter(SyncSchedule.sync_id == sync_id).first()

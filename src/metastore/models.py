@@ -19,6 +19,7 @@ class SyncStatus(str, Enum):
     FAILED = "failed"
     RUNNING = "running"
     SCHEDULED = "scheduled"
+    ABORTING = "aborting"
 
 
 Base: Any = declarative_base()

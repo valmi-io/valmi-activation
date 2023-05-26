@@ -26,7 +26,6 @@ SOFTWARE.
 
 import json
 from typing import Any, Iterable, Mapping, Dict
-from collections import defaultdict
 
 from airbyte_cdk import AirbyteLogger
 from airbyte_cdk.destinations import Destination
@@ -55,13 +54,13 @@ from google.ads.googleads.client import GoogleAdsClient
 from .client import GoogleClient
 from .google_ads_utils import GoogleAdsUtils
 from .google_ads_account import GoogleAdsAccount
-from datetime import datetime
 from valmi_connector_lib.destination_wrapper.destination_write_wrapper \
     import DestinationWriteWrapper, HandlerResponseData
 
+
 class GoogleAdsWriter(DestinationWriteWrapper):
     def initialise_message_handling(self) -> None:
-        #Get manager account id if there is one
+        # Get manager account id if there is one
         manager_id = self.configured_destination_catalog.sinks[0].sink.__dict__.get("manager_id", "None")
         if manager_id == "None":
             manager_id = None
@@ -71,15 +70,16 @@ class GoogleAdsWriter(DestinationWriteWrapper):
 
     def handle_message(self, msg: AirbyteMessage, counter: int) -> HandlerResponseData:
         flushed = self.google_ads_utils.add_to_queue(
-                    msg.record.data,
-                    configured_stream = self.configured_catalog.streams[0],
-                    sink = self.configured_destination_catalog.sinks[0]
-                )
+            msg.record.data,
+            configured_stream=self.configured_catalog.streams[0],
+            sink=self.configured_destination_catalog.sinks[0]
+        )
 
-        return HandlerResponseData(flushed = flushed)
+        return HandlerResponseData(flushed=flushed)
 
     def finalise_message_handling(self) -> None:
         self.google_ads_utils.flush(sink=self.configured_destination_catalog.sinks[0])
+
 
 class DestinationGoogleAds(ValmiDestination):
     def __init__(self) -> None:
@@ -113,9 +113,9 @@ class DestinationGoogleAds(ValmiDestination):
             google_ads_account = GoogleAdsAccount(logger, google_client, str(account_info.get("account")))
 
             user_list_resource_name = google_ads_account.create_customer_match_user_list(
-                name = f"{object_spec['audience_name']}",
-                description = f"{object_spec['audience_description']}",
-                membership_life_span = int(object_spec['membership_life_span']),
+                name=f"{object_spec['audience_name']}",
+                description=f"{object_spec['audience_description']}",
+                membership_life_span=int(object_spec['membership_life_span']),
             )
 
             return AirbyteConnectionStatus(status=Status.SUCCEEDED)
@@ -181,7 +181,7 @@ class DestinationGoogleAds(ValmiDestination):
 
             for account_info in accounts:
 
-                #We dont want null as manager id
+                # We dont want null as manager id
                 if account_info["manager"] is None:
                     account_info.pop("manager")
 
@@ -214,7 +214,7 @@ class DestinationGoogleAds(ValmiDestination):
         try:
             client = GoogleClient(config).authorize()
 
-            #Get customer ids to check if credentials are valid
+            # Get customer ids to check if credentials are valid
             customer_service = client.get_service("CustomerService")
 
             accessible_customers = customer_service.list_accessible_customers()

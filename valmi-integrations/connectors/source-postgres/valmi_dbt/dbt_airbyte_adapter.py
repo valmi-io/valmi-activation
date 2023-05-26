@@ -154,7 +154,7 @@ class DbtAirbyteAdpater:
             full_refresh = config["run_time_args"]["full_refresh"]
 
         previous_run_status = "success"
-        # override full_refresh from run_time_args
+        # override previous_run_status from run_time_args
         if "run_time_args" in config and "previous_run_status" in config["run_time_args"]:
             previous_run_status = config["run_time_args"]["previous_run_status"]
 

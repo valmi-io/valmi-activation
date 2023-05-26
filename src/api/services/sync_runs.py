@@ -52,6 +52,13 @@ class SyncRunsService(BaseService[SyncRun, SyncRunCreate, Any]):
             .all()
         )
 
+    def get_run(self, sync_id: UUID4, run_id: UUID4) -> SyncRun:
+        return (
+            self.db_session.query(self.model)
+            .filter(SyncRun.sync_id == sync_id, SyncRun.id == run_id)
+            .first()
+        )
+
     def get_active_or_latest_runs(self, after: datetime) -> List[SyncRun]:
         return (
             self.db_session.query(self.model)
@@ -81,6 +88,21 @@ class SyncRunsService(BaseService[SyncRun, SyncRunCreate, Any]):
         if connector_string not in sync_run.extra:
             sync_run.extra[connector_string] = {}
         sync_run.extra[connector_string]["state"] = {"state": state}
+        flag_modified(sync_run, "extra")
+
+        self.db_session.commit()
+
+    def update_sync_run_extra_data(self, run_id, connector_string, key, value):
+        sync_run = self.get(run_id)
+        self.db_session.refresh(sync_run)
+
+        if not sync_run.extra:
+            sync_run.extra = {}
+
+        if connector_string not in sync_run.extra:
+            sync_run.extra[connector_string] = {}
+
+        sync_run.extra[connector_string][key] = value
         flag_modified(sync_run, "extra")
 
         self.db_session.commit()

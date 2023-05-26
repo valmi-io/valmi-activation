@@ -57,6 +57,22 @@ class SyncRunnerThread(threading.Thread):
         self.sync_service = get_syncs_service(db_session)
         self.run_service = get_sync_runs_service(db_session)
 
+    def abort_active_run(self, sync, run):
+        dagster_run_id = run.dagster_run_id
+
+        run_status = self.dc.get_run_status(dagster_run_id)
+        if run_status == DagsterRunStatus.STARTED \
+            or run_status == DagsterRunStatus.STARTING \
+                or run_status == DagsterRunStatus.QUEUED:
+
+            self.dc.terminate_run(dagster_run_id)
+
+            sync.run_status = SyncStatus.STOPPED
+            run.status = SyncStatus.STOPPED
+            self.sync_service.update_sync_and_run(sync, run)
+        else:
+            logger.error(f"Cannot abort the run with state '{run_status}'")
+
     @exception_to_sys_exit
     def _run(self):
         while not self.exit_flag:
@@ -73,7 +89,15 @@ class SyncRunnerThread(threading.Thread):
 
                 for sync in syncs_to_handle:
                     if sync.status != SyncConfigStatus.ACTIVE:
-                        # TODO: terminate dagster runs
+                        run = self.run_service.get(sync.last_run_id)
+                        # Set connector run_manager status to terminated to stop source and destination connections
+                        run_status = {
+                            "status": "terminated",
+                            "message": f"Run aborted because syn status is {sync.status}",
+                        }
+                        self.run_service.update_sync_run_extra_data(
+                            sync.last_run_id, "run_manager", "status", run_status)
+                        self.abort_active_run(sync, run)
                         pass
                     elif sync.run_status == SyncStatus.STOPPED:
                         logger.info("Sync is stopped %s", sync.sync_id)
@@ -99,6 +123,9 @@ class SyncRunnerThread(threading.Thread):
                         run.status = SyncStatus.STOPPED
                         self.sync_service.update_sync_and_run(sync, run)
 
+                    elif sync.run_status == SyncStatus.ABORTING:
+                        run = self.run_service.get(sync.last_run_id)
+                        self.abort_active_run(sync, run)
                     elif sync.run_status == SyncStatus.SCHEDULED:
                         # submit job to dagster,
                         # TODO: if jobs is already submitted, but failed to set metastore status, check below TODO

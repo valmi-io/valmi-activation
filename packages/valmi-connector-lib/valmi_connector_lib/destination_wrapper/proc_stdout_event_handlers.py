@@ -81,8 +81,10 @@ class StoreReader:
                 if fn.startswith(f"{MAGIC_NUM+1}"):
                     # print("returning")
                     return
-            if self.engine.abort_required():
-                return
+
+                # Check for abort condition after reading a file
+                if self.engine.abort_required():
+                    return
             time.sleep(3)
             yield ""
 

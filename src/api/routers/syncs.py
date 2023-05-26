@@ -23,8 +23,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-from datetime import datetime
 import logging
+import uuid
+
+from datetime import datetime
 from typing import Any, Dict, List
 
 from fastapi import Depends
@@ -47,7 +49,9 @@ from api.schemas.utils import assign_metrics_to_run
 from sqlalchemy.orm.attributes import flag_modified
 
 from api.schemas.metric import MetricBase
-from api.schemas.sync_run import ConnectorSynchronization
+from api.schemas.sync_run import ConnectorSynchronization, SyncRunTimeArgs
+from metastore.models import SyncStatus, SyncConfigStatus
+from api.schemas import SyncRunCreate
 
 
 router = APIRouter(prefix="/syncs")
@@ -77,17 +81,23 @@ async def get_current_run_details(
         )  # TODO: Have to find a better way instead of so many refreshes
 
     # TODO: get saved checkpoint state of the run_id & create column run_time_args in the sync_runs table to get repeatable runs
-    return SyncCurrentRunArgs(
-        sync_id=sync_id,
-        run_id=sync_schedule.last_run_id,
-        chunk_size=300,
-        chunk_id=0,
-        records_per_metric=10,
-        previous_run_status="success"
-        if previous_run is None
+    run_args = {
+        "sync_id": sync_id,
+        "run_id": sync_schedule.last_run_id,
+        "chunk_size": 300,
+        "chunk_id": 0,
+        "records_per_metric": 10,
+        "previous_run_status": "success" if previous_run is None
         or ("run_manager" in previous_run.extra and previous_run.extra["run_manager"]["status"]["status"] == "success")
         else "failure",  # For first run also, previous_run_status will be success
-    )
+    }
+
+    # Get run time args from run object
+    current_run = runs[0]
+    if current_run.run_time_args is not None and "full_refresh" in current_run.run_time_args:
+        run_args["full_refresh"] = current_run.run_time_args["full_refresh"]
+
+    return SyncCurrentRunArgs(**run_args)
 
 
 @router.get("/{sync_id}/runs/{run_id}/synchronize_connector_engine", response_model=ConnectorSynchronization)
@@ -98,12 +108,20 @@ async def synchronize_connector(
 ) -> ConnectorSynchronization:
     run = sync_runs_service.get(run_id)
     abort_required = False
-    keys_to_check = ["src", "dest"]
-    for key in keys_to_check:
-        if run.extra is not None and key in run.extra.keys() and "status" in run.extra[key].keys():
-            if run.extra[key]["status"]["status"] == "failed":
+
+    print(f"Run tagas extra: {run.extra}")
+    if run.extra is not None:
+        for key in ["src", "dest"]:
+            key_value = run.extra.get(key, {})
+            status = key_value.get("status", {}).get("status", "")
+            if status == "failed":
                 abort_required = True
                 break
+
+        run_state = run.extra.get("run_manager", {}).get("status", {})
+        if run_state.get("status", "") == "terminated":
+            abort_required = True
+
     return ConnectorSynchronization(abort_required=abort_required)
 
 
@@ -129,6 +147,77 @@ async def status(
 ) -> GenericResponse:
     sync_runs_service.save_status(sync_id, run_id, connector_string, status)
     return GenericResponse()
+
+
+@router.post("/{sync_id}/runs/{run_id}/abort", response_model=GenericResponse)
+async def abort(
+    sync_id: UUID4,
+    run_id: UUID4,
+    sync_service: SyncsService = Depends(get_syncs_service),
+    sync_runs_service: SyncRunsService = Depends(get_sync_runs_service),
+) -> GenericResponse:
+
+    sync = sync_service.get_sync(sync_id)
+    run = sync_runs_service.get(run_id)
+
+    if run.status == SyncStatus.RUNNING: 
+        # Set connector run_manager status to terminated to stop source and destination connections
+        run_status = {
+            "status": "terminated",
+            "message": "Run aborted by user",
+        }
+        sync_runs_service.update_sync_run_extra_data(run_id, "run_manager", "status", run_status)
+
+        # Update sync and run status to "ABORTING" so that
+        # current running sync will get aborted by run manager
+        sync.run_status = SyncStatus.ABORTING
+        run.status = SyncStatus.ABORTING
+        sync_service.update_sync_and_run(sync, run)
+
+    else:
+        return GenericResponse(success=False, message=f"Connot stop sync run with status '{run.status}'")
+
+    return GenericResponse(success=True, message="success")
+
+
+@router.post("/{sync_id}/runs/create", response_model=GenericResponse)
+async def new_run(
+    sync_id: UUID4,
+    run_time_args: SyncRunTimeArgs,
+    sync_service: SyncsService = Depends(get_syncs_service),
+    sync_runs_service: SyncRunsService = Depends(get_sync_runs_service),
+):
+    sync = sync_service.get_sync(sync_id)
+    runs = sync_runs_service.get_runs(sync_id, datetime.now(), 2)
+    previous_run = runs[1] if len(runs) > 1 else None
+    previous_run_status = previous_run.status if previous_run is not None else None
+
+    if sync.status == SyncConfigStatus.ACTIVE and (
+        previous_run is None or previous_run.status == SyncStatus.STOPPED
+    ):
+        sync.run_status = SyncStatus.ABORTING
+
+        run = SyncRunCreate(
+            run_id=uuid.uuid4(),
+            sync_id=sync.sync_id,
+            run_at=datetime.now(),
+            status=SyncStatus.SCHEDULED,
+            run_time_args=run_time_args.run_time_args
+        )
+
+        sync.last_run_at = run.run_at
+        sync.run_status = SyncStatus.SCHEDULED
+        sync.last_run_id = run.run_id
+
+        sync_service.update_sync_and_create_run(sync, run)
+
+        return GenericResponse(success=True, message=f"Sync run started with run_id: {run.run_id}")
+    else:
+        return GenericResponse(
+            success=False, 
+            message=f"Cannot start the sync run with status: {sync.status}, "
+            f"with previous run status: {previous_run_status}"
+        )
 
 
 @router.get("/{sync_id}/runs/", response_model=List[SyncRun])
