@@ -50,9 +50,6 @@ from sqlalchemy.orm.attributes import flag_modified
 
 from api.schemas.metric import MetricBase
 from api.schemas.sync_run import ConnectorSynchronization, SyncRunTimeArgs
-from orchestrator.dagster_client import ValmiDagsterClient
-from dagster_graphql import DagsterGraphQLClientError
-from dagster import DagsterRunStatus
 from metastore.models import SyncStatus, SyncConfigStatus
 from api.schemas import SyncRunCreate
 
@@ -156,32 +153,29 @@ async def status(
 async def abort(
     sync_id: UUID4,
     run_id: UUID4,
+    sync_service: SyncsService = Depends(get_syncs_service),
     sync_runs_service: SyncRunsService = Depends(get_sync_runs_service),
 ) -> GenericResponse:
+
+    sync = sync_service.get_sync(sync_id)
     run = sync_runs_service.get(run_id)
-    dagster_run_id = run.dagster_run_id
-    dagster_client = ValmiDagsterClient(v.get("DAGIT_HOST"), port_number=v.get_int("DAGIT_PORT"))
 
-    run_status = dagster_client.get_run_status(dagster_run_id)
-    if run_status == DagsterRunStatus.STARTED \
-        or run_status == DagsterRunStatus.STARTING \
-            or run_status == DagsterRunStatus.QUEUED:
-
-        # Set connector run_manager status to terminated
+    if run.status == SyncStatus.RUNNING: 
+        # Set connector run_manager status to terminated to stop source and destination connections
         run_status = {
             "status": "terminated",
             "message": "Run aborted by user",
         }
-        sync_runs_service.update_sync_run_extra_data(sync_id, run_id, "run_manager", "status", run_status)
+        sync_runs_service.update_sync_run_extra_data(run_id, "run_manager", "status", run_status)
 
-        # Abort the run
-        try:
-            dagster_client.terminate_run(dagster_run_id)
-        except DagsterGraphQLClientError as e:
-            logger.error(f"Error while terminating the run: {e}")
-            return GenericResponse(success=False, message=f"Error while terminating the run {e}")
+        # Update sync and run status to "ABORTING" so that
+        # current running sync will get aborted by run manager
+        sync.run_status = SyncStatus.ABORTING
+        run.status = SyncStatus.ABORTING
+        sync_service.update_sync_and_run(sync, run)
+
     else:
-        return GenericResponse(success=True, message=f"Run is not in a state to be aborted: {run_status}")
+        return GenericResponse(success=False, message=f"Connot stop sync run with status '{run.status}'")
 
     return GenericResponse(success=True, message="success")
 
@@ -201,7 +195,7 @@ async def new_run(
     if sync.status == SyncConfigStatus.ACTIVE and (
         previous_run is None or previous_run.status == SyncStatus.STOPPED
     ):
-        logger.info("Sync is stopped %s", sync.sync_id)
+        sync.run_status = SyncStatus.ABORTING
 
         run = SyncRunCreate(
             run_id=uuid.uuid4(),

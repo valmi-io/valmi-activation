@@ -92,7 +92,7 @@ class SyncRunsService(BaseService[SyncRun, SyncRunCreate, Any]):
 
         self.db_session.commit()
 
-    def update_sync_run_extra_data(self, sync_ic, run_id, connector_string, key, value):
+    def update_sync_run_extra_data(self, run_id, connector_string, key, value):
         sync_run = self.get(run_id)
         self.db_session.refresh(sync_run)
 
