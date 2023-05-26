@@ -44,6 +44,7 @@ from valmi_connector_lib.destination_wrapper.destination_write_wrapper import (
     HandlerResponseData,
 )
 from .stripe_utils import StripeUtils
+from valmi_connector_lib.common.metrics import get_metric_type
 
 
 class StripeWriter(DestinationWriteWrapper):
@@ -57,27 +58,36 @@ class StripeWriter(DestinationWriteWrapper):
     ) -> HandlerResponseData:
         # TODO : handle rejected records and metric type strings.
         metrics = {}
-        if msg.record.data["_valmi_meta"]["_valmi_sync_op"] == "upsert":
-            obj = self.stripe_utils.upsert(
-                msg.record,
-                configured_stream=self.configured_catalog.streams[0],
-                sink=self.configured_destination_catalog.sinks[0],
-            )
-            if obj:
-                metrics["upsert-ed"] = 1
+        sync_op = msg.record.data["_valmi_meta"]["_valmi_sync_op"]
 
-        elif msg.record.data["_valmi_meta"]["_valmi_sync_op"] == "update":
-            obj = self.stripe_utils.update(
+        rejected_records = []
+        if sync_op == "upsert":
+            sync_op_response = self.stripe_utils.upsert(
                 msg.record,
                 configured_stream=self.configured_catalog.streams[0],
                 sink=self.configured_destination_catalog.sinks[0],
             )
-            if obj:
-                metrics["updated"] = 1
+            if sync_op_response.rejected:
+                metrics[get_metric_type("reject")] = 1
+                rejected_records.append(sync_op_response.rejected_record)
             else:
-                metrics["ignored"] = 1
+                metrics[get_metric_type(sync_op)] = 1
 
-        return HandlerResponseData(flushed=True, metrics=metrics)
+        elif sync_op == "update":
+            sync_op_response = self.stripe_utils.update(
+                msg.record,
+                configured_stream=self.configured_catalog.streams[0],
+                sink=self.configured_destination_catalog.sinks[0],
+            )
+            if sync_op_response.rejected:
+                metrics[get_metric_type("reject")] = 1
+                rejected_records.append(sync_op_response.rejected_record)
+            elif sync_op_response.obj:
+                metrics[get_metric_type(sync_op)] = 1
+            else:
+                metrics[get_metric_type("ignore")] = 1
+
+        return HandlerResponseData(flushed=True, metrics=metrics, rejected_records=rejected_records)
 
     def finalise_message_handling(self):
         pass

@@ -23,17 +23,22 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+from collections import namedtuple
+from datetime import datetime
 from typing import Any, Dict, Mapping, Optional, Union
 from airbyte_cdk import AirbyteLogger
 from requests import HTTPError
 from requests_cache import Request, Response
 import stripe
-from valmi_connector_lib.valmi_protocol import ValmiStream, ConfiguredValmiSink
+from valmi_connector_lib.valmi_protocol import ValmiStream, ConfiguredValmiSink, ValmiRejectedRecordMessage
 from valmi_connector_lib.common.run_time_args import RunTimeArgs
 from airbyte_cdk.sources.streams.http.rate_limiting import user_defined_backoff_handler, default_backoff_handler
 from airbyte_cdk.sources.streams.http.exceptions import DefaultBackoffException, UserDefinedBackoffException
 from jsonpath_ng import parse
-from stripe.error import StripeError
+from stripe.error import StripeError, InvalidRequestError, RateLimitError
+
+
+SyncOpResponse = namedtuple('SyncOpResponse', ['obj', 'rejected', 'rejected_record'], defaults=[None, False, None])
 
 
 class StripeUtils:
@@ -63,53 +68,66 @@ class StripeUtils:
         return mapped_data
 
     def upsert(self, record, configured_stream: ValmiStream, sink: ConfiguredValmiSink):
-        return self.make_request("upsert", self.make_customer_object(record.data, configured_stream, sink))
+        return self.make_request("upsert", record, self.make_customer_object(record.data, configured_stream, sink))
 
     def update(self, record, configured_stream: ValmiStream, sink: ConfiguredValmiSink):
-        return self.make_request("update", self.make_customer_object(record.data, configured_stream, sink))
+        return self.make_request("update", record, self.make_customer_object(record.data, configured_stream, sink))
 
-    def make_request(self, op, request_obj):
+    def make_request(self, op, record, request_obj):
         self.max_tries = self.max_retries
         if self.max_tries is not None:
             max_tries = max(0, self.max_tries) + 1
 
         user_backoff_handler = user_defined_backoff_handler(max_tries=max_tries)(self._customer_query)
         backoff_handler = default_backoff_handler(max_tries=max_tries, factor=self.retry_factor)
-        return backoff_handler(user_backoff_handler)(op, request_obj)
+        return backoff_handler(user_backoff_handler)(op, record, request_obj)
 
-    def _perform_upsert(self, request_obj):
+    def _perform_upsert(self, record, request_obj):
         # check for existence
         customer_objs = stripe.Customer.list(api_key=self.api_key, email=request_obj["email"])
         if customer_objs and len(customer_objs.data) > 0:
             # just update the first object.
-            return stripe.Customer.modify(api_key=self.api_key, sid=customer_objs.data[0]["id"], **request_obj)
+            return SyncOpResponse(obj=stripe.Customer.modify(api_key=self.api_key, sid=customer_objs.data[0]["id"], **request_obj))
         else:
             # not found, create the object.
             self.logger.debug("Customer not found")
-            return stripe.Customer.create(api_key=self.api_key, **request_obj)
+            return SyncOpResponse(obj=stripe.Customer.create(api_key=self.api_key, **request_obj))
 
-    def _perform_update(self, request_obj):
+    def _perform_update(self, record, request_obj):
         # check for existence
         customer_objs = stripe.Customer.list(api_key=self.api_key, email=request_obj["email"])
         if customer_objs and len(customer_objs.data) > 0:
             # just update the first object.
-            return stripe.Customer.modify(api_key=self.api_key, sid=customer_objs.data[0]["id"], **request_obj)
-        return None
+            return SyncOpResponse(obj=stripe.Customer.modify(api_key=self.api_key, sid=customer_objs.data[0]["id"], **request_obj))
+        return SyncOpResponse(obj=None)
 
-    def _customer_query(self, op, request_obj):
+    def generate_rejected_message_from_record(self, record, error: InvalidRequestError):
+        return ValmiRejectedRecordMessage(
+            stream=record.stream,
+            data=record.data,
+            rejected=True,
+            rejection_message=f'reason: {str(error)}',
+            rejection_code=str(error.code),
+            rejection_metadata={},
+            emitted_at=int(datetime.now().timestamp()) * 1000,
+        )
+
+    def _customer_query(self, op, record, request_obj):
         dummy_http_request = Request()
         dummy_http_response = Response()
         error_message = ""
         exc = None
         try:
             if op == "upsert":
-                return self._perform_upsert(request_obj)
+                return self._perform_upsert(record, request_obj)
             elif op == "update":
-                return self._perform_update(request_obj)
-        except stripe.error.InvalidRequestError as e:
-            ## HANDLE Rejected sample request due to invalid request error.
-            pass
-        except stripe.error.RateLimitError as e:
+                return self._perform_update(record, request_obj)
+        except InvalidRequestError as e:
+            ## Rejecting this record as it is invalid.
+            return SyncOpResponse(obj=None, rejected=True,
+                                  rejected_record=self.generate_rejected_message_from_record(record, e))
+        except RateLimitError as e:
+            ## forcing the connector to backoff for hitting rate limits
             error_message = str(e)
             self.logger.error(error_message)
             dummy_http_response.status_code = 429
@@ -138,7 +156,7 @@ class StripeUtils:
         elif self.raise_on_http_errors:
             # Raise any HTTP exceptions that happened in case there were unexpected ones
             self.raise_for_status(exc)
-        pass
+        return SyncOpResponse()
 
     ### Retry behavior Logic used by the backoff closures ###
     @property

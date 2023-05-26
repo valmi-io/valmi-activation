@@ -59,7 +59,6 @@ class ProcStdoutHandlerThread(threading.Thread):
                 for line in io.TextIOWrapper(self.proc_stdout, encoding="utf-8"):
                     if line.strip() == "":
                         continue
-                    print(line)
                     json_record = json.loads(line)
 
                     # We want to check abort status after every chunk,
