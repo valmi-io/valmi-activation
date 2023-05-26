@@ -97,7 +97,7 @@ async def get_current_run_details(
 
     # Get run time args from run object
     current_run = runs[0]
-    if current_run.run_time_args is not None and "fulll_refresh" in current_run.run_time_args:
+    if current_run.run_time_args is not None and "full_refresh" in current_run.run_time_args:
         run_args["full_refresh"] = current_run.run_time_args["full_refresh"]
 
     return SyncCurrentRunArgs(**run_args)
@@ -186,7 +186,7 @@ async def abort(
     return GenericResponse(success=True, message="success")
 
 
-@router.post("/{sync_id}/runs/new", response_model=GenericResponse)
+@router.post("/{sync_id}/runs/create", response_model=GenericResponse)
 async def new_run(
     sync_id: UUID4,
     run_time_args: SyncRunTimeArgs,
