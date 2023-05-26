@@ -59,7 +59,6 @@ class ProcStdoutHandlerThread(threading.Thread):
                 for line in io.TextIOWrapper(self.proc_stdout, encoding="utf-8"):
                     if line.strip() == "":
                         continue
-                    print(line)
                     json_record = json.loads(line)
                     if json_record["type"] not in record_types:
                         handlers["default"].handle(json_record)

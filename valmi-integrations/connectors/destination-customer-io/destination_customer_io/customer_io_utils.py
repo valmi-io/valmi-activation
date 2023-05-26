@@ -108,7 +108,7 @@ class CustomerIOExt(CustomerIO):
             data=record.data,
             rejected=True,
             rejection_message=f'reason: {error["reason"]} -  fields: {error["field"]} - message: {error["message"]}',
-            rejection_code=207,
+            rejection_code="207",
             rejection_metadata=error,
             emitted_at=int(datetime.now().timestamp()) * 1000,
         )

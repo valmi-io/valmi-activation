@@ -26,7 +26,13 @@ SOFTWARE.
 from enum import Enum
 from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Extra, Field
-from airbyte_cdk.models import AirbyteCatalog, AirbyteStream, ConfiguredAirbyteStream, ConfiguredAirbyteCatalog, AirbyteRecordMessage
+from airbyte_cdk.models import (
+    AirbyteCatalog,
+    AirbyteStream,
+    ConfiguredAirbyteStream,
+    ConfiguredAirbyteCatalog,
+    AirbyteRecordMessage,
+)
 import inspect
 
 
@@ -150,4 +156,4 @@ class ValmiRejectedRecordMessage(AirbyteRecordMessage):
     rejected: bool = Field(..., description="Record is rejected.")
     rejection_metadata: Dict[str, Any] = Field(..., description="Metadata for rejection.")
     rejection_message: str = Field(..., description="Message for rejection.")
-    rejection_code: int = Field(..., description="Code for rejection.")
+    rejection_code: str = Field(..., description="Code for rejection.")
