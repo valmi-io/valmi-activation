@@ -66,7 +66,7 @@ class GoogleAdsWriter(DestinationWriteWrapper):
             manager_id = None
 
         google_client: GoogleAdsClient = GoogleClient(self.config).authorize(manager_id)
-        self.google_ads_utils = GoogleAdsUtils(self.logger, google_client)
+        self.google_ads_utils = GoogleAdsUtils(self.logger, google_client, self.run_time_args)
 
     def handle_message(self, msg: AirbyteMessage, counter: int) -> HandlerResponseData:
         flushed = self.google_ads_utils.add_to_queue(
@@ -79,6 +79,7 @@ class GoogleAdsWriter(DestinationWriteWrapper):
 
     def finalise_message_handling(self) -> None:
         self.google_ads_utils.flush(sink=self.configured_destination_catalog.sinks[0])
+        self.google_ads_utils.submit_offline_jobs(sink=self.configured_destination_catalog.sinks[0])
 
 
 class DestinationGoogleAds(ValmiDestination):
@@ -105,6 +106,8 @@ class DestinationGoogleAds(ValmiDestination):
         config: Mapping[str, Any],
         object_spec: Mapping[str, Any],
     ) -> AirbyteConnectionStatus:
+
+        # ToDo: Complete this method and test it
         try:
             account_info = json.loads(str(config.get("account")))
             google_client: GoogleAdsClient = GoogleClient(config).\
