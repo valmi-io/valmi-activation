@@ -30,12 +30,13 @@ from airbyte_cdk import AirbyteLogger
 from requests import HTTPError
 from requests_cache import Request, Response
 import stripe
-from valmi_connector_lib.valmi_protocol import ValmiStream, ConfiguredValmiSink, ValmiRejectedRecordMessage
+from valmi_connector_lib.valmi_protocol import ValmiStream, ConfiguredValmiSink, ValmiFinalisedRecordMessage
 from valmi_connector_lib.common.run_time_args import RunTimeArgs
 from airbyte_cdk.sources.streams.http.rate_limiting import user_defined_backoff_handler, default_backoff_handler
 from airbyte_cdk.sources.streams.http.exceptions import DefaultBackoffException, UserDefinedBackoffException
 from jsonpath_ng import parse
 from stripe.error import StripeError, InvalidRequestError, RateLimitError
+from valmi_connector_lib.common.metrics import get_metric_type
 
 
 SyncOpResponse = namedtuple('SyncOpResponse', ['obj', 'rejected', 'rejected_record'], defaults=[None, False, None])
@@ -101,14 +102,15 @@ class StripeUtils:
             return SyncOpResponse(obj=stripe.Customer.modify(api_key=self.api_key, sid=customer_objs.data[0]["id"], **request_obj))
         return SyncOpResponse(obj=None)
 
-    def generate_rejected_message_from_record(self, record, error: InvalidRequestError):
-        return ValmiRejectedRecordMessage(
+    def generate_rejected_message_from_record(self, record, error: InvalidRequestError, metric_type):
+        return ValmiFinalisedRecordMessage(
             stream=record.stream,
             data=record.data,
             rejected=True,
             rejection_message=f'reason: {str(error)}',
             rejection_code=str(error.code),
             rejection_metadata={},
+            metric_type=metric_type,
             emitted_at=int(datetime.now().timestamp()) * 1000,
         )
 
@@ -125,7 +127,7 @@ class StripeUtils:
         except InvalidRequestError as e:
             ## Rejecting this record as it is invalid.
             return SyncOpResponse(obj=None, rejected=True,
-                                  rejected_record=self.generate_rejected_message_from_record(record, e))
+                                  rejected_record=self.generate_rejected_message_from_record(record, e, get_metric_type("reject")))
         except RateLimitError as e:
             ## forcing the connector to backoff for hitting rate limits
             error_message = str(e)

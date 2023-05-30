@@ -152,8 +152,9 @@ class ConfiguredValmiCatalog(ConfiguredAirbyteCatalog):
     streams: List[ConfiguredValmiStream]
 
 
-class ValmiRejectedRecordMessage(AirbyteRecordMessage):
+class ValmiFinalisedRecordMessage(AirbyteRecordMessage):
     rejected: bool = Field(..., description="Record is rejected.")
     rejection_metadata: Dict[str, Any] = Field(..., description="Metadata for rejection.")
     rejection_message: str = Field(..., description="Message for rejection.")
     rejection_code: str = Field(..., description="Code for rejection.")
+    metric_type: str = Field(..., description="Metric type for rejection.")

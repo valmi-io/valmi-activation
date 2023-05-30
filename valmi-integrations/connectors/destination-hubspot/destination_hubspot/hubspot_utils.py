@@ -18,7 +18,7 @@ from valmi_connector_lib.valmi_protocol import (
     ValmiStream,
     ConfiguredValmiSink,
     FieldCatalog,
-    ValmiRejectedRecordMessage,
+    ValmiFinalisedRecordMessage,
 )
 
 logger = AirbyteLogger()
@@ -233,14 +233,15 @@ class HubspotClient:
                     element["id"] = result["id"]
                     break
 
-    def generate_rejected_message_from_record(self, record, error_code, error_msg):
-        return ValmiRejectedRecordMessage(
+    def generate_rejected_message_from_record(self, record, error_code, error_msg,metric_type):
+        return ValmiFinalisedRecordMessage(
             stream=record.stream,
             data=record.data,
             rejected=True,
             rejection_message=error_msg,
             rejection_code=error_code,
             rejection_metadata={},
+            metric_type=metric_type,
             emitted_at=int(datetime.now().timestamp()) * 1000,
         )
 
@@ -295,7 +296,7 @@ class HubspotClient:
             for idx, (original_record, ignored_obj) in enumerate(create_original_records):
                 rejected_records.append(self.generate_rejected_message_from_record(original_record.record,
                                                                                    ignored_obj[1],
-                                                                                   ignored_obj[2]))
+                                                                                   ignored_obj[2]), get_metric_type("ignore"))
             metrics[get_metric_type("ignore")] += len(create_original_records)
             flushed, new_metrics, new_rejected_records = self.handle_update(update_objs, update_original_records, config, sink)
             metrics = {**metrics, **new_metrics}
@@ -326,7 +327,7 @@ class HubspotClient:
                         for ctxt_id in error["context"]["ids"]:
                             for idx, element in enumerate(update_objs):
                                 rejected_records.append(
-                                    self.generate_rejected_message_from_record(update_original_records[idx].record, error["category"], f'{error["category"]} - {error["message"]}'))
+                                    self.generate_rejected_message_from_record(update_original_records[idx].record, error["category"], f'{error["category"]} - {error["message"]}', get_metric_type("fail")))
                                     
         elif (resp.status_code == 401):
             raise RequestUnAuthorizedException("Unauthorized")

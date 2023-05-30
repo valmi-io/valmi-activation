@@ -4,7 +4,7 @@ from airbyte_cdk import AirbyteLogger
 import requests
 from customerio import CustomerIO
 from io import StringIO
-from valmi_connector_lib.valmi_protocol import ValmiStream, ConfiguredValmiSink, ValmiRejectedRecordMessage
+from valmi_connector_lib.valmi_protocol import ValmiStream, ConfiguredValmiSink, ValmiFinalisedRecordMessage
 import json
 from .http_sink import HttpSink
 from valmi_connector_lib.common.run_time_args import RunTimeArgs
@@ -102,14 +102,15 @@ class CustomerIOExt(CustomerIO):
             rejected_records = rejected_records.extend(new_rejected_records)
         return flushed, metrics, rejected_records
 
-    def generate_rejected_message_from_record(self, record, error):
-        return ValmiRejectedRecordMessage(
+    def generate_rejected_message_from_record(self, record, error, metric_type):
+        return ValmiFinalisedRecordMessage(
             stream=record.stream,
             data=record.data,
             rejected=True,
             rejection_message=f'reason: {error["reason"]} -  fields: {error["field"]} - message: {error["message"]}',
             rejection_code="207",
             rejection_metadata=error,
+            metric_type=metric_type,
             emitted_at=int(datetime.now().timestamp()) * 1000,
         )
 

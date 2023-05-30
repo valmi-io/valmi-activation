@@ -9,7 +9,7 @@ from .valmi_protocol import (
     ValmiCatalog,
     DestinationSyncMode,
     FieldCatalog,
-    ValmiRejectedRecordMessage,
+    ValmiFinalisedRecordMessage,
 )
 from .valmi_event import add_event_meta
 
@@ -25,5 +25,5 @@ __all__ = [
     "DestinationSyncMode",
     "FieldCatalog",
     "add_event_meta",
-    "ValmiRejectedRecordMessage",
+    "ValmiFinalisedRecordMessage",
 ]
