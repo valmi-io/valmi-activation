@@ -21,7 +21,7 @@ class HttpSink(HttpStream):
         s = Session()
         req = Request(method, url, data=data, json=json, headers=headers, auth=auth)
         prepped = s.prepare_request(req)
-        self._send_request(prepped, request_kwargs={"timeout": self.run_time_args.http_timeout})
+        return self._send_request(prepped, request_kwargs={"timeout": self.run_time_args.http_timeout})
 
     ##############################################################################################
     # TODO: DUMMY stuff to make it run
