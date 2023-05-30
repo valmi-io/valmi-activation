@@ -88,7 +88,12 @@ class GoogleAdsUtils:
         self.num_identifiers: dict[str, int] = defaultdict(lambda: 0)
         self.offline_user_data_job_resource_names: dict[str, str] = defaultdict(str)
         self.operations: dict[str, list[Any]] = defaultdict(list)
-        self.chunk_size = run_time_args.chunk_size if run_time_args and run_time_args.chunk_size else MAX_CHUNK_SIZE
+
+        # Max cap on chunk size
+        self.chunk_size = MAX_CHUNK_SIZE
+        if run_time_args and run_time_args.chunk_size:
+            if run_time_args.chunk_size < MAX_CHUNK_SIZE:
+                self.chunk_size = run_time_args.chunk_size
 
     def get_custom_audience_schema(self) -> Mapping[str, Any]:
         json_schema = {
