@@ -37,7 +37,7 @@ from valmi_connector_lib.valmi_protocol import (
     ConfiguredValmiDestinationCatalog,
 )
 from valmi_connector_lib.valmi_destination import ValmiDestination
-from .run_time_args import RunTimeArgs
+from valmi_connector_lib.common.run_time_args import RunTimeArgs
 from .hubspot_utils import HubspotClient
 from datetime import datetime
 
