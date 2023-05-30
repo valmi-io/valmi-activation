@@ -5,7 +5,7 @@ from typing import Any, Dict, Mapping
 from airbyte_cdk import AirbyteLogger
 import requests
 
-from .run_time_args import RunTimeArgs
+from valmi_connector_lib.common.run_time_args import RunTimeArgs
 from .http_sink import HttpSink
 from .retry_decorators import retry_on_exception
 from hubspot.auth.oauth import TokensApi
@@ -13,10 +13,10 @@ from hubspot.auth.oauth import TokensApi
 from valmi_connector_lib.valmi_protocol import (
     DestinationSyncMode,
     ValmiSink,
-    DestinationIdWithSupportedSyncModes,
     ValmiDestinationCatalog,
     ValmiStream,
     ConfiguredValmiSink,
+    FieldCatalog,
 )
 
 logger = AirbyteLogger()
@@ -36,26 +36,18 @@ class HubspotClient:
         "Contact": {
             "props_url": "/crm/v3/properties/contacts",
             "batch_url": "/crm/v3/objects/contacts/batch/create",
-            "supported_destination_ids_modes": [
-                DestinationIdWithSupportedSyncModes(
-                    destination_id="email", destination_sync_modes=[DestinationSyncMode.upsert]
-                ),
-                DestinationIdWithSupportedSyncModes(
-                    destination_id="id", destination_sync_modes=[DestinationSyncMode.update]
-                ),
-            ],
+            "supported_destination_ids": {
+                DestinationSyncMode.upsert.value: ["email"],
+                DestinationSyncMode.update.value: ["id"],
+            }
         },
         "Company": {
             "props_url": "/crm/v3/properties/companies",
             "batch_url": "/crm/v3/objects/companies/batch/create",
-            "supported_destination_ids_modes": [
-                DestinationIdWithSupportedSyncModes(
-                    destination_id="domain", destination_sync_modes=[DestinationSyncMode.upsert]
-                ),
-                DestinationIdWithSupportedSyncModes(
-                    destination_id="id", destination_sync_modes=[DestinationSyncMode.update]
-                ),
-            ],
+            "supported_destination_ids": {
+                DestinationSyncMode.upsert.value: ["domain"],
+                DestinationSyncMode.update.value: ["id"],
+            }
         },
     }
 
@@ -134,8 +126,12 @@ class HubspotClient:
                 f"{API_URL}{props_url}", timeout=REQ_TIMEOUT, headers={"Authorization": f"Bearer {self.access_token}"}
             ).json()
 
+            #print(json.dumps(resp, indent=4))
+
             for result in resp["results"]:
                 if "modificationMetadata" in result and result["modificationMetadata"]["readOnlyValue"]:
+                    continue
+                if result["hidden"] or result["calculated"] or not result["formField"]:
                     continue
 
                 json_schema["properties"][result["name"]] = {}
@@ -148,9 +144,18 @@ class HubspotClient:
                     name=f"{obj_name}",
                     id=f"{obj_id}",
                     supported_destination_sync_modes=[DestinationSyncMode.upsert, DestinationSyncMode.update],
-                    json_schema=json_schema,
-                    allow_freeform_fields=False,
-                    supported_destination_ids_modes=v["supported_destination_ids_modes"],
+                    field_catalog={
+                        DestinationSyncMode.upsert.value: FieldCatalog(
+                            json_schema=json_schema,
+                            allow_freeform_fields=False,
+                            supported_destination_ids=v["supported_destination_ids"][DestinationSyncMode.upsert.value],
+                        ),
+                        DestinationSyncMode.update.value: FieldCatalog(
+                            json_schema=json_schema,
+                            allow_freeform_fields=False,
+                            supported_destination_ids=v["supported_destination_ids"][DestinationSyncMode.update.value],
+                        ),
+                    },
                 )
             )
         return ValmiDestinationCatalog(sinks=sinks)
