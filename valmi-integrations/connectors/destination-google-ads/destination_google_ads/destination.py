@@ -146,8 +146,8 @@ class DestinationGoogleAds(ValmiDestination):
             for aud in audiences:
                 sinks.append(
                     ValmiSink(
-                        name=str(aud.name),
-                        label=str(aud.resource_name),
+                        label=str(aud.name),
+                        name=str(aud.resource_name),
                         manager_id=str(manager_id),
                         supported_destination_sync_modes=[DestinationSyncMode.upsert, DestinationSyncMode.mirror],
                         field_catalog={

@@ -435,9 +435,9 @@ class GoogleAdsUtils:
 
     def flush(self, sink: ConfiguredValmiSink) -> None:
         # Note
-        # sink.id is actually userlist resource name 
+        # sink.name is actually userlist resource name 
         # It will be in the format : customers/{customer_id}/userLists/{user_list_id}
-        customer_id = sink.sink.id.split("/")[1]
+        customer_id = sink.sink.name.split("/")[1]
 
         quota_error_enum = self.client.get_type("QuotaErrorEnum").QuotaError
         resource_exhausted = quota_error_enum.RESOURCE_EXHAUSTED
@@ -460,7 +460,7 @@ class GoogleAdsUtils:
 
             if not offline_user_data_job_resource_name:
                 offline_user_data_job_resource_name = self.create_offline_user_data_job(
-                    sink.sink.id, customer_id
+                    sink.sink.name, customer_id
                 )
                 self.offline_user_data_job_resource_names[op] = offline_user_data_job_resource_name
 
@@ -616,7 +616,7 @@ class GoogleAdsUtils:
         Returns:
             A list of offline user data job operations.
         """
-        customer_id = sink.sink.id.split("/")[1]
+        customer_id = sink.sink.name.split("/")[1]
 
         # Creates the OfflineUserDataJobService client.
         offline_user_data_job_service_client = self.client.get_service(

@@ -98,7 +98,7 @@ class FBAdsUtils:
     def flush(self, configured_stream: ValmiStream, sink: ConfiguredValmiSink):
         if self.is_deleting:
             if len(self.users) > 0:
-                CustomAudience(sink.sink.id).remove_users(
+                CustomAudience(sink.sink.name).remove_users(
                     schema=[sink.destination_id],
                     users=[self.users],
                     is_raw=True,
@@ -106,7 +106,7 @@ class FBAdsUtils:
             self.is_deleting = False
             self.users.clear()
         else:
-            CustomAudience(sink.sink.id).add_users(
+            CustomAudience(sink.sink.name).add_users(
                 schema=self.schema,
                 users=self.users,
                 is_raw=True,
