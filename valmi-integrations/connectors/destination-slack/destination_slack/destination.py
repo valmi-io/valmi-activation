@@ -38,7 +38,8 @@ from valmi_connector_lib.valmi_protocol import (
     ConfiguredValmiCatalog,
     ConfiguredValmiDestinationCatalog,
     DestinationSyncMode,
-    FieldCatalog
+    FieldCatalog,
+    DestinationWriteWrapper,
 )
 from valmi_connector_lib.valmi_destination import ValmiDestination
 from valmi_connector_lib.common.run_time_args import RunTimeArgs
@@ -46,6 +47,34 @@ from datetime import datetime
 from slack_sdk import WebClient
 from .slack_utils import map_data
 
+
+class SlackWriter(DestinationWriteWrapper):
+    def initialise_message_handling(self):
+        self.client = WebClient(token=self.config["credentials"]["access_token"])
+
+        response = self.client.conversations_join(channel=self.configured_destination_catalog.sinks[0].sink.name)
+        if not response["ok"]:
+            raise Exception(response["message"]["error"])
+
+
+    def handle_message(
+        self,
+        msg,
+        counter,
+    ) -> HandlerResponseData:
+
+        sync_op = msg.record.data["_valmi_meta"]["_valmi_sync_op"]
+        self.last_seen_sync_op = sync_op
+        flushed, metrics, rejected_records = self.hub_client.add_to_queue(
+            sync_op, counter, msg, self.config,
+            configured_stream=self.configured_catalog.streams[0],
+            sink=self.configured_destination_catalog.sinks[0])
+
+        return HandlerResponseData(flushed=flushed, metrics=metrics, rejected_records=rejected_records)
+
+    def finalise_message_handling(self):
+        flushed, metrics, rejected_records = self.hub_client.flush(self.last_seen_sync_op, config=self.config, sink=self.configured_destination_catalog.sinks[0])
+        return HandlerResponseData(flushed=flushed, metrics=metrics, rejected_records=rejected_records)
 
 class DestinationSlack(ValmiDestination):
     def __init__(self):
@@ -64,7 +93,7 @@ class DestinationSlack(ValmiDestination):
         # Invite  bot this to the selected channel
         client = WebClient(token=config["credentials"]["access_token"])
 
-        response = client.conversations_join(channel=configured_destination_catalog.sinks[0].sink.id)
+        response = client.conversations_join(channel=configured_destination_catalog.sinks[0].sink.name)
         if not response["ok"]:
             raise Exception(response["message"]["error"])
 
@@ -82,7 +111,7 @@ class DestinationSlack(ValmiDestination):
                 mapped_data = map_data(configured_destination_catalog.sinks[0].mapping, record.data)
 
                 response = client.chat_postMessage(
-                    channel=configured_destination_catalog.sinks[0].sink.id, text=str(mapped_data)
+                    channel=configured_destination_catalog.sinks[0].sink.name, text=str(mapped_data)
                 )
 
                 counter = counter + 1
@@ -146,8 +175,8 @@ class DestinationSlack(ValmiDestination):
             channel_id = channel["id"]
             sinks.append(
                 ValmiSink(
-                    name=f"{channel_name} - {channel_id}",
-                    label=f"{channel_name}",
+                    name=f"{channel_id}",
+                    label=f"{channel_name} - {channel_id}",
                     supported_destination_sync_modes=[ 
                         DestinationSyncMode.append,
                     ],

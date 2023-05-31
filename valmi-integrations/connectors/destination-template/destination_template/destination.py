@@ -74,7 +74,7 @@ class DestinationTemplate(ValmiDestination):
                 ## External api call to send data to destination  . Example below
                 """
                 response = client.chat_postMessage(
-                    channel=configured_destination_catalog.sinks[0].sink.id, text=str(mapped_data)
+                    channel=configured_destination_catalog.sinks[0].sink.name, text=str(mapped_data)
                 )
                 """
 
