@@ -73,7 +73,7 @@ class FieldCatalog(BaseModel):
         ..., description="List of supported_destination ids", min_items=0
     )
     allow_freeform_fields: bool = Field(..., description="Allow freeform fields in destination.")
-    template_fields: Optional[Dict[str, Any]] = Field(..., description="Templated fields for destination, rendered using Jinja with mapped fields. Some connectors like Slack and Android push notifications can use this to generate user friendly messages.")
+    template_fields: Optional[Dict[str, Any]] = Field(None, description="Templated fields for destination, rendered using Jinja with mapped fields. Some connectors like Slack and Android push notifications can use this to generate user friendly messages.")
 
 
 class ValmiSink(BaseModel):
