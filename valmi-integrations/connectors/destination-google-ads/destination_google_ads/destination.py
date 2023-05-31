@@ -147,7 +147,7 @@ class DestinationGoogleAds(ValmiDestination):
                 sinks.append(
                     ValmiSink(
                         name=str(aud.name),
-                        id=str(aud.resource_name),
+                        label=str(aud.resource_name),
                         manager_id=str(manager_id),
                         supported_destination_sync_modes=[DestinationSyncMode.upsert, DestinationSyncMode.mirror],
                         field_catalog={
@@ -191,7 +191,7 @@ class DestinationGoogleAds(ValmiDestination):
                 sinks.append(
                     ValmiSink(
                         name=str(json.dumps(account_info)),
-                        id=str(account_info["account"]),
+                        label=str(account_info["account"]),
                         supported_destination_sync_modes=[DestinationSyncMode.upsert, DestinationSyncMode.mirror],
                         field_catalog={}
                     )

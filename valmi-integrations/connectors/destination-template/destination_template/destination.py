@@ -121,7 +121,7 @@ class DestinationTemplate(ValmiDestination):
             sinks.append(
                 ValmiSink(
                     name=f"{channel_name}",
-                    id=f"{channel_id}",
+                    label=f"{channel_id}",
                     supported_destination_sync_modes=[DestinationSyncMode.append],
                     json_schema={},
                     allow_freeform_fields=True,

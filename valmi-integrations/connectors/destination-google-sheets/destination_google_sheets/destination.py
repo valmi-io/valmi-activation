@@ -116,7 +116,7 @@ class DestinationGoogleSheets(ValmiDestination):
         sinks.append(
             ValmiSink(
                 name="Google Sheets",
-                id="GoogleSheets",
+                label="GoogleSheets",
                 supported_destination_sync_modes=[
                     DestinationSyncMode.upsert
                 ],

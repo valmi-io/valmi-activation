@@ -99,7 +99,7 @@ class DestinationCustomerIO(ValmiDestination):
         sinks.append(
             ValmiSink(
                 name="Person",
-                id="Person",
+                label="Person",
                 supported_destination_sync_modes=[DestinationSyncMode.upsert],
                 field_catalog={
                     DestinationSyncMode.upsert.value: FieldCatalog(

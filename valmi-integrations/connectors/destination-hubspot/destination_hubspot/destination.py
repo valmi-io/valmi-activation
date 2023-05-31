@@ -43,6 +43,7 @@ from valmi_connector_lib.destination_wrapper.destination_write_wrapper import De
 class HubspotWriter(DestinationWriteWrapper):
     def initialise_message_handling(self):
         self.hub_client = HubspotClient(run_time_args=self.run_time_args)
+        self.last_seen_sync_op = None   
 
     def handle_message(
         self,

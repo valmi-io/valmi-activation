@@ -38,10 +38,10 @@ from valmi_connector_lib.valmi_protocol import (
     ConfiguredValmiCatalog,
     ConfiguredValmiDestinationCatalog,
     DestinationSyncMode,
+    FieldCatalog
 )
 from valmi_connector_lib.valmi_destination import ValmiDestination
-from .run_time_args import RunTimeArgs
-
+from valmi_connector_lib.common.run_time_args import RunTimeArgs
 from datetime import datetime
 from slack_sdk import WebClient
 from .slack_utils import map_data
@@ -124,23 +124,49 @@ class DestinationSlack(ValmiDestination):
         client = WebClient(token=config["credentials"]["access_token"])
         response = client.api_call("conversations.list", params=[])
         sinks = []
+        basic_field_catalog = FieldCatalog(
+            json_schema={
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "type": "object",
+                "properties": {},
+            },
+            allow_freeform_fields=True,
+            supported_destination_ids=[],
+            templated_fields={
+                "message": {
+                    "type": "string",
+                    "label": "Formatted Message",
+                    "description": "Message to be sent to the channel. You can use jinja template with the mapped fields to format the message. For example: `{{name}}` will be replaced with the value of the `name` field. So you can write 'Hello {{name}}, ...'",
+                    "required": True
+                }
+            },
+        )
         for channel in response["channels"]:
             channel_name = channel["name"]
             channel_id = channel["id"]
             sinks.append(
                 ValmiSink(
-                    name=f"{channel_name}",
-                    id=f"{channel_id}",
-                    supported_destination_sync_modes=[DestinationSyncMode.append],
-                    json_schema={},
-                    allow_freeform_fields=True,
-                    supported_destination_ids_modes=None,
+                    name=f"{channel_name} - {channel_id}",
+                    label=f"{channel_name}",
+                    supported_destination_sync_modes=[ 
+                        DestinationSyncMode.append,
+                    ],
+                    field_catalog={ 
+                        DestinationSyncMode.append.value: basic_field_catalog,
+                    },
                 )
             )
         return ValmiDestinationCatalog(sinks=sinks)
 
     def check(self, logger: AirbyteLogger, config: Mapping[str, Any]) -> AirbyteConnectionStatus:
         try:
-            return AirbyteConnectionStatus(status=Status.SUCCEEDED)
+            # Check if you can read the channel list
+            client = WebClient(token=config["credentials"]["access_token"])
+            response = client.api_call("conversations.list", params=[])
+            if response["ok"]:
+                return AirbyteConnectionStatus(status=Status.SUCCEEDED)
+            else:
+                return AirbyteConnectionStatus(status=Status.FAILED,
+                                               message=f'Unable to fetch Slack Channels. Error: {response["error"]}')
         except Exception as err:
             return AirbyteConnectionStatus(status=Status.FAILED, message=f"An exception occurred: {repr(err)}")

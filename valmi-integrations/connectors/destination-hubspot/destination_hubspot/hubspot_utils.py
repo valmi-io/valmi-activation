@@ -124,8 +124,6 @@ class HubspotClient:
         if len(self.buffer) >= self.max_items_in_batch or counter % self.run_time_args.chunk_size == 0:
             flushed, metrics, rejected_records = self.flush(sync_op, config, sink)
         return flushed, metrics, rejected_records
-
-
     
     '''
     Sample Response
@@ -192,6 +190,7 @@ class HubspotClient:
         for element in self.buffer:
             ids.append(element["properties"][sink.destination_id])
 
+        # TODO: if id is used as destination_id, then do we need to fetch the id from the properties?
         fetch_properties = [sink.destination_id]
         resp = self.http_sink.send(
             method="POST",
@@ -205,9 +204,9 @@ class HubspotClient:
         )
 
         # insert the id from the fetch properties. This is needed for the update.
-        ignored_ids = []
+        absent_ids = []
         if (resp.status_code == 200):
-            ignored_ids = []
+            absent_ids = []
             resp_json = resp.json()
             self.insert_ids_into_obj_buffer(resp_json, sink)
 
@@ -219,21 +218,22 @@ class HubspotClient:
                 for error in resp_json["errors"]:
                     if error["status"] == "error":
                         for ctxt_id in error["context"]["ids"]:
-                            ignored_ids.append((ctxt_id,
+                            absent_ids.append((ctxt_id,
                                                 error["category"],
                                                 f'{error["category"]} - {error["message"]}',))
         elif (resp.status_code == 401):
             raise RequestUnAuthorizedException("Unauthorized")
-        return ignored_ids
+        return absent_ids
 
     def insert_ids_into_obj_buffer(self, resp_json, sink):
         for element in self.buffer:
             for result in resp_json["results"]:
+                # TODO: check if the id is part of properties or as a separate key
                 if element["properties"][sink.destination_id] == result["properties"][sink.destination_id]:
                     element["id"] = result["id"]
                     break
 
-    def generate_rejected_message_from_record(self, record, error_code, error_msg,metric_type):
+    def generate_rejected_message_from_record(self, record, error_code, error_msg, metric_type):
         return ValmiFinalisedRecordMessage(
             stream=record.stream,
             data=record.data,
@@ -250,7 +250,7 @@ class HubspotClient:
     def flush(self, sync_op, config: Mapping[Dict, Any], sink: ConfiguredValmiSink):
         self.get_access_token(config)
         
-        ignored_ids = self.object_map()[sink.sink.name]["read_object_fn"](sink)
+        absent_ids = self.object_map()[sink.sink.name]["read_object_fn"](sink)
         # logger.debug(json.dumps({"inputs": self.buffer}))
 
         create_objs = []
@@ -259,16 +259,18 @@ class HubspotClient:
         update_original_records = []
 
         for idx, element in enumerate(self.buffer):
-            for ignored_obj in ignored_ids:
-                if element["properties"][sink.destination_id] == ignored_obj[0]:
+            for absent_obj in absent_ids:
+                # TODO: check if the id is part of properties or as a separate key
+                if element["properties"][sink.destination_id] == absent_obj[0]:
                     create_objs.append(element)
-                    create_original_records.append((self.original_records[idx], ignored_obj,))
+                    create_original_records.append((self.original_records[idx], absent_obj,))
                     break
 
         for idx, element in enumerate(self.buffer):
             update = True
-            for ignored_obj in ignored_ids:
-                if element["properties"][sink.destination_id] == ignored_obj[0]:
+            for absent_obj in absent_ids:
+                # TODO: check if the id is part of properties or as a separate key
+                if element["properties"][sink.destination_id] == absent_obj[0]:
                     update = False
             if update:
                 update_objs.append(element)
@@ -279,28 +281,31 @@ class HubspotClient:
         flushed = True
 
         if sync_op == DestinationSyncMode.upsert.value:
-            flushed, new_metrics, new_rejected_records = self.handle_create(create_objs,
-                                                                            create_original_records,
-                                                                            config,
-                                                                            sink)
-            metrics = {**metrics, **new_metrics}
-            rejected_records.extend(new_rejected_records)
+            if len(create_original_records) > 0:
+                flushed, new_metrics, new_rejected_records = self.handle_create(create_objs,
+                                                                                create_original_records,
+                                                                                config,
+                                                                                sink)
+                metrics = {**metrics, **new_metrics}
+                rejected_records.extend(new_rejected_records)
 
-            flushed, new_metrics, new_rejected_records = self.handle_update(update_objs,
-                                                                            update_original_records,
-                                                                            config,
-                                                                            sink)
-            metrics = {**metrics, **new_metrics}
-            rejected_records.extend(new_rejected_records)
+            if len(update_original_records) > 0:
+                flushed, new_metrics, new_rejected_records = self.handle_update(update_objs,
+                                                                                update_original_records,
+                                                                                config,
+                                                                                sink)
+                metrics = {**metrics, **new_metrics}
+                rejected_records.extend(new_rejected_records)
         elif sync_op == DestinationSyncMode.update.value:
             for idx, (original_record, ignored_obj) in enumerate(create_original_records):
                 rejected_records.append(self.generate_rejected_message_from_record(original_record.record,
                                                                                    ignored_obj[1],
                                                                                    ignored_obj[2]), get_metric_type("ignore"))
             metrics[get_metric_type("ignore")] += len(create_original_records)
-            flushed, new_metrics, new_rejected_records = self.handle_update(update_objs, update_original_records, config, sink)
-            metrics = {**metrics, **new_metrics}
-            rejected_records.extend(new_rejected_records)
+            if len(update_original_records) > 0:
+                flushed, new_metrics, new_rejected_records = self.handle_update(update_objs, update_original_records, config, sink)
+                metrics = {**metrics, **new_metrics}
+                rejected_records.extend(new_rejected_records)
 
         self.buffer.clear()
         self.original_records.clear()
@@ -326,8 +331,9 @@ class HubspotClient:
                     if error["status"] == "error":
                         for ctxt_id in error["context"]["ids"]:
                             for idx, element in enumerate(update_objs):
-                                rejected_records.append(
-                                    self.generate_rejected_message_from_record(update_original_records[idx].record, error["category"], f'{error["category"]} - {error["message"]}', get_metric_type("fail")))
+                                if element["id"] == ctxt_id:
+                                    rejected_records.append(
+                                        self.generate_rejected_message_from_record(update_original_records[idx].record, error["category"], f'{error["category"]} - {error["message"]}', get_metric_type("fail")))
                                     
         elif (resp.status_code == 401):
             raise RequestUnAuthorizedException("Unauthorized")
@@ -337,13 +343,13 @@ class HubspotClient:
 
         return True, metrics, rejected_records
 
-    def handle_create(self, update_objs, update_original_records, config: Mapping[Dict, Any], sink: ConfiguredValmiSink):
+    def handle_create(self, create_objs, create_original_records, config: Mapping[Dict, Any], sink: ConfiguredValmiSink):
 
         resp = self.http_sink.send(
                             method="POST",
                             url=f"{API_URL}{self.object_map()[sink.sink.name]['batch_create_url']}",
                             data=None,
-                            json={"inputs": update_objs},
+                            json={"inputs": create_objs},
                             headers={"Authorization": f"Bearer {self.access_token}", "Content-Type": "application/json"},
                             auth=None,
                         )
@@ -356,14 +362,15 @@ class HubspotClient:
                 for error in resp_json["errors"]:
                     if error["status"] == "error":
                         for ctxt_id in error["context"]["ids"]:
-                            for idx, element in enumerate(update_objs):
-                                rejected_records.append(
-                                    self.generate_rejected_message_from_record(update_original_records[idx].record, error["category"], f'{error["category"]} - {error["message"]}'))
-                                    
+                            for idx, element in enumerate(create_objs):
+                                if element["properties"][sink.destination_id] == ctxt_id:
+                                    rejected_records.append(
+                                        self.generate_rejected_message_from_record(create_original_records[idx].record, error["category"], f'{error["category"]} - {error["message"]}'))
+                                        
         elif (resp.status_code == 401):
             raise RequestUnAuthorizedException("Unauthorized")
         
-        metrics[get_metric_type("upsert")] += len(update_objs) - len(rejected_records)
+        metrics[get_metric_type("upsert")] += len(create_objs) - len(rejected_records)
         metrics[get_metric_type("fail")] += len(rejected_records)
 
         return True, metrics, rejected_records
@@ -404,7 +411,7 @@ class HubspotClient:
             sinks.append(
                 ValmiSink(
                     name=f"{obj_name}",
-                    id=f"{obj_id}",
+                    label=f"{obj_id}",
                     supported_destination_sync_modes=[DestinationSyncMode.upsert, DestinationSyncMode.update],
                     field_catalog={
                         DestinationSyncMode.upsert.value: FieldCatalog(

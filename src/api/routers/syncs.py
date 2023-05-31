@@ -23,6 +23,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+import copy
 import logging
 import uuid
 
@@ -52,6 +53,7 @@ from api.schemas.metric import MetricBase
 from api.schemas.sync_run import ConnectorSynchronization, SyncRunTimeArgs
 from metastore.models import SyncStatus, SyncConfigStatus
 from api.schemas import SyncRunCreate
+from metrics import MetricDisplayOrder
 
 
 router = APIRouter(prefix="/syncs")
@@ -229,11 +231,20 @@ async def get_sync_runs(
     metric_service: MetricsService = Depends(get_metrics_service),
 ) -> List[models.SyncRun]:
     runs = sync_runs_service.get_runs(sync_id=sync_id, before=before, limit=limit)
+    metrics_display_order = MetricDisplayOrder()
+
+    runs_copy = []
     for run in runs:
         if run.status == "running":
             sync_runs_service.db_session.refresh(run)
             assign_metrics_to_run(run, metric_service)
-    return runs
+
+        run_copy = copy.deepcopy(run)
+        if run_copy.metrics:
+            run_copy.metrics = metrics_display_order.format(run_copy.metrics)
+        
+        runs_copy.append(run_copy)
+    return runs_copy
 
 
 @router.get("/{sync_id}/runs/finalise_last_run", response_model=GenericResponse)
