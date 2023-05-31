@@ -98,7 +98,7 @@ class ConfiguredValmiSink(BaseModel):
     destination_sync_mode: DestinationSyncMode
     mapping: list[Dict[str, Any]] = Field(..., description="Create mapping from source to destination fields.")
     destination_id: Optional[str]
-    template_fields: Optional[Dict[str, str]] = Field(..., description="Configured template fields by the user from the UI.")
+    template_fields: Optional[Dict[str, str]] = Field(None, description="Configured template fields by the user from the UI.")
 
 
 # TODO: Hack. Think of a nice way
