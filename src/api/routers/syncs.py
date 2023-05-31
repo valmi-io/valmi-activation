@@ -254,18 +254,19 @@ async def finalise_last_run(
     sync_runs_service: SyncRunsService = Depends(get_sync_runs_service),
     sync_service: SyncsService = Depends(get_syncs_service),
 ) -> GenericResponse:
-    sync_schedule = sync_service.get(sync_id)
-
     # get metrics from Metric service
     sync_schedule = sync_service.get(sync_id)
     metrics = metric_service.get_metrics(MetricBase(run_id=sync_schedule.last_run_id, sync_id=sync_id))
+    sync_run = sync_runs_service.get(sync_schedule.last_run_id)
+    sync_runs_service.db_session.refresh(sync_run)
+
     if metrics:
-        sync_run = sync_runs_service.get(sync_schedule.last_run_id)
-        sync_runs_service.db_session.refresh(sync_run)
         sync_run.metrics = metrics
         flag_modified(sync_run, "metrics")
-        sync_runs_service.commit()
         metric_service.clear_metrics(MetricBase(run_id=sync_id, sync_id=sync_run.run_id))
+
+    sync_run.run_end_at = datetime.now()
+    sync_runs_service.commit()
 
     return GenericResponse(success=True, message="success")
 
