@@ -57,7 +57,7 @@ class StripeUtils:
 
         return mapped_data
 
-    def map_data(self, mapping: Dict[str, str], data: Dict[str, Any]):
+    def map_data(self, mapping: list[Dict[str, str]], data: Dict[str, Any]):
         mapped_data = {}
         for item in mapping:
             k = item["stream"]

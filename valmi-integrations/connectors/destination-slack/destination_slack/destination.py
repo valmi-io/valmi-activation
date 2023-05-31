@@ -30,8 +30,7 @@ from typing import Any, Iterable, Mapping
 
 from airbyte_cdk import AirbyteLogger
 from airbyte_cdk.destinations import Destination
-from airbyte_cdk.models import AirbyteConnectionStatus, AirbyteStateMessage, AirbyteMessage, Status
-from airbyte_cdk.models.airbyte_protocol import Type, AirbyteStateType
+from airbyte_cdk.models import AirbyteConnectionStatus, AirbyteMessage, Status
 from valmi_connector_lib.valmi_protocol import (
     ValmiDestinationCatalog,
     ValmiSink,
@@ -40,10 +39,10 @@ from valmi_connector_lib.valmi_protocol import (
     DestinationSyncMode,
     FieldCatalog,
     DestinationWriteWrapper,
+    HandlerResponseData,
+    get_metric_type,
 )
 from valmi_connector_lib.valmi_destination import ValmiDestination
-from valmi_connector_lib.common.run_time_args import RunTimeArgs
-from datetime import datetime
 from slack_sdk import WebClient
 from .slack_utils import map_data
 
@@ -56,25 +55,36 @@ class SlackWriter(DestinationWriteWrapper):
         if not response["ok"]:
             raise Exception(response["message"]["error"])
 
-
     def handle_message(
         self,
         msg,
         counter,
     ) -> HandlerResponseData:
 
+        metrics = {}
         sync_op = msg.record.data["_valmi_meta"]["_valmi_sync_op"]
-        self.last_seen_sync_op = sync_op
-        flushed, metrics, rejected_records = self.hub_client.add_to_queue(
-            sync_op, counter, msg, self.config,
-            configured_stream=self.configured_catalog.streams[0],
-            sink=self.configured_destination_catalog.sinks[0])
 
-        return HandlerResponseData(flushed=flushed, metrics=metrics, rejected_records=rejected_records)
+        rejected_records = []
+        mapped_data = map_data(self.configured_destination_catalog.sinks[0].mapping, msg.record.data)
+
+        # TODO: Handle JINJA templated fields
+        
+        response = self.client.chat_postMessage(
+            channel=self.configured_destination_catalog.sinks[0].sink.name, text=str(mapped_data)
+        )
+
+        if not response["ok"]:
+            raise Exception(response["message"]["error"])
+
+        metrics[get_metric_type(sync_op)] = 1
+
+        # slack lets 1 message per second
+        time.sleep(1)
+        return HandlerResponseData(flushed=True, metrics=metrics, rejected_records=rejected_records)
 
     def finalise_message_handling(self):
-        flushed, metrics, rejected_records = self.hub_client.flush(self.last_seen_sync_op, config=self.config, sink=self.configured_destination_catalog.sinks[0])
-        return HandlerResponseData(flushed=flushed, metrics=metrics, rejected_records=rejected_records)
+        pass
+
 
 class DestinationSlack(ValmiDestination):
     def __init__(self):
@@ -90,64 +100,8 @@ class DestinationSlack(ValmiDestination):
         input_messages: Iterable[AirbyteMessage],
         # state: Dict[str, any],
     ) -> Iterable[AirbyteMessage]:
-        # Invite  bot this to the selected channel
-        client = WebClient(token=config["credentials"]["access_token"])
-
-        response = client.conversations_join(channel=configured_destination_catalog.sinks[0].sink.name)
-        if not response["ok"]:
-            raise Exception(response["message"]["error"])
-
-        # Start handling messages
-
-        counter = 0
-        chunk_id = 0
-        run_time_args = RunTimeArgs.parse_obj(config["run_time_args"] if "run_time_args" in config else {})
-
-        for message in input_messages:
-            now = datetime.now()
-
-            if message.type == Type.RECORD:
-                record = message.record
-                mapped_data = map_data(configured_destination_catalog.sinks[0].mapping, record.data)
-
-                response = client.chat_postMessage(
-                    channel=configured_destination_catalog.sinks[0].sink.name, text=str(mapped_data)
-                )
-
-                counter = counter + 1
-                if counter % run_time_args.chunk_size == 0:
-                    yield AirbyteMessage(
-                        type=Type.STATE,
-                        state=AirbyteStateMessage(
-                            type=AirbyteStateType.STREAM,
-                            data={
-                                "records_delivered": {DestinationSyncMode.append.value: counter},
-                                "chunk_id": chunk_id,
-                                "finished": False,
-                            },
-                        ),
-                    )
-                    counter = 0
-                    chunk_id = chunk_id + 1
-
-                if (datetime.now() - now).seconds > 5:
-                    logger.info("A log every 5 seconds - is this required??")
-
-                # slack lets 1 message per second
-                time.sleep(1)
-
-        # Sync completed - final state message
-        yield AirbyteMessage(
-            type=Type.STATE,
-            state=AirbyteStateMessage(
-                type=AirbyteStateType.STREAM,
-                data={
-                    "records_delivered": {DestinationSyncMode.append.value: counter},
-                    "chunk_id": chunk_id,
-                    "finished": True,
-                },
-            ),
-        )
+        slack_writer = SlackWriter(logger, config, configured_catalog, configured_destination_catalog, None)
+        return slack_writer.start_message_handling(input_messages)
 
     def discover(self, logger: AirbyteLogger, config: json) -> ValmiDestinationCatalog:
         client = WebClient(token=config["credentials"]["access_token"])
@@ -176,8 +130,8 @@ class DestinationSlack(ValmiDestination):
             sinks.append(
                 ValmiSink(
                     name=f"{channel_id}",
-                    label=f"{channel_name} - {channel_id}",
-                    supported_destination_sync_modes=[ 
+                    label=f"#{channel_name}",
+                    supported_destination_sync_modes=[
                         DestinationSyncMode.append,
                     ],
                     field_catalog={ 
