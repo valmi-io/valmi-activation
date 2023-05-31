@@ -23,7 +23,6 @@ class MetricDisplayOrder:
         pass
 
     def format_metric(self, dispaly_order: Dict[str, int], metric: Dict[str, int]) -> List[Dict[str, int]]:
-        print(metric)
         formatted_metrics = copy.deepcopy(metric)
         for k, v in metric.items():
             formatted_metrics[k] = {
