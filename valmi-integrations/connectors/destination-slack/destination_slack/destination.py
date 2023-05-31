@@ -160,6 +160,13 @@ class DestinationSlack(ValmiDestination):
 
     def check(self, logger: AirbyteLogger, config: Mapping[str, Any]) -> AirbyteConnectionStatus:
         try:
-            return AirbyteConnectionStatus(status=Status.SUCCEEDED)
+            # Check if you can read the channel list
+            client = WebClient(token=config["credentials"]["access_token"])
+            response = client.api_call("conversations.list", params=[])
+            if response["ok"]:
+                return AirbyteConnectionStatus(status=Status.SUCCEEDED)
+            else:
+                return AirbyteConnectionStatus(status=Status.FAILED,
+                                               message=f'Unable to fetch Slack Channels. Error: {response["error"]}')
         except Exception as err:
             return AirbyteConnectionStatus(status=Status.FAILED, message=f"An exception occurred: {repr(err)}")
