@@ -411,7 +411,7 @@ class HubspotClient:
             sinks.append(
                 ValmiSink(
                     name=f"{obj_name}",
-                    id=f"{obj_id}",
+                    label=f"{obj_id}",
                     supported_destination_sync_modes=[DestinationSyncMode.upsert, DestinationSyncMode.update],
                     field_catalog={
                         DestinationSyncMode.upsert.value: FieldCatalog(

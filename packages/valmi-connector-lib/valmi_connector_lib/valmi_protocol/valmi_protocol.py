@@ -83,8 +83,8 @@ class ValmiSink(BaseModel):
         ..., description="List of sync modes supported by this sink.", min_items=1
     )
 
-    name: str = Field(..., description="Sink's name.")
-    id: str = Field(..., description="Sink's id.")
+    name: str = Field(..., description="Sink's unique name.")
+    label: str = Field(..., description="Sink's Display Label.")
 
     field_catalog: Dict[str, FieldCatalog] = Field(..., description="Sink Fields mapped by Destination Sync Mode")
 

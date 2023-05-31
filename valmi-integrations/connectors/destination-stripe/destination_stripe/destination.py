@@ -118,7 +118,7 @@ class DestinationStripe(ValmiDestination):
         sinks.append(
             ValmiSink(
                 name="Customer",
-                id="Customer",
+                label="Customer",
                 supported_destination_sync_modes=[DestinationSyncMode.upsert, DestinationSyncMode.update],
                 field_catalog={
                     DestinationSyncMode.upsert.value: FieldCatalog(

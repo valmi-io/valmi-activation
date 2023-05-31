@@ -167,7 +167,7 @@ class DestinationFacebookAds(ValmiDestination):
                 sinks.append(
                     ValmiSink(
                         name=str(aud["name"]),
-                        id=str(aud["id"]),
+                        label=str(aud["id"]),
                         supported_destination_sync_modes=(DestinationSyncMode.upsert, DestinationSyncMode.mirror),
                         json_schema=json_schema,
                         supported_destination_ids_modes=fb_utils.get_id_keys_with_supported_sync_modes(),
@@ -198,7 +198,7 @@ class DestinationFacebookAds(ValmiDestination):
                 sinks.append(
                     ValmiSink(
                         name=str(row["name"]),
-                        id=str(row["account_id"]),
+                        label=str(row["account_id"]),
                         supported_destination_sync_modes=(DestinationSyncMode.upsert, DestinationSyncMode.mirror),
                         # json_schema=json_schema,
                         allow_freeform_fields=False,

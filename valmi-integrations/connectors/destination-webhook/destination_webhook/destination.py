@@ -105,7 +105,7 @@ class DestinationWebhook(ValmiDestination):
         sinks.append(
             ValmiSink(
                 name="Webhook",
-                id="Webhook",
+                label="Webhook",
                 supported_destination_sync_modes=[
                     DestinationSyncMode.upsert,
                     DestinationSyncMode.mirror,
