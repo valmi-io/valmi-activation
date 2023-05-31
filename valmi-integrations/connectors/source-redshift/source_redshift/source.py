@@ -95,6 +95,7 @@ class SourceRedshift(Source):
                 streams.append(
                     ValmiStream(
                         name=str(row),
+                        label=str(row),
                         supported_destination_sync_modes=(DestinationSyncMode.upsert, DestinationSyncMode.mirror),
                         supported_sync_modes=(SyncMode.full_refresh, SyncMode.incremental)
                         # json_schema=json_schema,
@@ -120,6 +121,7 @@ class SourceRedshift(Source):
                 streams.append(
                     ValmiStream(
                         name=stream_name,
+                        label=stream_name,
                         supported_sync_modes=["full_refresh", "incremental"],
                         json_schema=json_schema,
                     )

@@ -125,6 +125,7 @@ class ValmiStream(AirbyteStream):
     supported_destination_sync_modes: List[DestinationSyncMode] = Field(
         ..., description="List of destination sync modes supported by this stream.", min_items=1
     )
+    label: str = Field(..., description="Stream's Display Label.")
     pass
 
 

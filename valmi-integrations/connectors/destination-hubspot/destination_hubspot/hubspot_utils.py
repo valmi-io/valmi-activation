@@ -66,7 +66,7 @@ class HubspotClient:
         self.http_sink = HttpSink(run_time_args=run_time_args)
         self.run_time_args = run_time_args
 
-    def map_data(self, configured_stream: ValmiStream, sink: ConfiguredValmiSink, mapping: Dict[str, str], data: Dict[str, Any]):
+    def map_data(self, configured_stream: ValmiStream, sink: ConfiguredValmiSink, mapping: list[Dict[str, str]], data: Dict[str, Any]):
         mapped_data = {}
         for item in mapping:
             k = item["stream"]
