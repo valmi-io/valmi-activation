@@ -10,6 +10,7 @@ from .http_sink import HttpSink
 from .retry_decorators import retry_on_exception, retry_on_unauthorized_exception, RequestUnAuthorizedException
 from hubspot.auth.oauth import TokensApi
 from valmi_connector_lib.common.metrics import get_metric_type
+from email_validator import validate_email, EmailNotValidError
 
 from valmi_connector_lib.valmi_protocol import (
     DestinationSyncMode,
@@ -259,11 +260,43 @@ class HubspotClient:
             id_key = element["properties"][sink.destination_id]
         return id_key
 
+    def merge_metric_dictionaries(self, m1, m2):
+        for k, v in m1.items():
+            if k in m2:
+                m2[k] += v
+            else:
+                m2[k] = v
+        return m2
+
     # RETRYING specifically for 401. Other retries are covered in http_sink.
     @retry_on_unauthorized_exception
     def flush(self, sync_op, config: Mapping[Dict, Any], sink: ConfiguredValmiSink):
+
         self.get_access_token(config)
-        
+                
+        rejected_records = []
+        metrics = defaultdict(lambda: 0)
+        flushed = True
+
+        # Do sanity checks on email ids
+        if sink.destination_id == "email":
+            self.new_buffer = []
+            self.new_original_records = []
+            for idx, element in enumerate(self.buffer):
+                try:
+                    validate_email(element["properties"][sink.destination_id], test_environment=True)
+                except EmailNotValidError as e:
+                    rejected_records.append(self.generate_rejected_message_from_record(self.original_records[idx].record, "INVALID_EMAIL", str(e), get_metric_type("fail")))
+                    metrics[get_metric_type("fail")] += 1
+                    continue
+                self.new_buffer.append(element)
+                self.new_original_records.append(self.original_records[idx])
+            self.buffer = self.new_buffer
+            self.original_records = self.new_original_records
+
+        """
+        Get existing elements from Hubspot and split it into updateRecords and CreateRecords
+        """
         absent_ids = self.object_map()[sink.sink.name]["read_object_fn"](sink)
         # logger.debug(json.dumps({"inputs": self.buffer}))
 
@@ -289,18 +322,17 @@ class HubspotClient:
             if update:
                 update_objs.append(element)
                 update_original_records.append(self.original_records[idx])
-                
-        rejected_records = []
-        metrics = defaultdict(lambda: 0)
-        flushed = True
 
+        """
+        Operate on the batch for different sync operations
+        """
         if sync_op == DestinationSyncMode.upsert.value:
             if len(create_original_records) > 0:
                 flushed, new_metrics, new_rejected_records = self.handle_create(create_objs,
                                                                                 create_original_records,
                                                                                 config,
                                                                                 sink)
-                metrics = {**metrics, **new_metrics}
+                metrics = self.merge_metric_dictionaries(metrics, new_metrics)
                 rejected_records.extend(new_rejected_records)
 
             if len(update_original_records) > 0:
@@ -308,7 +340,7 @@ class HubspotClient:
                                                                                 update_original_records,
                                                                                 config,
                                                                                 sink)
-                metrics = {**metrics, **new_metrics}
+                metrics = self.merge_metric_dictionaries(metrics, new_metrics)
                 rejected_records.extend(new_rejected_records)
         elif sync_op == DestinationSyncMode.update.value:
             for idx, (original_record, ignored_obj) in enumerate(create_original_records):
@@ -318,7 +350,7 @@ class HubspotClient:
             metrics[get_metric_type("ignore")] += len(create_original_records)
             if len(update_original_records) > 0:
                 flushed, new_metrics, new_rejected_records = self.handle_update(update_objs, update_original_records, config, sink)
-                metrics = {**metrics, **new_metrics}
+                metrics = self.merge_metric_dictionaries(metrics, new_metrics)
                 rejected_records.extend(new_rejected_records)
 
         self.buffer.clear()
