@@ -190,8 +190,12 @@ class HubspotClient:
         for element in self.buffer:
             ids.append(element["properties"][sink.destination_id])
 
-        # TODO: if id is used as destination_id, then do we need to fetch the id from the properties?
-        fetch_properties = [sink.destination_id]
+        # TEST: if id is used as destination_id, then do we need to fetch the id from the properties?
+        if (sink.destination_id == "id"):
+            fetch_properties = []
+        else:
+            fetch_properties = [sink.destination_id]
+            
         resp = self.http_sink.send(
             method="POST",
             url=f"{API_URL}{self.object_map()[sink.sink.name]['read_url']}",
@@ -228,7 +232,9 @@ class HubspotClient:
     def insert_ids_into_obj_buffer(self, resp_json, sink):
         for element in self.buffer:
             for result in resp_json["results"]:
-                # TODO: check if the id is part of properties or as a separate key
+                if sink.destination_id == "id":
+                    # id is already part of the buffer object
+                    continue
                 if element["properties"][sink.destination_id] == result["properties"][sink.destination_id]:
                     element["id"] = result["id"]
                     break
@@ -245,6 +251,14 @@ class HubspotClient:
             emitted_at=int(datetime.now().timestamp()) * 1000,
         )
 
+    def get_id_from_buffer_obj(self, element, sink: ConfiguredValmiSink):
+        id_key = None
+        if (sink.destination_id == "id"):
+            id_key = element["id"]
+        else:
+            id_key = element["properties"][sink.destination_id]
+        return id_key
+
     # RETRYING specifically for 401. Other retries are covered in http_sink.
     @retry_on_unauthorized_exception
     def flush(self, sync_op, config: Mapping[Dict, Any], sink: ConfiguredValmiSink):
@@ -260,8 +274,8 @@ class HubspotClient:
 
         for idx, element in enumerate(self.buffer):
             for absent_obj in absent_ids:
-                # TODO: check if the id is part of properties or as a separate key
-                if element["properties"][sink.destination_id] == absent_obj[0]:
+                id_key = self.get_id_from_buffer_obj(element, sink)
+                if id_key == absent_obj[0]:
                     create_objs.append(element)
                     create_original_records.append((self.original_records[idx], absent_obj,))
                     break
@@ -269,8 +283,8 @@ class HubspotClient:
         for idx, element in enumerate(self.buffer):
             update = True
             for absent_obj in absent_ids:
-                # TODO: check if the id is part of properties or as a separate key
-                if element["properties"][sink.destination_id] == absent_obj[0]:
+                id_key = self.get_id_from_buffer_obj(element, sink)
+                if id_key == absent_obj[0]:
                     update = False
             if update:
                 update_objs.append(element)
