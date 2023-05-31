@@ -38,13 +38,14 @@ from valmi_connector_lib.valmi_protocol import (
     ConfiguredValmiDestinationCatalog,
     DestinationSyncMode,
     FieldCatalog,
-    DestinationWriteWrapper,
-    HandlerResponseData,
-    get_metric_type,
 )
+from valmi_connector_lib.destination_wrapper.destination_write_wrapper import (
+    DestinationWriteWrapper, HandlerResponseData)
+from valmi_connector_lib.common.metrics import get_metric_type
 from valmi_connector_lib.valmi_destination import ValmiDestination
 from slack_sdk import WebClient
 from .slack_utils import map_data
+import jinja2
 
 
 class SlackWriter(DestinationWriteWrapper):
@@ -54,6 +55,9 @@ class SlackWriter(DestinationWriteWrapper):
         response = self.client.conversations_join(channel=self.configured_destination_catalog.sinks[0].sink.name)
         if not response["ok"]:
             raise Exception(response["message"]["error"])
+        
+        environment = jinja2.Environment()
+        self.template = environment.from_string(self.configured_destination_catalog.sinks[0].template_fields["message"])
 
     def handle_message(
         self,
@@ -67,10 +71,10 @@ class SlackWriter(DestinationWriteWrapper):
         rejected_records = []
         mapped_data = map_data(self.configured_destination_catalog.sinks[0].mapping, msg.record.data)
 
-        # TODO: Handle JINJA templated fields
-        
+        message = self.template.render(mapped_data)
+
         response = self.client.chat_postMessage(
-            channel=self.configured_destination_catalog.sinks[0].sink.name, text=str(mapped_data)
+            channel=self.configured_destination_catalog.sinks[0].sink.name, text=message
         )
 
         if not response["ok"]:
@@ -115,7 +119,7 @@ class DestinationSlack(ValmiDestination):
             },
             allow_freeform_fields=True,
             supported_destination_ids=[],
-            templated_fields={
+            template_fields={
                 "message": {
                     "type": "string",
                     "label": "Formatted Message",

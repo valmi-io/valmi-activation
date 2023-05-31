@@ -73,6 +73,7 @@ class FieldCatalog(BaseModel):
         ..., description="List of supported_destination ids", min_items=0
     )
     allow_freeform_fields: bool = Field(..., description="Allow freeform fields in destination.")
+    template_fields: Optional[Dict[str, Any]] = Field(None, description="Templated fields for destination, rendered using Jinja with mapped fields. Some connectors like Slack and Android push notifications can use this to generate user friendly messages.")
 
 
 class ValmiSink(BaseModel):
@@ -97,6 +98,7 @@ class ConfiguredValmiSink(BaseModel):
     destination_sync_mode: DestinationSyncMode
     mapping: list[Dict[str, Any]] = Field(..., description="Create mapping from source to destination fields.")
     destination_id: Optional[str]
+    template_fields: Optional[Dict[str, str]] = Field(..., description="Configured template fields by the user from the UI.")
 
 
 # TODO: Hack. Think of a nice way

@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-MAIN_REQUIREMENTS = ["valmi_connector_lib", "requests", "slack_sdk"]
+MAIN_REQUIREMENTS = ["valmi_connector_lib", "requests", "slack_sdk", "jinja2"]
 
 TEST_REQUIREMENTS = ["pytest~=6.2"]
 
