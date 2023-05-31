@@ -24,6 +24,18 @@ class HttpSink(HttpStream):
         prepped = s.prepare_request(req)
         return self._send_request(prepped, request_kwargs={"timeout": self.run_time_args.http_timeout})
 
+    def should_retry(self, response: requests.Response) -> bool:
+        # Checking both status_code and text is a bit of a hack, but it's the only way to check for a 429
+        retry = response.status_code == 429 or 500 <= response.status_code < 600
+        if not retry:
+            if response.text is not None:
+                resp_json = response.json()
+                if not resp_json["ok"]:
+                    error = resp_json["error"]
+                    if error in ["service_unavailable", "ratelimited"]:
+                        retry = True
+        return retry
+
     ##############################################################################################
     # TODO: DUMMY stuff to make it run
     def url_base(self) -> str:
