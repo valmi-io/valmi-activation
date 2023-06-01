@@ -13,6 +13,8 @@ class SyncScheduleCreate(SyncScheduleBase):
     last_run_at: Optional[datetime]
     run_interval: Optional[int]
     status: Optional[str]
+    src_connector_type: str
+    dst_connector_type: str
 
 
 class SyncSchedule(SyncScheduleCreate):

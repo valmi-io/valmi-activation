@@ -36,6 +36,8 @@ class SyncSchedule(Base):
     run_status = sa.Column(sa.Text, nullable=False, default=SyncStatus.STOPPED)
     created_at = sa.Column(sa.DateTime, server_default=sa.func.now(), nullable=False)
     updated_at = sa.Column(sa.DateTime, server_default=sa.func.now(), onupdate=sa.func.now(), nullable=False)
+    src_connector_type = sa.Column(sa.Text, nullable=False, default="SRC_POSTGRES")
+    dst_connector_type = sa.Column(sa.Text, nullable=False, default="DEST_WEBHOOK")
 
 
 class SyncRun(Base):
