@@ -42,6 +42,8 @@ LOGGING_CONF:
     handlers: [console]
   disable_existing_loggers: false
 
-
 ## chunk size per destination
+CONNECTOR_RUN_CONFIG:
+  FACEBOOK_ADS:
+    chunk_size: 9500
 
