@@ -60,7 +60,8 @@ class FBAdsWriter(DestinationWriteWrapper):
 
         sync_op = msg.record.data["_valmi_meta"]["_valmi_sync_op"]
         flushed, metrics, rejected_records = self.fb_utils.add_to_queue(
-            msg.record.data,
+            counter,
+            msg,
             configured_stream=self.configured_catalog.streams[0],
             sink=self.configured_destination_catalog.sinks[0],
         )
