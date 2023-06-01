@@ -28,24 +28,47 @@ from typing import Any, Iterable, Mapping
 
 from airbyte_cdk import AirbyteLogger
 from airbyte_cdk.destinations import Destination
-from airbyte_cdk.models import AirbyteConnectionStatus, AirbyteStateMessage, AirbyteMessage
-from airbyte_cdk.models.airbyte_protocol import Type, AirbyteStateType, Status
+from airbyte_cdk.models import AirbyteConnectionStatus, AirbyteMessage
+from airbyte_cdk.models.airbyte_protocol import Status
 from valmi_connector_lib.valmi_protocol import (
     ValmiDestinationCatalog,
     ValmiSink,
     ConfiguredValmiCatalog,
     ConfiguredValmiDestinationCatalog,
     DestinationSyncMode,
+    FieldCatalog,
 )
 from valmi_connector_lib.valmi_destination import ValmiDestination
-from .run_time_args import RunTimeArgs
-
-from datetime import datetime
+from valmi_connector_lib.destination_wrapper.destination_write_wrapper import DestinationWriteWrapper, HandlerResponseData
 from facebook_business.api import FacebookAdsApi
 from facebook_business.adobjects.adaccount import AdAccount
 from facebook_business.adobjects.adaccountuser import AdAccountUser
+from facebook_business.adobjects.customaudience import CustomAudience
 
 from .fb_ads_utils import FBAdsUtils
+
+
+class FBAdsWriter(DestinationWriteWrapper):
+    def initialise_message_handling(self):
+        self.fb_utils = FBAdsUtils(self.config, self.run_time_args)
+
+    def handle_message(
+        self,
+        msg,
+        counter,
+    ) -> HandlerResponseData:
+
+        sync_op = msg.record.data["_valmi_meta"]["_valmi_sync_op"]
+        flushed, metrics, rejected_records = self.fb_utils.add_to_queue(
+            msg.record.data,
+            configured_stream=self.configured_catalog.streams[0],
+            sink=self.configured_destination_catalog.sinks[0],
+        )
+        return HandlerResponseData(flushed=flushed, metrics=metrics, rejected_records=rejected_records)
+
+    def finalise_message_handling(self):
+        flushed, metrics, rejected_records = self.fb_utils.flush(configured_stream=self.configured_catalog.streams[0], sink=self.configured_destination_catalog.sinks[0])
+        return HandlerResponseData(flushed=flushed, metrics=metrics, rejected_records=rejected_records)
 
 
 class DestinationFacebookAds(ValmiDestination):
@@ -62,70 +85,13 @@ class DestinationFacebookAds(ValmiDestination):
         input_messages: Iterable[AirbyteMessage],
         # state: Dict[str, any],
     ) -> Iterable[AirbyteMessage]:
-        counter = 0
-        counter_by_type = {}
-        chunk_id = 0
-        run_time_args = RunTimeArgs.parse_obj(config["run_time_args"] if "run_time_args" in config else {})
+        
+        # Start handling messages
 
-        counter_by_type["upsert"] = 0
-        counter_by_type["delete"] = 0
+        fbAds_writer = FBAdsWriter(logger, config, configured_catalog, configured_destination_catalog, None)
+        return fbAds_writer.start_message_handling(input_messages)
 
-        fb_utils = FBAdsUtils(config, None)
-
-        # It is assumed and required that all deletes are done before upserts
-        for message in input_messages:
-            now = datetime.now()
-
-            if message.type == Type.RECORD:
-                record = message.record
-                flushed = fb_utils.add_to_queue(
-                    record.data,
-                    configured_stream=configured_catalog.streams[0],
-                    sink=configured_destination_catalog.sinks[0],
-                )
-
-                counter = counter + 1
-
-                if message.record.data["_valmi_meta"]["_valmi_sync_op"] not in counter_by_type:
-                    counter_by_type[message.record.data["_valmi_meta"]["_valmi_sync_op"]] = 0
-
-                counter_by_type[message.record.data["_valmi_meta"]["_valmi_sync_op"]] = (
-                    counter_by_type[message.record.data["_valmi_meta"]["_valmi_sync_op"]] + 1
-                )
-
-                if flushed or counter % run_time_args.chunk_size == 0:
-                    yield AirbyteMessage(
-                        type=Type.STATE,
-                        state=AirbyteStateMessage(
-                            type=AirbyteStateType.STREAM,
-                            data={
-                                "records_delivered": counter_by_type,
-                                "chunk_id": chunk_id,
-                                "finished": False,
-                            },
-                        ),
-                    )
-                    if counter % run_time_args.chunk_size == 0:
-                        counter_by_type.clear()
-                        chunk_id = chunk_id + 1
-
-                if (datetime.now() - now).seconds > 5:
-                    logger.info("A log every 5 seconds - is this required??")
-
-        fb_utils.flush(configured_stream=configured_catalog.streams[0], sink=configured_destination_catalog.sinks[0])
-        # Sync completed - final state message
-        yield AirbyteMessage(
-            type=Type.STATE,
-            state=AirbyteStateMessage(
-                type=AirbyteStateType.STREAM,
-                data={
-                    "records_delivered": counter_by_type,
-                    "chunk_id": chunk_id,
-                    "finished": True,
-                },
-            ),
-        )
-
+    # TODO: engine support required to support `create` command
     def create(
         self,
         logger: AirbyteLogger,
@@ -133,7 +99,8 @@ class DestinationFacebookAds(ValmiDestination):
         object_spec: json,
     ) -> AirbyteConnectionStatus:
         try:
-            FacebookAdsApi.init(config["app_id"], config["app_secret"], config["long_term_acccess_token"])
+            FacebookAdsApi.init(config["app_id"], config["app_secret"],
+                                config["long_term_acccess_token"], crash_log=False)
 
             fields = []
             params = {
@@ -163,22 +130,30 @@ class DestinationFacebookAds(ValmiDestination):
 
             json_schema = fb_utils.get_custom_audience_schema()
 
+            supported_destination_ids = [CustomAudience.Schema.MultiKeySchema.extern_id,
+                                         CustomAudience.Schema.MultiKeySchema.email,
+                                         CustomAudience.Schema.MultiKeySchema.phone,
+                                         CustomAudience.Schema.MultiKeySchema.madid]
             for aud in audiences:
                 sinks.append(
                     ValmiSink(
-                        name=str(aud["name"]),
-                        label=str(aud["id"]),
-                        supported_destination_sync_modes=(DestinationSyncMode.upsert, DestinationSyncMode.mirror),
-                        json_schema=json_schema,
-                        supported_destination_ids_modes=fb_utils.get_id_keys_with_supported_sync_modes(),
-                        allow_freeform_fields=False,
+                        label=str(aud["name"]),
+                        name=str(aud["id"]),
+                        supported_destination_sync_modes=[DestinationSyncMode.upsert, DestinationSyncMode.mirror],
+                        field_catalog={
+                            DestinationSyncMode.upsert.value: FieldCatalog(
+                                json_schema=json_schema,
+                                allow_freeform_fields=False,
+                                supported_destination_ids=supported_destination_ids,
+                            ),
+                            DestinationSyncMode.mirror.value: FieldCatalog(
+                                json_schema=json_schema,
+                                allow_freeform_fields=False,
+                                supported_destination_ids=supported_destination_ids,
+                            ),
+                        },
                     )
                 )
-            json_schema = {
-                "$schema": "http://json-schema.org/draft-07/schema#",
-                "type": "object",
-                "properties": {"audience_name": {"type": "string"}, "audience_description": {"type": "string"}},
-            }
             catalog = ValmiDestinationCatalog(sinks=sinks, allow_object_creation=True, object_schema=json_schema)
             catalog.__setattr__("type", "audience")
             catalog.__setattr__("more", False)
@@ -200,8 +175,18 @@ class DestinationFacebookAds(ValmiDestination):
                         name=str(row["name"]),
                         label=str(row["account_id"]),
                         supported_destination_sync_modes=(DestinationSyncMode.upsert, DestinationSyncMode.mirror),
-                        # json_schema=json_schema,
-                        allow_freeform_fields=False,
+                        field_catalog={
+                            DestinationSyncMode.upsert.value: FieldCatalog(
+                                json_schema=json_schema,
+                                allow_freeform_fields=False,
+                                supported_destination_ids=[],
+                            ),
+                            DestinationSyncMode.mirror.value: FieldCatalog(
+                                json_schema=json_schema,
+                                allow_freeform_fields=False,
+                                supported_destination_ids=[],
+                            ),
+                        },
                     )
                 )
             catalog = ValmiDestinationCatalog(sinks=sinks, allow_object_creation=False)
@@ -211,7 +196,8 @@ class DestinationFacebookAds(ValmiDestination):
 
     def check(self, logger: AirbyteLogger, config: Mapping[str, Any]) -> AirbyteConnectionStatus:
         try:
-            FacebookAdsApi.init(config["app_id"], config["app_secret"], config["long_term_acccess_token"])
+            FacebookAdsApi.init(config["app_id"], config["app_secret"],
+                                config["long_term_acccess_token"], crash_log=False)
 
             # checking by getting list of ad accounts
             accounts = list(AdAccountUser(fbid="me").get_ad_accounts(fields=["name", "account_id"]))

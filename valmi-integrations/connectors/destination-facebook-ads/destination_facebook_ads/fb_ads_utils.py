@@ -3,10 +3,8 @@ from airbyte_cdk import AirbyteLogger
 from valmi_connector_lib.valmi_protocol import (
     ValmiStream,
     ConfiguredValmiSink,
-    DestinationSyncMode,
-    DestinationIdWithSupportedSyncModes,
 )
-from .run_time_args import RunTimeArgs
+from valmi_connector_lib.common.run_time_args import RunTimeArgs
 from facebook_business.adobjects.customaudience import CustomAudience
 from facebook_business.api import FacebookAdsApi
 
@@ -16,12 +14,13 @@ class FBAdsUtils:
     logger = AirbyteLogger()
 
     def __init__(self, config: Mapping[str, Any], run_time_args: RunTimeArgs, *args, **kwargs):
-        FacebookAdsApi.init(config["app_id"], config["app_secret"], config["long_term_acccess_token"])
+        FacebookAdsApi.init(config["app_id"], config["app_secret"], config["long_term_acccess_token"], crash_log=False)
 
         self.users = []
         self.schema = None
         self.lookup_keys = None
         self.is_deleting = True
+        self.run_time_args = run_time_args
 
     def get_custom_audience_schema(self):
         key_types = [
@@ -49,30 +48,9 @@ class FBAdsUtils:
             "properties": {key_type: {"type": "string"} for key_type in key_types},
         }
 
-    def get_id_keys_with_supported_sync_modes(self):
-        key_types = [
-            DestinationIdWithSupportedSyncModes(
-                destination_id=CustomAudience.Schema.MultiKeySchema.extern_id,
-                destination_sync_modes=[DestinationSyncMode.upsert, DestinationSyncMode.mirror],
-            ),
-            DestinationIdWithSupportedSyncModes(
-                destination_id=CustomAudience.Schema.MultiKeySchema.email,
-                destination_sync_modes=[DestinationSyncMode.upsert, DestinationSyncMode.mirror],
-            ),
-            DestinationIdWithSupportedSyncModes(
-                destination_id=CustomAudience.Schema.MultiKeySchema.phone,
-                destination_sync_modes=[DestinationSyncMode.upsert, DestinationSyncMode.mirror],
-            ),
-            DestinationIdWithSupportedSyncModes(
-                destination_id=CustomAudience.Schema.MultiKeySchema.madid,
-                destination_sync_modes=[DestinationSyncMode.upsert, DestinationSyncMode.mirror],
-            ),
-        ]
-
-        return key_types
-
     def add_to_queue(self, data, configured_stream: ValmiStream, sink: ConfiguredValmiSink) -> bool:
-        if data["_valmi_meta"]["_valmi_sync_op"] == "delete":
+        sync_op = data["_valmi_meta"]["_valmi_sync_op"]
+        if sync_op == "delete":
             self.users.append([data[configured_stream.id_key]])
             if len(self.users) >= self.max_records:
                 self.flush(configured_stream, sink)

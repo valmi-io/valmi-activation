@@ -88,18 +88,19 @@ class SyncRunnerThread(threading.Thread):
                 # print(syncs_to_handle)
 
                 for sync in syncs_to_handle:
-                    if sync.status != SyncConfigStatus.ACTIVE:
-                        run = self.run_service.get(sync.last_run_id)
-                        # Set connector run_manager status to terminated to stop source and destination connections
-                        run_status = {
-                            "status": "terminated",
-                            "message": f"Run aborted because syn status is {sync.status}",
-                        }
-                        self.run_service.update_sync_run_extra_data(
-                            sync.last_run_id, "run_manager", "status", run_status)
-                        self.abort_active_run(sync, run)
-                        pass
-                    elif sync.run_status == SyncStatus.STOPPED:
+                    # if sync.status != SyncConfigStatus.ACTIVE:
+                    #     run = self.run_service.get(sync.last_run_id)
+                    #     # Set connector run_manager status to terminated to stop source and destination connections
+                    #     run_status = {
+                    #         "status": "terminated",
+                    #         "message": f"Run aborted because syn status is {sync.status}",
+                    #     }
+                    #     self.run_service.update_sync_run_extra_data(
+                    #         sync.last_run_id, "run_manager", "status", run_status)
+                    #     self.abort_active_run(sync, run)
+                    #     pass
+                    # el
+                    if sync.run_status == SyncStatus.STOPPED:
                         logger.info("Sync is stopped %s", sync.sync_id)
 
                         run = SyncRunCreate(
