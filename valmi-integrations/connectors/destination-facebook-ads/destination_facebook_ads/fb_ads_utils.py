@@ -21,7 +21,9 @@ class FBAdsUtils:
     logger = AirbyteLogger()
 
     def __init__(self, config: Mapping[str, Any], run_time_args: RunTimeArgs, *args, **kwargs):
-        FacebookAdsApi.init(config["app_id"], config["app_secret"], config["long_term_acccess_token"], crash_log=False)
+        credentials = config["credentials"]
+        FacebookAdsApi.init(credentials["app_id"], credentials["app_secret"],
+                            credentials["long_term_acccess_token"], crash_log=False)
 
         self.msgs = []
         self.users = []

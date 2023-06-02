@@ -100,9 +100,9 @@ class DestinationFacebookAds(ValmiDestination):
         object_spec: json,
     ) -> AirbyteConnectionStatus:
         try:
-            FacebookAdsApi.init(config["app_id"], config["app_secret"],
-                                config["long_term_acccess_token"], crash_log=False)
-
+            credentials = config["credentials"]
+            FacebookAdsApi.init(credentials["app_id"], credentials["app_secret"],
+                                credentials["long_term_acccess_token"], crash_log=False)
             fields = []
             params = {
                 "name": f"{object_spec['audience_name']}",
@@ -124,7 +124,7 @@ class DestinationFacebookAds(ValmiDestination):
         fb_utils = FBAdsUtils(config, None)
 
         if "account" in config:
-            my_account = AdAccount(config["account"])
+            my_account = AdAccount(f'act_{config["account"]}')
             audiences = my_account.get_custom_audiences(fields=["name", "id"])
 
             sinks = []
@@ -173,8 +173,8 @@ class DestinationFacebookAds(ValmiDestination):
             for row in accounts:
                 sinks.append(
                     ValmiSink(
-                        name=str(row["name"]),
-                        label=str(row["account_id"]),
+                        label=str(row["name"]),
+                        name=str(row["account_id"]),
                         supported_destination_sync_modes=(DestinationSyncMode.upsert, DestinationSyncMode.mirror),
                         field_catalog={
                             DestinationSyncMode.upsert.value: FieldCatalog(
@@ -197,8 +197,9 @@ class DestinationFacebookAds(ValmiDestination):
 
     def check(self, logger: AirbyteLogger, config: Mapping[str, Any]) -> AirbyteConnectionStatus:
         try:
-            FacebookAdsApi.init(config["app_id"], config["app_secret"],
-                                config["long_term_acccess_token"], crash_log=False)
+            credentials = config["credentials"]
+            FacebookAdsApi.init(credentials["app_id"], credentials["app_secret"],
+                                credentials["long_term_acccess_token"], crash_log=False)
 
             # checking by getting list of ad accounts
             accounts = list(AdAccountUser(fbid="me").get_ad_accounts(fields=["name", "account_id"]))
