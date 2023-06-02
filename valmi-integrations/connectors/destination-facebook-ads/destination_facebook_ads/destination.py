@@ -38,6 +38,7 @@ from valmi_connector_lib.valmi_protocol import (
     DestinationSyncMode,
     FieldCatalog,
 )
+from valmi_connector_lib.common.metrics import get_metric_type
 from valmi_connector_lib.valmi_destination import ValmiDestination
 from valmi_connector_lib.destination_wrapper.destination_write_wrapper import DestinationWriteWrapper, HandlerResponseData
 from facebook_business.api import FacebookAdsApi
@@ -59,12 +60,16 @@ class FBAdsWriter(DestinationWriteWrapper):
     ) -> HandlerResponseData:
 
         sync_op = msg.record.data["_valmi_meta"]["_valmi_sync_op"]
-        flushed, metrics, rejected_records = self.fb_utils.add_to_queue(
+        metrics = {}
+        metrics[get_metric_type(sync_op)] = 0
+
+        flushed, new_metrics, rejected_records = self.fb_utils.add_to_queue(
             counter,
             msg,
             configured_stream=self.configured_catalog.streams[0],
             sink=self.configured_destination_catalog.sinks[0],
         )
+        metrics = self.fb_utils.merge_metric_dictionaries(metrics, new_metrics)
         return HandlerResponseData(flushed=flushed, metrics=metrics, rejected_records=rejected_records)
 
     def finalise_message_handling(self):

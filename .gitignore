@@ -210,3 +210,6 @@ valmi-integrations/connectors/destination-stripe/secrets/.config.json
 tags
 .venv
 valmi-integrations/connectors/destination-customer-io/secrets/.config.json
+valmi-integrations/connectors/source-postgres/valmi_dbt/valmi_dbt_source_transform/macros/quote_single.sql
+valmi-integrations/connectors/source-postgres/valmi_dbt/valmi_dbt_source_transform/macros/quote.sql
+valmi-integrations/connectors/destination-facebook-ads/secrets/.config.json

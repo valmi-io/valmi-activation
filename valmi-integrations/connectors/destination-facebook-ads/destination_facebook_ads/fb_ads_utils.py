@@ -78,18 +78,23 @@ class FBAdsUtils:
         else:
             # Delete mode done, now Upsert mode
             if self.is_deleting:
-                flushed, metrics, rejected_records = self.flush(configured_stream, sink)
+                if len(self.msgs) > 0:
+                    flushed, metrics, rejected_records = self.flush(configured_stream, sink)
+                self.is_deleting = False
 
             # initialise schema and lookup_keys only once
             if self.schema is None:
                 self.schema = [sink.destination_id]
                 self.lookup_keys = [configured_stream.id_key]
 
-                for k, v in sink.mapping.items():
-                    self.schema.extend(v)
-                    self.lookup_keys.extend(k)
+                for item in sink.mapping:
+                    k = item["stream"]
+                    v = item["sink"]
+                    self.schema.append(v)
+                    self.lookup_keys.append(k)
 
             self.msgs.append(msg)
+
             # Both of the below conditions are actually same
             if len(self.msgs) >= self.run_time_args.chunk_size or counter % self.run_time_args.chunk_size == 0:
                 flushed, new_metrics, new_rejected_records = self.flush(configured_stream, sink)
@@ -128,11 +133,10 @@ class FBAdsUtils:
                 self.make_request(
                     CustomAudience(sink.sink.name).remove_users,
                     [sink.destination_id],
-                    [user_list],
+                    user_list,
                     True,
                 )
             metrics[get_metric_type("delete")] = len(valid_records)
-            self.is_deleting = False
             self.msgs.clear()
         else:
             user_list = [[record.data[key] for key in self.lookup_keys] for record in valid_records]

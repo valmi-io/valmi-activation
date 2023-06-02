@@ -200,7 +200,7 @@ class SourcePostgres(Source):
                     WHERE _valmi_row_num > {3} \
                     ORDER BY _valmi_row_num ASC \
                     LIMIT {2};".format(
-                    sync_id, ",".join(columns), chunk_size, last_row_num
+                    sync_id, ",".join([f'"{col}"' for col in columns]), chunk_size, last_row_num
                 ),
             )
 
