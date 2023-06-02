@@ -131,6 +131,8 @@ class JobCreatorThread(threading.Thread):
                 sync_id=sync["id"],
                 status=sync["status"],
                 run_interval=sync["schedule"].get("run_interval", 60000),
+                src_connector_type=sync["source"]["credential"]["connector_type"],
+                dst_connector_type=sync["destination"]["credential"]["connector_type"],
             )
             sync_schedules[obj.sync_id] = obj
 

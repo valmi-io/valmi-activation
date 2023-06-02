@@ -82,11 +82,20 @@ async def get_current_run_details(
             previous_run
         )  # TODO: Have to find a better way instead of so many refreshes
 
+    # Get connector run config
+    dst_connector_type = "_".join(sync_schedule.dst_connector_type.split('_')[1:])
+    connector_run_config = {}
+    if dst_connector_type in v.get("CONNECTOR_RUN_CONFIG"):
+        connector_run_config = v.get("CONNECTOR_RUN_CONFIG")[dst_connector_type]
+
+
     # TODO: get saved checkpoint state of the run_id & create column run_time_args in the sync_runs table to get repeatable runs
     run_args = {
         "sync_id": sync_id,
         "run_id": sync_schedule.last_run_id,
-        "chunk_size": 300,
+        "chunk_size": connector_run_config["chunk_size"]
+        if "chunk_size" in connector_run_config
+        else 300,
         "chunk_id": 0,
         "records_per_metric": 10,
         "previous_run_status": "success" if previous_run is None
