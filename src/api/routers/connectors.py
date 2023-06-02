@@ -51,7 +51,6 @@ async def spec(connector_type: str, docker_item: DockerItem) -> str:
         [
             "docker",
             "run",
-            "--rm",
             "{0}:{1}".format(docker_item.docker_image, docker_item.docker_tag),
             "spec",
         ],
@@ -77,7 +76,7 @@ async def check(connector_type: str, config: ConnectorConfig) -> str:
     lines = []
     args = shlex.split(
         "docker run --network host \
-            --rm -v /tmp/shared_dir/{0}:/secrets/config.json \
+             -v /tmp/shared_dir/{0}:/secrets/config.json \
                 {1}:{2} check --config /secrets/config.json".format(
             newid, config.docker_image, config.docker_tag
         )
