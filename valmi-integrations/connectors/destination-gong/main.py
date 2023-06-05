@@ -5,7 +5,7 @@
 
 import sys
 
-from destination_template import DestinationWebhook
+from destination_gong import DestinationGong
 
 if __name__ == "__main__":
-    DestinationWebhook().run(sys.argv[1:])
+    DestinationGong().run(sys.argv[1:])

@@ -4,5 +4,5 @@ plugins {
 }
 
 airbytePython {
-    moduleDirectory 'destination_template'
+    moduleDirectory 'destination_gong'
 }

@@ -52,7 +52,7 @@ from valmi_connector_lib.valmi_destination import ValmiDestination
 from urllib.parse import urlparse
 
 
-class TemplateWriter(DestinationWriteWrapper):
+class GongWriter(DestinationWriteWrapper):
     def initialise_message_handling(self):
         self.http_handler = CustomHttpSink(run_time_args=self.run_time_args)
 
@@ -74,7 +74,7 @@ class TemplateWriter(DestinationWriteWrapper):
         pass
 
 
-class DestinationTemplate(ValmiDestination):
+class DestinationGong(ValmiDestination):
     def __init__(self):
         super().__init__()
         Destination.VALID_CMDS = {"spec", "check", "discover", "write"}

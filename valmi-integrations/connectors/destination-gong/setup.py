@@ -5,8 +5,8 @@ MAIN_REQUIREMENTS = ["valmi-connector-lib", "requests", "flatten-json"]
 TEST_REQUIREMENTS = ["pytest~=6.2"]
 
 setup(
-    name="destination_template",
-    description="Destination implementation for Template.",
+    name="destination_gong",
+    description="Destination implementation for Gong.",
     author="valmi.io",
     author_email="contact@valmi.io",
     packages=find_packages(),

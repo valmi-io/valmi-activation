@@ -1,8 +1,8 @@
 {
-  "documentationUrl": "https://docs.valmi.io/integrations/destinations/template",
+  "documentationUrl": "https://docs.valmi.io/integrations/destinations/gong",
   "connectionSpecification": {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "title": "Destination Template",
+    "title": "Destination Gong",
     "type": "object",
     "required": [
       "url",
