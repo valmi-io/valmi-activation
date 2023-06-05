@@ -81,11 +81,11 @@ http://localhost:3000
 
 UI Backend API Server (http://localhost:4000/api/docs)       |  Activation Server Api (http://localhost:8000/docs)
 :-------------------------:|:-------------------------:
-![](https://www.valmi.io/img/api-4000.png)  |  ![](https://www.valmi.io/img/api-8000.png)
+![]( https://blog.valmi.io/content/images/2023/06/api-4000.png)  |  ![]( https://blog.valmi.io/content/images/2023/06/api-8000.png)
 
   Warehouses and Destinations   |  Sync Runs
 :-------------------------:|:-------------------------:
-![](https://www.valmi.io/img/connections.png)  |  ![](https://www.valmi.io/img/sync_runs.png)
+![]( https://blog.valmi.io/content/images/2023/06/connections.png)  |  ![](https://blog.valmi.io/content/images/2023/06/sync_runs.png)
 
 #### Watch the demo video here. 
 [<img  src="https://i.ytimg.com/vi/UEC3-C4_7nk/maxresdefault.jpg" width="50%"/>](https://www.youtube.com/watch?v=UEC3-C4_7nk "Watch the demo video") 
