@@ -5,22 +5,22 @@
     "title": "Destination Gong",
     "type": "object",
     "required": [
-      "url",
-      "method"
+      "access_key",
+      "access_key_secret"
     ],
     "additionalProperties": true,
     "properties": {
-      "url": {
+      "access_key": {
         "type": "string",
-        "title": "URL",
-        "description": "Webhook URL"
+        "title": "Access Key",
+        "description": "Access Key for Gong API",
+        "airbyte_secret": true
       },
-      "method": {
+      "access_key_secret": {
         "type": "string",
-        "enum": [
-          "POST",
-          "GET"
-        ]
+        "title": "Access Key Secret",
+        "description": "Access Key Secret for Gong API",
+        "airbyte_secret": true
       }
     }
   }
