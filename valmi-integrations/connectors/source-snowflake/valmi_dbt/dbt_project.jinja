@@ -40,7 +40,7 @@ vars:
   transit_snapshot: "transit_snapshot_{{args['sync_id']}}"
   cleanup_snapshot: "cleanup_snapshot_{{args['sync_id']}}"
 
-  full_refresh: "{{args['full_refresh']}}" 
+  full_refresh: {{args['full_refresh']}}
   previous_run_status: "{{args['previous_run_status']}}" 
 
   destination_sync_mode: "{{args['destination_sync_mode']}}" 

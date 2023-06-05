@@ -26,6 +26,7 @@ SOFTWARE.
 import json
 from datetime import datetime
 import os
+import time
 from typing import Any, Dict, Generator, Sequence
 from airbyte_cdk.logger import AirbyteLogger
 from airbyte_cdk.models import (
@@ -174,7 +175,7 @@ class SourcePostgres(Source):
                 ),
             )
             return
-
+     
         # initialise chunk_size
         if "run_time_args" in config and "chunk_size" in config["run_time_args"]:
             chunk_size = config["run_time_args"]["chunk_size"]
