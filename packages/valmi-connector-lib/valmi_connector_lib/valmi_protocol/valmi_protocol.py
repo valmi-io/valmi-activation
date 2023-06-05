@@ -74,6 +74,7 @@ class FieldCatalog(BaseModel):
     )
     allow_freeform_fields: bool = Field(..., description="Allow freeform fields in destination.")
     template_fields: Optional[Dict[str, Any]] = Field(None, description="Templated fields for destination, rendered using Jinja with mapped fields. Some connectors like Slack and Android push notifications can use this to generate user friendly messages.")
+    mandatory_fields: Optional[List[str]] = Field(None, description="List of mandatory fields for destination.")
 
 
 class ValmiSink(BaseModel):
