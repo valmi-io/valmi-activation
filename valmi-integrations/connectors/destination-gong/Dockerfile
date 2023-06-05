@@ -30,7 +30,7 @@ RUN apt install bash
 
 # copy payload code only
 COPY main.py ./
-COPY destination_template ./destination_template
+COPY destination_gong ./destination_gong
 COPY docker-entrypoint.sh ./
 RUN chmod +x ./docker-entrypoint.sh
 
@@ -46,4 +46,4 @@ ENTRYPOINT ["./docker-entrypoint.sh"]
 ARG VERSION
 
 LABEL io.valmi.version=${VERSION}
-LABEL io.valmi.name=valmi/destination_template
+LABEL io.valmi.name=valmi/destination_gong
