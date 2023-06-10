@@ -1,0 +1,26 @@
+{ 
+  "documentationUrl": "https://docs.valmi.io/integrations/destinations/android-push-notifications",
+  "connectionSpecification": {
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Destination Android Push Notifications",
+    "type": "object",
+    "required": ["credentials"],
+    "additionalProperties": true,
+    "properties": { 
+      "credentials": {
+        "type": "object",
+        "title": "Service account",
+        "description": "The Service Account of your android application.",
+        "required": ["service_account"],
+        "properties": {
+          "service_account": {
+            "title": "Service account",
+            "type": "object",
+            "description": "The Service Account of your android application.",
+            "airbyte_secret": false
+          }
+        }
+      }
+    }
+  }
+}
