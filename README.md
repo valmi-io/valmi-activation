@@ -9,6 +9,8 @@
     <a href="https://www.valmi.io/slack">Slack Community</a>
     ·
     <a href="https://docs.valmi.io">Documentation</a>
+    ·
+    <a href="https://blog.valmi.io">Blog</a>
   </b>
 </p>
 
