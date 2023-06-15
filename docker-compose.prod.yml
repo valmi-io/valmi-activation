@@ -1,0 +1,20 @@
+version: "3.8"
+
+services:
+  dagit:
+    image: valmiio/valmi-dagster:latest
+
+  dagster_daemon:
+    image: valmiio/valmi-dagster:latest
+
+  valmi-repo:
+    image: valmiio/valmi-repo:latest
+
+  valmi-activation:
+    image: valmiio/valmi-activation:latest
+
+  valmi-app-backend:
+    image: valmiio/valmi-app-backend:latest
+
+  valmi-app:
+    image: valmiio/valmi-app:latest

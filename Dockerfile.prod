@@ -14,7 +14,7 @@ RUN set -x \
 RUN curl -fsSL https://get.docker.com | sh
 
 WORKDIR /workspace 
-#COPY . /workspace/
+COPY . /workspace/
 ENV PATH="/opt/valmi-activation/bin:${PATH}"
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONPATH /workspace/src
