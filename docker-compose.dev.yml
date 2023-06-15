@@ -1,0 +1,43 @@
+version: "3.8"
+
+services:
+  dagit:
+    build:
+      context: ./dagster
+      dockerfile: Dockerfile.dagster
+    ports:
+      - "4002:4002"
+
+  dagster_daemon:
+    build:
+      context: ./dagster
+      dockerfile: Dockerfile.dagster
+
+  valmi-repo:
+    build:
+      context: ./dagster
+      dockerfile: Dockerfile.usercode
+
+  valmi-activation:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    container_name: valmi-activation
+    volumes:
+      - .:/workspace:z
+
+  valmi-app-backend:
+    build:
+      context: ./valmi-app-backend
+      dockerfile: Dockerfile
+    volumes:
+      - ./valmi-app-backend:/workspace:z
+
+  valmi-app:
+    build:
+      context: ./valmi-app
+      dockerfile: Dockerfile
+    volumes:
+      - ./valmi-app:/workspace:z

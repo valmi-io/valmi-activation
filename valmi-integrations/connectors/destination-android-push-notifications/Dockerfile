@@ -5,7 +5,8 @@ FROM base as builder
 WORKDIR /valmi/integration_code
 
 # upgrade pip to the latest version
-RUN apt update && apt -y upgrade \
+RUN apt update \
+    && apt -y upgrade \
     && pip install --upgrade pip \
     && apt install -y tzdata vim 
 
