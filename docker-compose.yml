@@ -106,6 +106,7 @@ services:
     restart: on-failure
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./config.yaml:/workspace/config.yaml
       - /tmp/shared_dir:/tmp/shared_dir:z
     networks:
       - valmi-network

@@ -62,7 +62,7 @@ build-and-push-valmi-repo:
 	$(MAKE) -C dagster build-and-push-valmi-repo
 
 build-and-push-valmi-activation:
-	$(BUILDX) build --platform linux/amd64,linux/arm64 \
+	$(BUILDX) build --platform linux/amd64 \
 		--cache-from valmiio/valmi-activation:latest \
 		-t valmiio/valmi-activation:${valmi_activation_version} \
 		-t valmiio/valmi-activation:stable \
