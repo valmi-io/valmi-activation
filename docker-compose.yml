@@ -58,8 +58,6 @@ services:
     image: postgres:13.2
     container_name: valmi-db
     command: ["postgres", "-c", "log_statement=all"]
-    ports:
-      - "5432:5432"
     volumes:
       - postgres:${PGDATA}
     environment:

@@ -3,8 +3,6 @@ version: "3.8"
 services:
   dagit:
     image: valmiio/valmi-dagster:latest
-    ports:
-      - "4002:4002"
 
   dagster_daemon:
     image: valmiio/valmi-dagster:latest
@@ -25,8 +23,6 @@ services:
         "--log-level",
         "debug"
       ]
-    ports:
-      - "8000:8000"
 
   valmi-app-backend:
     image: valmiio/valmi-app-backend:latest

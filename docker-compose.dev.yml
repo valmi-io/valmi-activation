@@ -13,6 +13,10 @@ services:
       context: ./dagster
       dockerfile: Dockerfile.dagster
 
+  valmi-db:
+    ports:
+      - "5432:5432"
+
   valmi-repo:
     build:
       context: ./dagster
