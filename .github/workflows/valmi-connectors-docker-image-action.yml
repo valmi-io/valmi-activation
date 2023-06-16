@@ -8,11 +8,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      # Update references
-      - name: Git Sumbodule Update
-        run: |
-          git pull --recurse-submodules
-          git submodule update --remote --recursive
+        with: 
+          submodules: recursive
       - name: Parse Connector Info
         id: vars
         run: |
