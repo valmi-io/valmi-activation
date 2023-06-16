@@ -43,5 +43,17 @@ services:
     build:
       context: ./valmi-app
       dockerfile: Dockerfile
+    env_file:
+      - ./valmi-app/.env
+    ports:
+      - "3000:3000"
+    container_name: valmi-app
+    restart: on-failure
+    networks:
+      - valmi-network
+    depends_on:
+      - valmi-db
+      - valmi-app-backend
     volumes:
       - ./valmi-app:/workspace:z
+      - ./valmi-app/.env:/app/.env
