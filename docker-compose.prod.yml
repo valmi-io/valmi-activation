@@ -7,6 +7,9 @@ services:
   dagster_daemon:
     image: valmiio/valmi-dagster:latest
 
+  valmi-db:
+    command: ["postgres"]
+
   valmi-repo:
     image: valmiio/valmi-repo:latest
 
