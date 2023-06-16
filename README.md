@@ -26,9 +26,8 @@
     <img src="https://img.shields.io/static/v1?label=license&message=MIT&color=white" alt="License">
 </a> 
 </p>
-<p>
+
 [![Valmi app backend docker build](https://github.com/valmi-io/valmi-app-backend/actions/workflows/valmi-app-backend-docker-image-action.yml/badge.svg)](https://github.com/valmi-io/valmi-app-backend/actions/workflows/valmi-app-backend-docker-image-action.yml)
-</p>
 
 [![Valmi activation docker build](https://github.com/valmi-io/valmi-activation/actions/workflows/valmi-activation-docker-image-action.yml/badge.svg)](https://github.com/valmi-io/valmi-activation/actions/workflows/valmi-activation-docker-image-action.yml)
 
