@@ -27,6 +27,7 @@ class SyncRunCreate(SyncRunBase):
 
 class SyncRun(SyncRunCreate):
     run_id: UUID4
+    run_end_at: datetime
 
     class Config:
         orm_mode = True
