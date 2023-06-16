@@ -36,10 +36,10 @@ setup-buildx:
 	$(BUILDX) use $(BUILDER_NAME)
 
 build-connector:
-	$(MAKE) -C valmi-integrations/connectors/$(CONNECTOR_NAME) build_docker
+	$(MAKE) -C valmi-integrations/connectors/$(connector_name) build_docker
 
 build-and-push-connector:
-	$(MAKE) -C valmi-integrations/connectors/$(CONNECTOR_NAME) build_and_push
+	$(MAKE) -C valmi-integrations/connectors/$(connector_name) build_and_push
 
 build-connectors-all:
 	@for dir in $(CONNECTORS); do \
@@ -60,16 +60,6 @@ build-and-push-valmi-dagster:
 
 build-and-push-valmi-repo:
 	$(MAKE) -C dagster build-and-push-valmi-repo
-
-version_file := .version
-
-# Check if the 'VALMI_ACTIVATION_VERSION' environment variable is set.
-ifeq ($(VALMI_ACTIVATION_VERSION),)
-    $(info The 'VALMI_ACTIVATION_VERSION' environment variable is not set. Reading it from '$(version_file)')
-    valmi_activation_version := $(shell cat $(version_file))
-else
-		valmi_activation_version := $(VALMI_ACTIVATION_VERSION)
-endif
 
 build-and-push-valmi-activation:
 	$(BUILDX) build --platform linux/amd64,linux/arm64 \
