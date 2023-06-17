@@ -1,4 +1,4 @@
-name: Valmi activation docker build
+name: valmi-activation
 on:
   push:
     tags:
