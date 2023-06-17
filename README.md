@@ -84,7 +84,7 @@ OR
 
 Develop locally
 
-1. Clone, setup enveronment variables and create intermediate storage (see above section)
+1. Clone, setup environmental variables and create intermediate storage (see above section)
 2. New connector (Optional)
 ```
 # Copy code base from any existing connectors from valmi-integrations folder (ex. destination-webhook)
@@ -125,8 +125,5 @@ UI Backend API Server (http://localhost:4000/api/docs)       |  Activation Serve
 ```
 ./valmi dev down
 ```
-
-<br/>
-<br/>
 
 ### For more, checkout [valmi.io](https://www.valmi.io/)
