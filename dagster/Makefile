@@ -1,21 +1,24 @@
 
-BUILDX = docker buildx
+DOCKER = docker
+BUILDX = $(DOCKER) buildx build
+PLATFORMS = linux/amd64,linux/arm64
+BUILDX_ARGS = --platform ${PLATFORMS} --allow security.insecure --no-cache --push
 
 .PHONY: build_all
 
 build-all: build_and_push_valmi_dagster build_and_push_valmi_repo
 
 build-and-push-valmi-dagster:
-	$(BUILDX) build --platform linux/amd64,linux/arm64 \
+	$(BUILDX) $(BUILDX_ARGS) \
 		-t valmiio/valmi-dagster:${valmi_dagster_version} \
 		-t valmiio/valmi-dagster:stable \
 		-t valmiio/valmi-dagster:latest \
-		--no-cache --push -f Dockerfile.dagster .
+		-f Dockerfile.dagster .
 
 build-and-push-valmi-repo:
-	$(BUILDX) build --platform linux/amd64,linux/arm64 \
+	$(BUILDX) $(BUILDX_ARGS) \
 		-t valmiio/valmi-repo:${valmi_repo_version} \
 		-t valmiio/valmi-repo:stable \
 		-t valmiio/valmi-repo:latest \
-		--no-cache --push -f Dockerfile.usercode .
+		-f Dockerfile.usercode .
 

@@ -1,4 +1,8 @@
 
+BUILDX = docker buildx build
+PLATFORMS = linux/amd64,linux/arm64
+BUILDX_ARGS = --platform ${PLATFORMS} --allow security.insecure --no-cache --push
+
 .PHONY: build_docker
 
 build_docker: copy_dbt 
@@ -12,8 +16,7 @@ copy_dbt:
 	cp -r ../../valmi_dbt_source_transform ./valmi_dbt/valmi_dbt_source_transform
 
 build_and_push: copy_dbt
-	docker buildx build --platform linux/amd64,linux/arm64 \
+	$(BUILDX) $(BUILDX_ARGS) \
 		-t valmiio/source-snowflake:${version} \
 		-t valmiio/source-snowflake:stable \
-		-t valmiio/source-snowflake:latest \
-		--no-cache --push .
+		-t valmiio/source-snowflake:latest .
