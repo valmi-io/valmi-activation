@@ -105,6 +105,7 @@ services:
     container_name: valmi-activation
     restart: on-failure
     volumes:
+      - valmi-activation-data:/data
       - /var/run/docker.sock:/var/run/docker.sock
       - ./config.yaml:/workspace/config.yaml
       - /tmp/shared_dir:/tmp/shared_dir:z
@@ -138,6 +139,7 @@ services:
 
 volumes:
   postgres:
+  valmi-activation-data:
 
 networks:
   valmi-network:

@@ -33,7 +33,7 @@ import random
 from datetime import datetime
 
 METRICS_TABLE = "metrics"
-DB_NAME = "valmi_metrics.db"
+DB_NAME = "/data/valmi_metrics.db"
 
 MAGIC_CHUNK_ID = 2**31 - 1
 
