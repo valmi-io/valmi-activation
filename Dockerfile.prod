@@ -1,9 +1,7 @@
-FROM python:3.10
+FROM valmiio/valmi-activation:base
 
 COPY requirements/test-requirements.txt /tmp/test-requirements.txt
 RUN pip install --no-cache-dir --timeout 1000 -r /tmp/test-requirements.txt
-
-RUN curl -fsSL https://get.docker.com | sh
 
 WORKDIR /workspace 
 COPY . /workspace/
