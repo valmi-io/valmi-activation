@@ -3,7 +3,7 @@ user_id:=$(shell id -u)
 group_id:=$(shell id -g)
 
 DOCKER = docker
-BUILDX = $(DOCKER) buildx build
+BUILDX = $(DOCKER) buildx
 PLATFORMS = linux/amd64,linux/arm64
 BUILDX_ARGS = --platform ${PLATFORMS} --allow security.insecure --push
 BUILDER_NAME = valmi-docker-builder
@@ -64,13 +64,13 @@ build-and-push-valmi-repo:
 	$(MAKE) -C dagster build-and-push-valmi-repo
 
 build-and-push-valmi-activation-base:
-	$(BUILDX) $(BUILDX_ARGS) \
+	$(BUILDX) build $(BUILDX_ARGS) \
 		--cache-from valmiio/valmi-activation:base \
 		-t valmiio/valmi-activation:base \
 		-f Dockerfile.base .
 
 build-and-push-valmi-activation:
-	$(BUILDX) $(BUILDX_ARGS) \
+	$(BUILDX) build $(BUILDX_ARGS) \
 		--cache-from valmiio/valmi-activation:latest \
 		-t valmiio/valmi-activation:${valmi_activation_version} \
 		-t valmiio/valmi-activation:stable \
