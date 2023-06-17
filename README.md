@@ -84,7 +84,7 @@ OR
 
 Develop locally
 
-1. Clone, setup environmental variables and create intermediate storage (see above section)
+1. Clone, setup environment variables and create intermediate storage (see above section)
 2. New connector (Optional)
 ```
 # Copy code base from any existing connectors from valmi-integrations folder (ex. destination-webhook)
