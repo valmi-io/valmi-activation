@@ -242,6 +242,11 @@ class DbtAirbyteAdpater:
             stderr=subprocess.PIPE,
             stdout=subprocess.PIPE,
         )
+        
+        logs = []
+        for line in iter(proc.stdout.readline, b''):
+            logs.append(line)
+        proc.stdout.close()
 
         while True:
             try:
@@ -251,7 +256,6 @@ class DbtAirbyteAdpater:
                 continue
             break
 
-        logs = proc.stdout.readlines()
         lastError = None
         for log in logs:
             j = json.loads(log.decode())
