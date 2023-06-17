@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+
+set -o errexit
+set -o nounset
+set -o pipefail
+
+if [[ "${TRACE-0}" == "1" ]]; then
+    set -o xtrace
+fi
+
+if [[ "${1-}" =~ ^-*h(elp)?$ ]]; then
+    echo 'Usage: 
+    ./valmi [STAGE] [COMMAND]
+    ./valmi prod/dev 
+    
+    Script to manage valmi-activaiton services.
+    '
+    exit
+fi
+
+src_dir="$(cd "$(dirname "$0")"; pwd -P)"
+
+main() {
+    mode="$1"
+    echo "Manage valmi-activation services:"
+
+    cd $src_dir
+    echo "Working directory: $PWD"
+
+    echo "Setting environment variables from .env file"
+    source $src_dir/.env
+    
+    cmd_args=${@:2}
+    # Check if the arguments are empty or not
+    if [ -z "$cmd_args" ]
+    then
+        # If the arguments are empty, then set the default arguments to "up -d"
+        cmd_args="up -d"
+    fi
+
+    echo "Running: ${mode} ${cmd_args}"
+    docker compose -f docker-compose.yml -f docker-compose.$mode.yml $cmd_args
+}
+
+main "$@"
