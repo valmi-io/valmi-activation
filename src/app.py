@@ -48,11 +48,22 @@ async def lifespan(app: FastAPI):
 
     yield
 
+    logging.info("Shutting down Metrics service")
     get_metrics_service().shutdown()
+
+    logging.info("Shutting down Repo manager")
     repo.destroy()
+
+    logging.info("Shutting down Image manager")
     img_manager.destroy()
+
+    logging.info("Shutting down Container Cleaner")
     container_cleaner.destroy()
+
+    logging.info("Shutting down DataStore Cleaner")
     datastore_cleaner.destroy()
+
+    logging.info("All services shut down successfully")
 
 
 def create_app() -> FastAPI:
