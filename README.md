@@ -94,7 +94,7 @@ cp -r destination-webhook your-awesome-connector
 
 # Make necessary changes and build the connector
 cd your-awesome-connector
-make build_docker
+make build_docker version=latest
 
 # Add new connector information to "valmi-app-backend/init_db/connector_def.json"
 ```
