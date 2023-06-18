@@ -10,7 +10,7 @@
     },
     {
       "name": "VALMI: Activation",
-      "path": "src"
+      "path": "."
     },
     {
       "name": "VALMI: Connectors",

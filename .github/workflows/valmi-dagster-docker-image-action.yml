@@ -1,4 +1,4 @@
-name: Valmi dagster docker build
+name: valmi-dagster
 on:
   push:
     tags:

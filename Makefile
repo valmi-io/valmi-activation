@@ -4,7 +4,9 @@ group_id:=$(shell id -g)
 
 DOCKER = docker
 BUILDX = $(DOCKER) buildx
-BUILDER_NAME=valmi-docker-builder
+PLATFORMS = linux/amd64,linux/arm64
+BUILDX_ARGS = --platform ${PLATFORMS} --allow security.insecure --push
+BUILDER_NAME = valmi-docker-builder
 
 ECHO = echo
 
@@ -32,7 +34,7 @@ setup-db:
 setup-buildx:
 	$(DOCKER) run --privileged --rm tonistiigi/binfmt --install all
 	$(BUILDX) rm $(BUILDER_NAME) || true
-	$(BUILDX) create --name $(BUILDER_NAME) --driver docker-container --bootstrap
+	$(BUILDX) create --name $(BUILDER_NAME) --driver docker-container --bootstrap --buildkitd-flags '--allow-insecure-entitlement security.insecure'
 	$(BUILDX) use $(BUILDER_NAME)
 
 build-connector:
@@ -61,10 +63,16 @@ build-and-push-valmi-dagster:
 build-and-push-valmi-repo:
 	$(MAKE) -C dagster build-and-push-valmi-repo
 
+build-and-push-valmi-activation-base:
+	$(BUILDX) build $(BUILDX_ARGS) \
+		--cache-from valmiio/valmi-activation:base \
+		-t valmiio/valmi-activation:base \
+		-f Dockerfile.base .
+
 build-and-push-valmi-activation:
-	$(BUILDX) build --platform linux/amd64 \
+	$(BUILDX) build $(BUILDX_ARGS) \
 		--cache-from valmiio/valmi-activation:latest \
 		-t valmiio/valmi-activation:${valmi_activation_version} \
 		-t valmiio/valmi-activation:stable \
 		-t valmiio/valmi-activation:latest \
-		--push -f Dockerfile.prod .
+		-f Dockerfile.prod .
