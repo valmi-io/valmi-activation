@@ -45,7 +45,7 @@
 
 <div align="center">
   
-  ![GitHub closed issues](https://img.shields.io/github/issues-closed/valmi-io/valmi-activation?style=flat-square&color=%238957e5) ![GitHub issues](https://img.shields.io/github/issues/valmi-io/valmi-activation?style=flat-square&color=%23238636) ![GitHub pull requests](https://img.shields.io/github/issues-pr/valmi-io/valmi-activation?style=flat-square) ![GitHub closed pull requests](https://img.shields.io/github/issues-pr-closed/valmi-io/valmi-activation?style=flat-square)
+  ![GitHub closed issues](https://img.shields.io/github/issues-closed/valmi-io/valmi-activation?style=flat-square&color=%238957e5&link=https%3A%2F%2Fgithub.com%2Fvalmi-io%2Fvalmi-activation%2Fissues%3Fq%3Dis%253Aissue%2Bis%253Aclosed) ![GitHub issues](https://img.shields.io/github/issues/valmi-io/valmi-activation?style=flat-square&color=%23238636&link=https%3A%2F%2Fgithub.com%2Fvalmi-io%2Fvalmi-activation%2Fissues%3Fq%3Dis%253Aopen%2Bis%253Aissue) ![GitHub pull requests](https://img.shields.io/github/issues-pr/valmi-io/valmi-activation?style=flat-square&link=https%3A%2F%2Fgithub.com%2Fvalmi-io%2Fvalmi-activation%2Fpulls%3Fq%3Dis%253Aopen%2Bis%253Apr) ![GitHub closed pull requests](https://img.shields.io/github/issues-pr-closed/valmi-io/valmi-activation?style=flat-square&link=https%3A%2F%2Fgithub.com%2Fvalmi-io%2Fvalmi-activation%2Fpulls%3Fq%3Dis%253Apr%2Bis%253Aclosed)
 
   
 </div>
