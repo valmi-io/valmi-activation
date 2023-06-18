@@ -32,11 +32,24 @@
 
 <br/>
 
-<center>
+<div align="center" >
 
-[![valmi-activation](https://github.com/valmi-io/valmi-activation/actions/workflows/valmi-activation-docker-image-action.yml/badge.svg)](https://github.com/valmi-io/valmi-activation/actions/workflows/valmi-activation-docker-image-action.yml) [![valmi-connectors](https://github.com/valmi-io/valmi-activation/actions/workflows/valmi-connectors-docker-image-action.yml/badge.svg)](https://github.com/valmi-io/valmi-activation/actions/workflows/valmi-connectors-docker-image-action.yml) [![valmi-dagster](https://github.com/valmi-io/valmi-activation/actions/workflows/valmi-dagster-docker-image-action.yml/badge.svg)](https://github.com/valmi-io/valmi-activation/actions/workflows/valmi-dagster-docker-image-action.yml) [![valmi-repo](https://github.com/valmi-io/valmi-activation/actions/workflows/valmi-repo-docker-image-action.yml/badge.svg)](https://github.com/valmi-io/valmi-activation/actions/workflows/valmi-repo-docker-image-action.yml) [![valmi-app-backend](https://github.com/valmi-io/valmi-app-backend/actions/workflows/valmi-app-backend-docker-image-action.yml/badge.svg)](https://github.com/valmi-io/valmi-app-backend/actions/workflows/valmi-app-backend-docker-image-action.yml) [![valmi-app](https://github.com/valmi-io/valmi-app/actions/workflows/valmi-app-docker-image-action.yml/badge.svg)](https://github.com/valmi-io/valmi-app/actions/workflows/valmi-app-docker-image-action.yml)
+[![valmi-activation](https://github.com/valmi-io/valmi-activation/actions/workflows/valmi-activation-docker-image-action.yml/badge.svg)](https://github.com/valmi-io/valmi-activation/actions/workflows/valmi-activation-docker-image-action.yml) [![valmi-connectors](https://github.com/valmi-io/valmi-activation/actions/workflows/valmi-connectors-docker-image-action.yml/badge.svg)](https://github.com/valmi-io/valmi-activation/actions/workflows/valmi-connectors-docker-image-action.yml) [![valmi-dagster](https://github.com/valmi-io/valmi-activation/actions/workflows/valmi-dagster-docker-image-action.yml/badge.svg)](https://github.com/valmi-io/valmi-activation/actions/workflows/valmi-dagster-docker-image-action.yml) 
 
-</center>
+</div>
+<div align="center" >
+  
+[![valmi-repo](https://github.com/valmi-io/valmi-activation/actions/workflows/valmi-repo-docker-image-action.yml/badge.svg)](https://github.com/valmi-io/valmi-activation/actions/workflows/valmi-repo-docker-image-action.yml) [![valmi-app-backend](https://github.com/valmi-io/valmi-app-backend/actions/workflows/valmi-app-backend-docker-image-action.yml/badge.svg)](https://github.com/valmi-io/valmi-app-backend/actions/workflows/valmi-app-backend-docker-image-action.yml) [![valmi-app](https://github.com/valmi-io/valmi-app/actions/workflows/valmi-app-docker-image-action.yml/badge.svg)](https://github.com/valmi-io/valmi-app/actions/workflows/valmi-app-docker-image-action.yml)
+
+</div>
+
+<div align="center">
+  
+  ![GitHub closed issues](https://img.shields.io/github/issues-closed/valmi-io/valmi-activation?style=flat-square&color=%238957e5) ![GitHub issues](https://img.shields.io/github/issues/valmi-io/valmi-activation?style=flat-square&color=%23238636) ![GitHub pull requests](https://img.shields.io/github/issues-pr/valmi-io/valmi-activation?style=flat-square) ![GitHub closed pull requests](https://img.shields.io/github/issues-pr-closed/valmi-io/valmi-activation?style=flat-square)
+
+  
+</div>
+
 <br/>
 
 ### How to Run?
@@ -47,14 +60,14 @@ OR
 Run locally
 
 1. Clone this repo and move into the directory.
-```
+```bash
 git clone git@github.com:valmi-io/valmi-activation.git
 cd valmi-activation
 git submodule update --init --recursive
 ```
 
 2. Setup the environment
-```
+```bash
 cp .env-sample .env
 
 cd valmi-app-backend
@@ -65,18 +78,18 @@ cp .env-example .env
 ```
 
 3. Intermediate storage, We are adding support for object stores like S3, GCS. Until then, Local storage is used.
-```
+```bash
 sudo mkdir -p /tmp/shared_dir/intermediate_store
 sudo chmod -R 777 /tmp/shared_dir/intermediate_store
 ```
 
 4. And run
-```
+```bash
 ./valmi prod
 ```
 
 5. For stopping service
-```
+```bash
 ./valmi prod down
 ```
 
@@ -86,7 +99,7 @@ Develop locally
 
 1. Clone, setup environment variables and create intermediate storage (see above section)
 2. New connector (Optional)
-```
+```bash
 # Copy code base from any existing connectors from valmi-integrations folder (ex. destination-webhook)
 
 cd valmi-integrations/connectors
@@ -100,15 +113,17 @@ make build_docker version=latest
 ```
 
 3. Run the service
-```
+```bash
 ./valmi dev
 ```
  
 4. Access the service
-
-```
-http://localhost:3000
-```
+<pre>
+ <code>
+  <a href="http://localhost:3000">http://localhost:3000</a>
+ </code>
+</pre>
+  
 
 UI Backend API Server (http://localhost:4000/api/docs)       |  Activation Server Api (http://localhost:8000/docs)
 :-------------------------:|:-------------------------:
@@ -122,7 +137,7 @@ UI Backend API Server (http://localhost:4000/api/docs)       |  Activation Serve
 [<img  src="https://i.ytimg.com/vi/UEC3-C4_7nk/maxresdefault.jpg" width="50%"/>](https://www.youtube.com/watch?v=UEC3-C4_7nk "Watch the demo video") 
 
 5. Stop the service
-```
+```bash
 ./valmi dev down
 ```
 
