@@ -39,10 +39,13 @@
   
  <p align="center">We envision a world where a vibrant community of engineers develops around connectors - a world in which the power of the open-source platform draws on the collective mind to keep the fast-moving world of connectors functional and cost-effective.</p>
 
-### Demo Page
-https://demo.valmi.io
+### 3 ways to start with valmi.io
 
-### Run Locally
+#### 1. Test out the valmi.io deployment
+1. You can quickly witness the scalability of a One Million Record Sync at [Live Sync](https://demo.valmi.io/spaces/a9195c50-60ca-4692-8f03-5a486ee9f270/syncs/d69cf9f9-0e20-4e2c-a683-2649404f52ed/runs)
+2. You can immediately create a sync at [https://demo.valmi.io.](https://demo.valmi.io/)
+   
+#### 2.  Run it in your Cloud/Locally
 
 1. Clone this repo and move into the directory.
 ```bash
@@ -78,8 +81,11 @@ sudo chmod -R 777 /tmp/shared_dir/intermediate_store
 ./valmi prod down
 ```
 
+6. Accessing the service
+   Please check the 'Accessing the service' section for local deployments.
 
-### Develop Locally
+
+#### 3. Develop a connector locally to customize valmi.io as per your needs. You can just contact us too.
 
 1. Clone, setup environment variables and create intermediate storage (see above section)
 2. New connector (Optional)
@@ -101,7 +107,10 @@ make build_docker version=latest
 ./valmi dev
 ```
  
-4. Access the service
+4. Accessing the service
+   Please check the 'Accessing the service' section for local deployments.
+
+### Accessing the service for local deployments  
 <pre>
  <code>
   <a href="http://localhost:3000">http://localhost:3000</a>
@@ -125,5 +134,5 @@ UI Backend API Server (http://localhost:4000/api/docs)       |  Activation Serve
 ./valmi dev down
 ```
 
-#### Docs: https://docs.valmi.io
-#### Usecases: https://blog.valmi.io
+### Checkout docs at - [https://docs.valmi.io](https://docs.valmi.io/)
+### Read the variety of usecases valmi.io will enable for your organization - [https://blog.valmi.io/](https://blog.valmi.io/)  
