@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-    <em> <a href="https://valmi.io">valmi.io</a> activation (reverse-ETL) is the open-source data activation platform to load data from warehouses into SaaS platforms, Webhook Apis etc.</em>
+    <em> <a href="https://valmi.io">valmi.io</a> is a open-source Reverse ETL (data activation) platform to load data from warehouses into SaaS platforms, Webhook Apis etc.</em>
 </p>
 <p align="center">
 <a href="https://github.com/valmi-io/valmi-activation/stargazers/" target="_blank">
@@ -25,13 +25,6 @@
     <img src="https://img.shields.io/static/v1?label=license&message=MIT&color=white" alt="License">
 </a>
 </p>
-
-<p align="center">valmi.io uses some of the best tools to create an Open Source Activation (reverse ETL) Platform. It is built over the <a href="https://airbyte.com/">airbyte</a> protocol. <a href="https://www.getdbt.com/">dbt</a> is the centerpiece of our source connectors, and <a href="https://duckdb.org/">duckdb</a> for metrics. We engineered our orchestrator over <a href="https://dagster.io/">dagster</a>, and dagster dovetails perfectly with our vision of being a multi-persona tool.  </p>
-  
- <p align="center">We envision a world where a vibrant community of engineers develops around connectors - a world in which the power of the open-source platform draws on the collective mind to keep the fast-moving world of connectors functional and cost-effective.</p>
-
-<br/>
-
 <div align="center" >
 
 [![valmi-activation](https://github.com/valmi-io/valmi-activation/actions/workflows/valmi-activation-docker-image-action.yml/badge.svg)](https://github.com/valmi-io/valmi-activation/actions/workflows/valmi-activation-docker-image-action.yml) [![valmi-connectors](https://github.com/valmi-io/valmi-activation/actions/workflows/valmi-connectors-docker-image-action.yml/badge.svg)](https://github.com/valmi-io/valmi-activation/actions/workflows/valmi-connectors-docker-image-action.yml) [![valmi-dagster](https://github.com/valmi-io/valmi-activation/actions/workflows/valmi-dagster-docker-image-action.yml/badge.svg)](https://github.com/valmi-io/valmi-activation/actions/workflows/valmi-dagster-docker-image-action.yml) 
@@ -42,23 +35,19 @@
 [![valmi-repo](https://github.com/valmi-io/valmi-activation/actions/workflows/valmi-repo-docker-image-action.yml/badge.svg)](https://github.com/valmi-io/valmi-activation/actions/workflows/valmi-repo-docker-image-action.yml) [![valmi-app-backend](https://github.com/valmi-io/valmi-app-backend/actions/workflows/valmi-app-backend-docker-image-action.yml/badge.svg)](https://github.com/valmi-io/valmi-app-backend/actions/workflows/valmi-app-backend-docker-image-action.yml) [![valmi-app](https://github.com/valmi-io/valmi-app/actions/workflows/valmi-app-docker-image-action.yml/badge.svg)](https://github.com/valmi-io/valmi-app/actions/workflows/valmi-app-docker-image-action.yml)
 
 </div>
-
-
-
 <div align="center">
   
 <a href="/../../issues?q=is%3Aopen+is%3Aissue"> <img alt="GitHub issues" src="https://img.shields.io/github/issues-raw/valmi-io/valmi-activation?color=%23238636"></a> <a href="/../../issues?q=is%3Aissue+is%3Aclosed"> <img alt="GitHub closed issues" src="https://img.shields.io/github/issues-closed-raw/valmi-io/valmi-activation?color=%238957e5"> </a> <a href="/../../pulls?q=is%3Aopen+is%3Apr"> <img alt="GitHub pull requests" src="https://img.shields.io/github/issues-pr-raw/valmi-io/valmi-activation"> </a> <a href="/../../pulls?q=is%3Apr+is%3Aclosed"> <img alt="GitHub closed pull requests" src="https://img.shields.io/github/issues-pr-closed-raw/valmi-io/valmi-activation?color=%238957e5"> </a>
   
 </div>
+<p align="center">valmi.io uses some of the best tools to create an Open Source Activation (reverse ETL) Platform. It is built over the <a href="https://airbyte.com/">airbyte</a> protocol. <a href="https://www.getdbt.com/">dbt</a> is the centerpiece of our source connectors, and <a href="https://duckdb.org/">duckdb</a> for metrics. We engineered our orchestrator over <a href="https://dagster.io/">dagster</a>, and dagster dovetails perfectly with our vision of being a multi-persona tool.  </p>
+  
+ <p align="center">We envision a world where a vibrant community of engineers develops around connectors - a world in which the power of the open-source platform draws on the collective mind to keep the fast-moving world of connectors functional and cost-effective.</p>
 
-<br/>
+### Demo Page
+https://demo.valmi.io
 
-### How to Run?
-Demo at https://demo.valmi.io
-
-OR
-
-Run locally
+### Run Locally
 
 1. Clone this repo and move into the directory.
 ```bash
@@ -94,9 +83,8 @@ sudo chmod -R 777 /tmp/shared_dir/intermediate_store
 ./valmi prod down
 ```
 
-OR
 
-Develop locally
+### Develop Locally
 
 1. Clone, setup environment variables and create intermediate storage (see above section)
 2. New connector (Optional)
@@ -142,4 +130,5 @@ UI Backend API Server (http://localhost:4000/api/docs)       |  Activation Serve
 ./valmi dev down
 ```
 
-### For more, checkout [valmi.io](https://www.valmi.io/)
+#### Docs: https://docs.valmi.io
+#### Usecases: https://blog.valmi.io
