@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-    <em> <a href="https://valmi.io">valmi.io</a> is a open-source Reverse-ETL (data activation) platform to load data from warehouses into SaaS platforms, Webhook Apis etc.</em>
+    <em> <a href="https://valmi.io">valmi.io</a> is the open-source Reverse-ETL (data activation) platform to load data from warehouses into SaaS platforms, Webhook Apis etc.</em>
 </p>
 <p align="center">
 <a href="https://github.com/valmi-io/valmi-activation/stargazers/" target="_blank">
