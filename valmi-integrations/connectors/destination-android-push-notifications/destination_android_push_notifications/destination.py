@@ -161,7 +161,8 @@ class DestinationAndroidPushNotifications(ValmiDestination):
 
     def check(self, logger: AirbyteLogger, config: Mapping[str, Any]) -> AirbyteConnectionStatus:
         try:
-            service_ac_credentials = config["credentials"].get("service_account", {})
+            service_ac_credentials_str = config["service_account"]
+            service_ac_credentials = json.loads(service_ac_credentials_str)
             creds = credentials.Certificate(service_ac_credentials)
             firebase_admin.initialize_app(creds)
             return AirbyteConnectionStatus(status=Status.SUCCEEDED)

@@ -20,6 +20,7 @@ from firebase_admin import credentials, messaging
 from firebase_admin.exceptions import FirebaseError, RESOURCE_EXHAUSTED, UNAVAILABLE
 from airbyte_cdk.models import AirbyteMessage
 import time
+import json
 
 MAX_CHUNK_SIZE = 500
 
@@ -49,7 +50,8 @@ class FCMUtils:
     logger = AirbyteLogger()
 
     def __init__(self, config: Mapping[str, Any], run_time_args: RunTimeArgs, *args, **kwargs):
-        service_ac_credentials = config["credentials"].get("service_account", {})
+        service_ac_credentials_str = config["service_account"]
+        service_ac_credentials = json.loads(service_ac_credentials_str)
         creds = credentials.Certificate(service_ac_credentials)
         self.app = firebase_admin.initialize_app(creds)
 
