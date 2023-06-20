@@ -50,7 +50,7 @@
       
     <div align="center" >
       
-  [<img  src="https://blog.valmi.io/content/images/size/w1000/2023/06/demo_sync-1.png" width="90%" />](https://www.youtube.com/watch?v=um-Hgij3rL4 "Watch the demo video") 
+  [<img  src="https://blog.valmi.io/content/images/size/w1000/2023/06/syncs_demo.png" width="90%" />](https://www.youtube.com/watch?v=um-Hgij3rL4 "Watch the demo video") 
 
     </div>
     
