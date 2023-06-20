@@ -87,7 +87,7 @@
       ./valmi prod down
       ```
       
-    - To Access the servic, please check the ['Accessing the service'](https://github.com/valmi-io/valmi-activation#accessing-the-service-for-local-deployments) section for local deployments.
+    - To access the service, please check the ['Accessing the service'](https://github.com/valmi-io/valmi-activation#accessing-the-service-for-local-deployments) section for local deployments.
     
     
     #### 3. Develop a connector locally to customize valmi.io as per your needs. You can just contact us too.
