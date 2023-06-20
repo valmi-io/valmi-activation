@@ -46,4 +46,8 @@ LOGGING_CONF:
 CONNECTOR_RUN_CONFIG:
   FACEBOOK_ADS:
     chunk_size: 9500
+  WEBHOOK:
+    records_per_metric: 100
+  POSTGRES:
+    records_per_metric: 100
 
