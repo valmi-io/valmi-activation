@@ -46,7 +46,7 @@
     #### 1. See it in Action
     - You can quickly witness a One Million Record Sync at [Live Sync](https://demo.valmi.io/spaces/a9195c50-60ca-4692-8f03-5a486ee9f270/syncs/d69cf9f9-0e20-4e2c-a683-2649404f52ed/runs).
     - You can immediately create a sync at [https://demo.valmi.io.](https://demo.valmi.io/)
-    - Watch demo video on creating a sync.
+    - Watch a demo video to create a sync.
       
     <div align="center" >
       
