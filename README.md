@@ -52,8 +52,9 @@
     - Watch a demo video to create a sync.
       
     <div align="center" >
-      
-  [<img  src="https://blog.valmi.io/content/images/size/w1000/2023/06/syncs_demo.png" width="95%" />](https://www.youtube.com/watch?v=um-Hgij3rL4 "Watch the demo video") 
+  <br/>    
+
+  [<img  src="https://blog.valmi.io/content/images/size/w1000/2023/06/syncs_demo.png" width="70%" />](https://www.youtube.com/watch?v=um-Hgij3rL4 "Watch the demo video") 
 
     </div>
     
