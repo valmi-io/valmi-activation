@@ -46,6 +46,9 @@
     #### 1. See it in Action
     - You can quickly witness a One Million Record Sync at [Live Sync](https://demo.valmi.io/spaces/a9195c50-60ca-4692-8f03-5a486ee9f270/syncs/d69cf9f9-0e20-4e2c-a683-2649404f52ed/runs).
     - You can immediately create a sync at [https://demo.valmi.io.](https://demo.valmi.io/)
+    - Watch demo video on creating a sync.
+  
+    [<img  src="https://blog.valmi.io/content/images/size/w1000/2023/06/demo_sync-1.png" />](https://www.youtube.com/watch?v=um-Hgij3rL4 "Watch the demo video") 
        
     #### 2.  Run it locally or in your Cloud
     
@@ -125,17 +128,15 @@
       <a href="http://localhost:3000">http://localhost:3000</a>
      </code>
     </pre>
-      
-    
-    UI Backend API Server (http://localhost:4000/api/docs)       |  Activation Server Api (http://localhost:8000/docs)
+  
+    Syncs   |  Sync Runs
     :-------------------------:|:-------------------------:
-    ![]( https://blog.valmi.io/content/images/2023/06/api-4000.png)  |  ![]( https://blog.valmi.io/content/images/2023/06/api-8000.png)
-    
-      Warehouses and Destinations   |  Sync Runs
+    ![](https://blog.valmi.io/content/images/size/w1000/2023/06/syncs_page.png)  |  ![](https://blog.valmi.io/content/images/size/w1000/2023/06/sync_runs_page.png)
+
+    UI Backend Server API (http://localhost:4000/api/docs)       |  Activation Server API (http://localhost:8000/docs)
     :-------------------------:|:-------------------------:
-    ![]( https://blog.valmi.io/content/images/2023/06/connections.png)  |  ![](https://blog.valmi.io/content/images/2023/06/sync_runs.png)
-    
-    #### Watch the demo video here. 
-    [<img  src="https://i.ytimg.com/vi/UEC3-C4_7nk/maxresdefault.jpg" width="50%"/>](https://www.youtube.com/watch?v=UEC3-C4_7nk "Watch the demo video") 
+    ![](https://blog.valmi.io/content/images/size/w1000/2023/06/app_backend_api.png)  |  ![](https://blog.valmi.io/content/images/size/w1000/2023/06/activation_server_api.png)
+
+  
     
 
