@@ -65,7 +65,7 @@
       cp .env-example.linux .env
       
       cd valmi-app-backend
-      cp .env-sample .env
+      cp .env-example .env
       
       cd ../valmi-app
       cp .env-example .env
