@@ -32,8 +32,6 @@ services:
 
   valmi-app:
     image: valmiio/valmi-app:latest
-    env_file:
-      - ./valmi-app/.env
     ports:
       - "3000:3000"
     container_name: valmi-app
