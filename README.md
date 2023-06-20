@@ -59,8 +59,10 @@
     - Setup the environment.
       ```bash
       
-      For macos - cp .env-example.macos .env
-      For linux - cp .env-example.linux .env
+      `For macos`
+      cp .env-example.macos .env
+      `For linux`
+      cp .env-example.linux .env
       
       cd valmi-app-backend
       cp .env-sample .env
