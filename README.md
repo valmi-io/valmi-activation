@@ -44,78 +44,80 @@
 - ### 3 ways to start with valmi.io
     
     #### 1. See it in Action
-    1. You can quickly witness a One Million Record Sync at [Live Sync](https://demo.valmi.io/spaces/a9195c50-60ca-4692-8f03-5a486ee9f270/syncs/d69cf9f9-0e20-4e2c-a683-2649404f52ed/runs).
-    2. You can immediately create a sync at [https://demo.valmi.io.](https://demo.valmi.io/)
+    - You can quickly witness a One Million Record Sync at [Live Sync](https://demo.valmi.io/spaces/a9195c50-60ca-4692-8f03-5a486ee9f270/syncs/d69cf9f9-0e20-4e2c-a683-2649404f52ed/runs).
+    - You can immediately create a sync at [https://demo.valmi.io.](https://demo.valmi.io/)
        
     #### 2.  Run it locally or in your Cloud
     
-    1. Clone this repo and move into the directory.
-    ```bash
-    git clone git@github.com:valmi-io/valmi-activation.git
-    cd valmi-activation
-    git submodule update --init --recursive
-    ```
+    - Clone this repo and move into the directory.
+      ```bash
+      git clone git@github.com:valmi-io/valmi-activation.git
+      cd valmi-activation
+      git submodule update --init --recursive
+      ```
     
-    2. Setup the environment.
-    ```bash
-    cp .env-sample .env
+    - Setup the environment.
+      ```bash
+      
+      cp .env-example .env
+      
+      cd valmi-app-backend
+      cp .env-example .env
+      
+      cd ../valmi-app
+      `For macos`
+      cp .env-example.macos .env
+      `For linux`
+      cp .env-example.linux .env
+      ```
     
-    cd valmi-app-backend
-    cp .env-sample .env
+    - Intermediate storage, We are adding support for object stores like S3, GCS. Until then, Local storage is used.
+      ```bash
+      sudo mkdir -p /tmp/shared_dir/intermediate_store
+      sudo chmod -R 777 /tmp/shared_dir/intermediate_store
+      ```
     
-    cd ../valmi-app
-    cp .env-example .env
-    ```
-    
-    3. Intermediate storage, We are adding support for object stores like S3, GCS. Until then, Local storage is used.
-    ```bash
-    sudo mkdir -p /tmp/shared_dir/intermediate_store
-    sudo chmod -R 777 /tmp/shared_dir/intermediate_store
-    ```
-    
-    4. Launch the reverse-etl service.
-    ```bash
-    ./valmi prod
-    ```
-    
-    5. To stop the service, run the following.
-    ```bash
-    ./valmi prod down
-    ```
-    
-    6. To Access the service,
-    Please check the ['Accessing the service'](https://github.com/valmi-io/valmi-activation#accessing-the-service-for-local-deployments) section for local deployments.
+    - Launch the reverse-etl service.
+      ```bash
+      ./valmi prod
+      ```
+      
+    - To stop the service, run the following.
+      ```bash
+      ./valmi prod down
+      ```
+      
+    - To Access the servic, please check the ['Accessing the service'](https://github.com/valmi-io/valmi-activation#accessing-the-service-for-local-deployments) section for local deployments.
     
     
     #### 3. Develop a connector locally to customize valmi.io as per your needs. You can just contact us too.
     
-    1. Clone, setup environment variables and create intermediate storage (see above section).
-    2. Create a new connector (Optional).
-    ```bash
-    # Copy code base from any existing connectors from valmi-integrations folder (ex. destination-webhook)
+    - Clone, setup environment variables and create intermediate storage (see above section).
+    - Create a new connector (Optional).
+      ```bash
+      # Copy code base from any existing connectors from valmi-integrations folder (ex. destination-webhook)
+      
+      cd valmi-integrations/connectors
+      cp -r destination-webhook destination-awesome_connector
+      
+      # Make necessary changes and build the connector
+      cd destination-awesome_connector
+      make build_docker version=latest
+      
+      # Add the new connector information to "valmi-app-backend/init_db/connector_def.json"
+      ```
     
-    cd valmi-integrations/connectors
-    cp -r destination-webhook destination-awesome_connector
-    
-    # Make necessary changes and build the connector
-    cd destination-awesome_connector
-    make build_docker version=latest
-    
-    # Add the new connector information to "valmi-app-backend/init_db/connector_def.json"
-    ```
-    
-    3. Run the service.
-    ```bash
-    ./valmi dev
-    ```
-     
-    4. To access the service,
-    Please check the ['Accessing the service'](https://github.com/valmi-io/valmi-activation#accessing-the-service-for-local-deployments) section for local deployments.
+    - Run the service.
+      ```bash
+      ./valmi dev
+      ```
+       
+    - To access the service, please check the ['Accessing the service'](https://github.com/valmi-io/valmi-activation#accessing-the-service-for-local-deployments) section for local deployments.
 
-    5. To Stop the service, run the following.
-    ```bash
-    ./valmi dev down
-    ```
+    - To Stop the service, run the following.
+      ```bash
+      ./valmi dev down
+      ```
     
 - ### Accessing the service for local deployments  
     <pre>
