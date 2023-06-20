@@ -59,16 +59,16 @@
     - Setup the environment.
       ```bash
       
-      `For macos`
-      cp .env-example.macos .env
-      `For linux`
-      cp .env-example.linux .env
+      cp .env-example .env
       
       cd valmi-app-backend
       cp .env-example .env
       
       cd ../valmi-app
-      cp .env-example .env
+      `For macos`
+      cp .env-example.macos .env
+      `For linux`
+      cp .env-example.linux .env
       ```
     
     - Intermediate storage, We are adding support for object stores like S3, GCS. Until then, Local storage is used.
