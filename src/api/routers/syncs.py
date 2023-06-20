@@ -93,11 +93,16 @@ async def get_current_run_details(
     run_args = {
         "sync_id": sync_id,
         "run_id": sync_schedule.last_run_id,
+
         "chunk_size": connector_run_config["chunk_size"]
         if "chunk_size" in connector_run_config
         else 300,
+
         "chunk_id": 0,
-        "records_per_metric": 10,
+        "records_per_metric":  connector_run_config["records_per_metric"]
+        if "records_per_metric" in connector_run_config
+        else 10,
+        
         "previous_run_status": "success" if previous_run is None
         or ("run_manager" in previous_run.extra and previous_run.extra["run_manager"]["status"]["status"] == "success")
         else "failure",  # For first run also, previous_run_status will be success
