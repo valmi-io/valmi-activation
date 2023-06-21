@@ -132,11 +132,11 @@
     
 - ### Accessing the service for local deployments
   
-    Syncs http://localhost:3000  |  Sync Runs http://localhost:3000
+    Syncs <br> http://localhost:3000  |  Sync Runs <br> http://localhost:3000
     :-------------------------:|:-------------------------:
     ![](https://blog.valmi.io/content/images/size/w1000/2023/06/syncs_page.png)  |  ![](https://blog.valmi.io/content/images/size/w1000/2023/06/sync_runs_page.png)
 
-    UI Backend Server API http://localhost:4000/api/docs       |  Activation Server API http://localhost:8000/docs
+    UI Backend Server API <br> http://localhost:4000/api/docs       |  Activation Server API <br> http://localhost:8000/docs
     :-------------------------:|:-------------------------:
     ![](https://blog.valmi.io/content/images/size/w1000/2023/06/app_backend_api.png)  |  ![](https://blog.valmi.io/content/images/size/w1000/2023/06/activation_server_api.png)
 
