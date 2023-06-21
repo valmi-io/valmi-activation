@@ -44,7 +44,7 @@
  <p align="center">We envision a world where a vibrant community of engineers develops around connectors - a world in which the power of the open-source platform draws on the collective mind to keep the fast-moving world of connectors functional and cost-effective.</p>
 
 - ### Checkout docs at - [https://docs.valmi.io](https://docs.valmi.io/)
-- ### Read the variety of usecases valmi.io will enable for your organization - [https://blog.valmi.io/](https://blog.valmi.io/)  
+- ### Read the variety of usecases valmi.io can enable for your organization - [https://blog.valmi.io/](https://blog.valmi.io/)  
 - ### 3 ways to start with valmi.io
     
     #### 1. Use it in the cloud
