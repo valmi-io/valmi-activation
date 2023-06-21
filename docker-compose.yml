@@ -103,7 +103,7 @@ services:
         "--reload",
       ]
     container_name: valmi-activation
-    restart: always
+    restart: unless-stopped
     volumes:
       - valmi-activation-data:/data
       - /var/run/docker.sock:/var/run/docker.sock
