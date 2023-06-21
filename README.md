@@ -25,16 +25,20 @@
     <img src="https://img.shields.io/static/v1?label=license&message=MIT&color=white" alt="License">
 </a>
 </p>
-<div align="center" >
 
-[![valmi-activation](https://github.com/valmi-io/valmi-activation/actions/workflows/valmi-activation-docker-image-action.yml/badge.svg)](https://github.com/valmi-io/valmi-activation/actions/workflows/valmi-activation-docker-image-action.yml) [![valmi-connectors](https://github.com/valmi-io/valmi-activation/actions/workflows/valmi-connectors-docker-image-action.yml/badge.svg)](https://github.com/valmi-io/valmi-activation/actions/workflows/valmi-connectors-docker-image-action.yml) [![valmi-dagster](https://github.com/valmi-io/valmi-activation/actions/workflows/valmi-dagster-docker-image-action.yml/badge.svg)](https://github.com/valmi-io/valmi-activation/actions/workflows/valmi-dagster-docker-image-action.yml) 
-<br/>
-[![valmi-repo](https://github.com/valmi-io/valmi-activation/actions/workflows/valmi-repo-docker-image-action.yml/badge.svg)](https://github.com/valmi-io/valmi-activation/actions/workflows/valmi-repo-docker-image-action.yml) [![valmi-app-backend](https://github.com/valmi-io/valmi-app-backend/actions/workflows/valmi-app-backend-docker-image-action.yml/badge.svg)](https://github.com/valmi-io/valmi-app-backend/actions/workflows/valmi-app-backend-docker-image-action.yml) [![valmi-app](https://github.com/valmi-io/valmi-app/actions/workflows/valmi-app-docker-image-action.yml/badge.svg)](https://github.com/valmi-io/valmi-app/actions/workflows/valmi-app-docker-image-action.yml)
+  - ## See it in [Action](https://demo.valmi.io/spaces/a9195c50-60ca-4692-8f03-5a486ee9f270/syncs/d69cf9f9-0e20-4e2c-a683-2649404f52ed/runs)
+    Quickly witness a One Million (1M) Rows Sync at [Live Sync](https://demo.valmi.io/spaces/a9195c50-60ca-4692-8f03-5a486ee9f270/syncs/d69cf9f9-0e20-4e2c-a683-2649404f52ed/runs).
 
-  <!---
-<a href="/../../issues?q=is%3Aopen+is%3Aissue"> <img alt="GitHub issues" src="https://img.shields.io/github/issues-raw/valmi-io/valmi-activation?color=%23238636"></a> <a href="/../../issues?q=is%3Aissue+is%3Aclosed"> <img alt="GitHub closed issues" src="https://img.shields.io/github/issues-closed-raw/valmi-io/valmi-activation?color=%238957e5"> </a> <a href="/../../pulls?q=is%3Aopen+is%3Apr"> <img alt="GitHub pull requests" src="https://img.shields.io/github/issues-pr-raw/valmi-io/valmi-activation"> </a> <a href="/../../pulls?q=is%3Apr+is%3Aclosed"> <img alt="GitHub closed pull requests" src="https://img.shields.io/github/issues-pr-closed-raw/valmi-io/valmi-activation?color=%238957e5"> </a>
-  --->
-</div>
+    <div align="center">
+    
+     [![valmi-activation](https://github.com/valmi-io/valmi-activation/actions/workflows/valmi-activation-docker-image-action.yml/badge.svg)](https://github.com/valmi-io/valmi-activation/actions/workflows/valmi-activation-docker-image-action.yml) [![valmi-connectors](https://github.com/valmi-io/valmi-activation/actions/workflows/valmi-connectors-docker-image-action.yml/badge.svg)](https://github.com/valmi-io/valmi-activation/actions/workflows/valmi-connectors-docker-image-action.yml) [![valmi-dagster](https://github.com/valmi-io/valmi-activation/actions/workflows/valmi-dagster-docker-image-action.yml/badge.svg)](https://github.com/valmi-io/valmi-activation/actions/workflows/valmi-dagster-docker-image-action.yml) 
+    <br/>
+    [![valmi-repo](https://github.com/valmi-io/valmi-activation/actions/workflows/valmi-repo-docker-image-action.yml/badge.svg)](https://github.com/valmi-io/valmi-activation/actions/workflows/valmi-repo-docker-image-action.yml) [![valmi-app-backend](https://github.com/valmi-io/valmi-app-backend/actions/workflows/valmi-app-backend-docker-image-action.yml/badge.svg)](https://github.com/valmi-io/valmi-app-backend/actions/workflows/valmi-app-backend-docker-image-action.yml) [![valmi-app](https://github.com/valmi-io/valmi-app/actions/workflows/valmi-app-docker-image-action.yml/badge.svg)](https://github.com/valmi-io/valmi-app/actions/workflows/valmi-app-docker-image-action.yml)
+    
+      <!---
+    <a href="/../../issues?q=is%3Aopen+is%3Aissue"> <img alt="GitHub issues" src="https://img.shields.io/github/issues-raw/valmi-io/valmi-activation?color=%23238636"></a> <a href="/../../issues?q=is%3Aissue+is%3Aclosed"> <img alt="GitHub closed issues" src="https://img.shields.io/github/issues-closed-raw/valmi-io/valmi-activation?color=%238957e5"> </a> <a href="/../../pulls?q=is%3Aopen+is%3Apr"> <img alt="GitHub pull requests" src="https://img.shields.io/github/issues-pr-raw/valmi-io/valmi-activation"> </a> <a href="/../../pulls?q=is%3Apr+is%3Aclosed"> <img alt="GitHub closed pull requests" src="https://img.shields.io/github/issues-pr-closed-raw/valmi-io/valmi-activation?color=%238957e5"> </a>
+      --->
+ </div>
 <p align="center">valmi.io uses some of the best tools to create an Open Source reverse-ETL (data activation) Platform. It is built over the <a href="https://airbyte.com/">airbyte</a> protocol. <a href="https://www.getdbt.com/">dbt</a> is the centerpiece of our source connectors, and <a href="https://duckdb.org/">duckdb</a> for metrics. We engineered our orchestrator over <a href="https://dagster.io/">dagster</a>, and dagster dovetails perfectly with our vision of being a multi-persona tool.  </p>
   
  <p align="center">We envision a world where a vibrant community of engineers develops around connectors - a world in which the power of the open-source platform draws on the collective mind to keep the fast-moving world of connectors functional and cost-effective.</p>
@@ -43,10 +47,17 @@
 - ### Read the variety of usecases valmi.io will enable for your organization - [https://blog.valmi.io/](https://blog.valmi.io/)  
 - ### 3 ways to start with valmi.io
     
-    #### 1. See it in Action
-    - You can quickly witness a One Million Record Sync at [Live Sync](https://demo.valmi.io/spaces/a9195c50-60ca-4692-8f03-5a486ee9f270/syncs/d69cf9f9-0e20-4e2c-a683-2649404f52ed/runs).
+    #### 1. Use it in the cloud
     - You can immediately create a sync at [https://demo.valmi.io.](https://demo.valmi.io/)
-       
+    - Watch a demo video to create a sync.
+      
+    <div align="center" >
+  <br/>    
+
+  [<img  src="https://blog.valmi.io/content/images/size/w1000/2023/06/syncs_demo.png" width="70%" />](https://www.youtube.com/watch?v=um-Hgij3rL4 "Watch the demo video") 
+
+    </div>
+    
     #### 2.  Run it locally or in your Cloud
     
     - Clone this repo and move into the directory.
@@ -87,7 +98,7 @@
       ./valmi prod down
       ```
       
-    - To Access the servic, please check the ['Accessing the service'](https://github.com/valmi-io/valmi-activation#accessing-the-service-for-local-deployments) section for local deployments.
+    - Please wait for about 2 minutes before you access the service, since valmi-app builds an optimized compiled version of the app UI. To access the service, please check the ['Accessing the service'](https://github.com/valmi-io/valmi-activation#accessing-the-service-for-local-deployments) section for local deployments.
     
     
     #### 3. Develop a connector locally to customize valmi.io as per your needs. You can just contact us too.
@@ -119,23 +130,16 @@
       ./valmi dev down
       ```
     
-- ### Accessing the service for local deployments  
-    <pre>
-     <code>
-      <a href="http://localhost:3000">http://localhost:3000</a>
-     </code>
-    </pre>
-      
-    
-    UI Backend API Server (http://localhost:4000/api/docs)       |  Activation Server Api (http://localhost:8000/docs)
+- ### Accessing the service for local deployments
+  
+    Syncs http://localhost:3000  |  Sync Runs http://localhost:3000
     :-------------------------:|:-------------------------:
-    ![]( https://blog.valmi.io/content/images/2023/06/api-4000.png)  |  ![]( https://blog.valmi.io/content/images/2023/06/api-8000.png)
-    
-      Warehouses and Destinations   |  Sync Runs
+    ![](https://blog.valmi.io/content/images/size/w1000/2023/06/syncs_page.png)  |  ![](https://blog.valmi.io/content/images/size/w1000/2023/06/sync_runs_page.png)
+
+    UI Backend Server API http://localhost:4000/api/docs       |  Activation Server API http://localhost:8000/docs
     :-------------------------:|:-------------------------:
-    ![]( https://blog.valmi.io/content/images/2023/06/connections.png)  |  ![](https://blog.valmi.io/content/images/2023/06/sync_runs.png)
-    
-    #### Watch the demo video here. 
-    [<img  src="https://i.ytimg.com/vi/UEC3-C4_7nk/maxresdefault.jpg" width="50%"/>](https://www.youtube.com/watch?v=UEC3-C4_7nk "Watch the demo video") 
+    ![](https://blog.valmi.io/content/images/size/w1000/2023/06/app_backend_api.png)  |  ![](https://blog.valmi.io/content/images/size/w1000/2023/06/activation_server_api.png)
+
+  
     
 
