@@ -91,7 +91,7 @@ class HubspotClient:
         else:
             self.access_token_created_at = datetime.now()
 
-            resp = TokensApi().create_token(
+            resp = TokensApi().create(
                 grant_type="refresh_token",
                 client_id=config["credentials"]["client_id"],
                 client_secret=config["credentials"]["client_secret"],
