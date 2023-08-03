@@ -64,12 +64,13 @@
      - **Prerequisites:**
           valmi.io relies heavily on both Docker and Docker-compose. Install [Docker Desktop](https://docs.docker.com/compose/install/) to have both both docker and docker-compose.
       
-     - Clone this repo and move into the directory.
-      ```bash
-      git clone git@github.com:valmi-io/valmi-activation.git
-      cd valmi-activation
-      git submodule update --init --recursive
-      ```
+     - Clone this repo and recursively clone submodules.
+       
+       ```bash
+       git clone git@github.com:valmi-io/valmi-activation.git
+       cd valmi-activation
+       git submodule update --init --recursive
+       ```
     
     - Setup the environment.
       ```bash
