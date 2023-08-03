@@ -62,7 +62,7 @@
     
     #### 2.  Run it locally or in your Cloud
      - **Prerequisites:**
-          valmi.io relies heavily on both Docker and Docker-compose. Install [Docker Desktop]o(https://docs.docker.com/compose/install/) to get both docker and docker-compose.
+          valmi.io relies heavily on both Docker and Docker-compose. Install [Docker Desktop](https://docs.docker.com/compose/install/) to get both docker and docker-compose.
       
      - Clone this repo and recursively clone submodules.
        
