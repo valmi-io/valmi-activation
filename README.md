@@ -57,16 +57,20 @@
 
   [<img  src="https://blog.valmi.io/content/images/size/w1600/2023/06/Screenshot-2023-06-21-at-3.37.00-PM.png" width="70%" />](https://youtu.be/UBY0106gOD8 "Watch the demo video") 
 
+
     </div>
     
     #### 2.  Run it locally or in your Cloud
-    
-    - Clone this repo and move into the directory.
-      ```bash
-      git clone git@github.com:valmi-io/valmi-activation.git
-      cd valmi-activation
-      git submodule update --init --recursive
-      ```
+     - **Prerequisites:**
+          valmi.io relies heavily on both Docker and Docker-compose. Install [Docker Desktop](https://docs.docker.com/compose/install/) to get both docker and docker-compose.
+      
+     - Clone this repo and recursively clone submodules.
+       
+       ```bash
+       git clone git@github.com:valmi-io/valmi-activation.git
+       cd valmi-activation
+       git submodule update --init --recursive
+       ```
     
     - Setup the environment.
       ```bash
