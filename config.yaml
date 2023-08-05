@@ -19,9 +19,12 @@ HTTP_REQ_TIMEOUT: 10 #seconds
 LOGGING_CONF:
   version: 1
   formatters:
+    json:
+        class: "pythonjsonlogger.jsonlogger.JsonFormatter"
+        format: "%(asctime)s %(process)s %(levelname)s %(name)s %(module)s %(funcName)s %(lineno)s"
     simple:
       # {}-formatting(std.format), please see https://docs.python.org/3/library/logging.html#logrecord-attributes
-      format: "{asctime} {levelname: <8} {threadName: <10.10} {module: >32}::{funcName: <20.20} {message}"
+      format: "{asctime} {name} {levelname: <8} {threadName: <10.10} {module: >32}::{funcName: <20.20} {message}"
       datefmt: "%m/%d/%Y %I:%M:%S %p"
       style: "{"
   handlers:
@@ -29,13 +32,28 @@ LOGGING_CONF:
       class: logging.StreamHandler
       level: DEBUG
       formatter: simple
-      stream: ext://sys.stdout
+      stream: ext://sys.stdout 
   loggers:
     valmi:
       level: DEBUG
-      handlers: [console]
+      handlers: [console] 
     vyper:
       level: INFO
+      handlers: [console]
+    requests:
+      level: WARNING
+      handlers: [console]
+    gql.transport.requests:
+      level: WARNING
+      handlers: [console]
+    urllib3:
+      level: WARNING
+      handlers: [console]
+    uvicorn.error:
+      level: DEBUG
+      handlers: [console]
+    uvicorn.access:
+      level: DEBUG
       handlers: [console]
   root:
     level: DEBUG

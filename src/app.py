@@ -32,7 +32,7 @@ from pydantic import Json
 from vyper import v
 import logging
 from contextlib import asynccontextmanager
-
+from utils.request_logger import RouterLoggingMiddleware
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -71,13 +71,18 @@ def create_app() -> FastAPI:
 
     if v.get_bool("DEBUG"):
 
+        app.add_middleware(
+            RouterLoggingMiddleware,
+            logger=logging.getLogger(v.get("LOGGER_NAME"))
+        )
+        '''
         @app.middleware("http")
         async def log_request(request, call_next):
             response = await call_next(request)
             body = b""
             async for chunk in response.body_iterator:
                 body += chunk
-            logging.info(f"Status code: {response.status_code} Body { body}")
+            logging.info(f"Status code: {response.status_code} {request.} Body { body}")
             # do something with body ...
             return Response(
                 content=body,
@@ -85,6 +90,7 @@ def create_app() -> FastAPI:
                 headers=dict(response.headers),
                 media_type=response.media_type,
             )
+        '''
 
     @app.get("/health")
     async def health() -> Json[Any]:
