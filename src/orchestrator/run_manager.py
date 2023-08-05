@@ -119,6 +119,7 @@ class SyncRunnerThread(threading.Thread):
                         # submit job to dagster,
                         # TODO: if jobs is already submitted, but failed to set metastore status, check below TODO
                         try:
+                            logger.info("Submitting job to dagster for sync %s", sync.sync_id)
                             dagster_run_id = self.dc.submit_job_execution(
                                 self.dc.su(sync.sync_id),
                                 tags={"sync_id": self.dc.su(sync.sync_id), "run_id": self.dc.su(sync.last_run_id)},
@@ -162,11 +163,12 @@ class SyncRunnerThread(threading.Thread):
                             self.run_service.update_sync_run_extra_data(
                                 sync.last_run_id, "run_manager", "status", run_status)
                             self.abort_active_run(sync, run)
-                            pass
+                            continue
 
                         # check dagster status
                         run = self.run_service.get(sync.last_run_id)
 
+                        logger.debug("Checking dagster status for sync_id  %s, run_id %s, dagster_run_id %s", sync.sync_id, run.run_id, run.dagster_run_id)
                         dagster_run_status = self.dc.get_run_status(run.dagster_run_id)
 
                         update_db = False

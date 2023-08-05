@@ -4,7 +4,6 @@ import logging.config
 
 import uvicorn
 from vyper import v
-
 from app import create_app
 from vyperconfig import setup_vyper
 

@@ -14,6 +14,7 @@ install_requires = [
     "airbyte-cdk",
     "jinja2",
     "duckdb==0.7.1",
+    "python-json-logger"
 ]
 
 
