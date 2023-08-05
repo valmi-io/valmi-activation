@@ -85,6 +85,10 @@ class StoreReader:
                 # Check for abort condition after reading a file
                 if self.engine.abort_required():
                     return
+                
+            # Check for abort condition after exhausting files in the folder
+            if self.engine.abort_required():
+                return
             time.sleep(3)
             yield ""
 
