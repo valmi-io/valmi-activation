@@ -68,9 +68,10 @@ async def get_sync_schedules(
     return sync_service.list()
 
 
-@router.get("/{sync_id}/runs/current_run_details", response_model=SyncCurrentRunArgs)
-async def get_current_run_details(
+@router.get("/{sync_id}/runs/current_run_details/{connector_string}", response_model=SyncCurrentRunArgs)
+async def get_current_run_details_for_connector_string(
     sync_id: UUID4,
+    connector_string: str,
     sync_service: SyncsService = Depends(get_syncs_service),
     sync_runs_service: SyncRunsService = Depends(get_sync_runs_service),
 ) -> SyncCurrentRunArgs:
@@ -113,8 +114,21 @@ async def get_current_run_details(
     if current_run.run_time_args is not None and "full_refresh" in current_run.run_time_args:
         run_args["full_refresh"] = current_run.run_time_args["full_refresh"]
 
-    return SyncCurrentRunArgs(**run_args)
+    # Set Connector State for the run_time_args to restart the run from the checkpoint
+    if current_run.extra is not None and connector_string in current_run.extra and 'state' in current_run.extra[connector_string]:
+        run_args["state"] = current_run.extra[connector_string]['state']['state']
 
+    return SyncCurrentRunArgs(**run_args)
+    
+
+@router.get("/{sync_id}/runs/current_run_details", response_model=SyncCurrentRunArgs)
+async def get_current_run_details(
+    sync_id: UUID4,
+    sync_service: SyncsService = Depends(get_syncs_service),
+    sync_runs_service: SyncRunsService = Depends(get_sync_runs_service),
+) -> SyncCurrentRunArgs:
+    run_args = await get_current_run_details_for_connector_string(sync_id, None, sync_service, sync_runs_service)
+    return run_args
 
 @router.get("/{sync_id}/runs/{run_id}/synchronize_connector_engine", response_model=ConnectorSynchronization)
 async def synchronize_connector(
