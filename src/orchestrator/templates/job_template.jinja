@@ -31,6 +31,8 @@ from dagster import DefaultScheduleStatus, ScheduleDefinition, graph, op, RetryP
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
+from dagster import run_status_sensor, RunStatusSensorContext, DagsterRunStatus, JobSelector
+
 
 @op(name="initialise_{{ sync['id'].replace('-','_') }}")
 def initialise():
@@ -81,17 +83,10 @@ destination_op = docker_container_op.configured(
         jitter=Jitter.PLUS_MINUS,
     ))
 def finalizer(context, a, b) -> None:
-    context.log.info("finalizer")
-    activation_url = os.environ["ACTIVATION_ENGINE_URL"]
-    session = requests.Session()
-    retry = Retry(connect=5, backoff_factor=5)
-    adapter = HTTPAdapter(max_retries=retry)
-    session.mount('http://', adapter)
-    session.mount('https://', adapter)
+    pass
+    #context.log.info("finalizer")
+    #finalise_this_run()
 
-    sync_id = os.environ["DAGSTER_RUN_JOB_NAME"].replace("_","-")
-    response = session.get(f"{activation_url}/syncs/{sync_id}/runs/finalise_last_run")
-    response.raise_for_status()
 
 
 def job():
@@ -127,4 +122,28 @@ def schedule():
         default_status=DefaultScheduleStatus.STOPPED,
         execution_timezone="US/Central",
     )
+ 
 
+@run_status_sensor(name="canceled_sensor_{{ sync['id'].replace('-','_') }}", run_status=DagsterRunStatus.CANCELED, monitored_jobs = [JobSelector(location_name="valmi-repo",repository_name="valmi-repo",job_name="{{ sync['id'].replace('-','_') }}" )])
+def finalise_on_run_canceled(context: RunStatusSensorContext):
+    context.log.info("finalizer on run cancel")
+    finalise_this_run()
+
+
+@run_status_sensor(name="failure_sensor_{{ sync['id'].replace('-','_') }}", run_status=DagsterRunStatus.FAILURE, monitored_jobs = [JobSelector(location_name="valmi-repo",repository_name="valmi_repo",job_name="{{ sync['id'].replace('-','_') }}" )] )
+def finalise_on_run_failure(context: RunStatusSensorContext):
+    context.log.info("finalizer on run failure")
+    finalise_this_run()
+
+
+def finalise_this_run():
+    activation_url = os.environ["ACTIVATION_ENGINE_URL"]
+    session = requests.Session()
+    retry = Retry(connect=5, backoff_factor=5)
+    adapter = HTTPAdapter(max_retries=retry)
+    session.mount('http://', adapter)
+    session.mount('https://', adapter)
+
+    sync_id = os.environ["DAGSTER_RUN_JOB_NAME"].replace("_","-")
+    response = session.get(f"{activation_url}/syncs/{sync_id}/runs/finalise_last_run")
+    response.raise_for_status()

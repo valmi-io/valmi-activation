@@ -27,9 +27,13 @@ import importlib
 import os
 import shutil
 from os.path import basename, isfile, join
+from urllib3.util.retry import Retry
 
 from dagster import repository
 import glob
+from dagster import DefaultSensorStatus, run_status_sensor, RunStatusSensorContext, DagsterRunStatus, JobSelector
+import requests
+from requests.adapters import HTTPAdapter
 
 GENERATED_DIR = "generated"
 CONFIG_DIR = "config"
@@ -67,12 +71,50 @@ def get_jobs_schedules_from_py_files(files):
         module_spec.loader.exec_module(modules[idx])
 
     jobs = [getattr(mod, "job") for mod in modules]
-    schedules = [getattr(mod, "schedule") for mod in modules]
+    schedules = [getattr(mod, "schedule") for mod in modules] 
+    sensors = {"success_sensor": finalise_on_run_success,
+               "failure_sensor": finalise_on_run_failure,
+               "canceled_sensor": finalise_on_run_canceled}
 
     return {
         "jobs": dict(zip([f"{file}" for file in imports], jobs)),
         "schedules": dict(zip([f"{file}_schedule" for file in imports], schedules)),
+        "sensors": sensors
     }
+
+
+@run_status_sensor(name="canceled_sensor", run_status=DagsterRunStatus.CANCELED,
+                   default_status=DefaultSensorStatus.RUNNING, minimum_interval_seconds=3)
+def finalise_on_run_canceled(context: RunStatusSensorContext):
+    context.log.info("finalizer on run cancel")
+    finalise_this_run(context.dagster_run.job_name)
+
+
+@run_status_sensor(name="failure_sensor", run_status=DagsterRunStatus.FAILURE,
+                   default_status=DefaultSensorStatus.RUNNING, minimum_interval_seconds=3)
+def finalise_on_run_failure(context: RunStatusSensorContext):
+    context.log.info("finalizer on run failure")
+    finalise_this_run(context.dagster_run.job_name)
+
+
+@run_status_sensor(name="success_sensor", run_status=DagsterRunStatus.SUCCESS,
+                   default_status=DefaultSensorStatus.RUNNING, minimum_interval_seconds=3)
+def finalise_on_run_success(context: RunStatusSensorContext):
+    context.log.info("finalizer on run success")
+    finalise_this_run(context.dagster_run.job_name)
+
+
+def finalise_this_run(job_name: str):
+    activation_url = os.environ["ACTIVATION_ENGINE_URL"]
+    session = requests.Session()
+    retry = Retry(connect=5, backoff_factor=5)
+    adapter = HTTPAdapter(max_retries=retry)
+    session.mount('http://', adapter)
+    session.mount('https://', adapter)
+
+    sync_id = job_name.replace("_", "-")
+    response = session.get(f"{activation_url}/syncs/{sync_id}/runs/finalise_last_run")
+    response.raise_for_status()
 
 
 @repository

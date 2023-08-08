@@ -190,7 +190,7 @@ async def abort(
     sync = sync_service.get_sync(sync_id)
     run = sync_runs_service.get(run_id)
 
-    if run.status == SyncStatus.RUNNING: 
+    if run.status == SyncStatus.RUNNING or run.status == SyncStatus.SCHEDULED: 
         # Set connector run_manager status to terminated to stop source and destination connections
         run_status = {
             "status": "terminated",
@@ -205,7 +205,7 @@ async def abort(
         sync_service.update_sync_and_run(sync, run)
 
     else:
-        return GenericResponse(success=False, message=f"Connot stop sync run with status '{run.status}'")
+        return GenericResponse(success=False, message=f"Cannot stop sync run with status '{run.status}'")
 
     return GenericResponse(success=True, message="success")
 

@@ -60,12 +60,19 @@ class SyncRunnerThread(threading.Thread):
     def abort_active_run(self, sync, run):
         dagster_run_id = run.dagster_run_id
 
-        run_status = self.dc.get_run_status(dagster_run_id)
-        if run_status == DagsterRunStatus.STARTED \
+        ignore_dagster_call = False
+        if dagster_run_id is None:
+            # This case when stopping a run which is in SCHEDULED state
+            ignore_dagster_call = True
+        else:
+            run_status = self.dc.get_run_status(dagster_run_id)
+        
+        if ignore_dagster_call or run_status == DagsterRunStatus.STARTED \
             or run_status == DagsterRunStatus.STARTING \
                 or run_status == DagsterRunStatus.QUEUED:
 
-            self.dc.terminate_run_force(dagster_run_id)
+            if not ignore_dagster_call:
+                self.dc.terminate_run_force(dagster_run_id)
 
             sync.run_status = SyncStatus.STOPPED
             run.status = SyncStatus.STOPPED
