@@ -101,7 +101,8 @@ services:
         "0.0.0.0",
         "--log-level",
         "debug",
-        "--reload",
+        "--workers",
+        "1"
       ]
     container_name: valmi-activation
     restart: unless-stopped

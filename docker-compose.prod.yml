@@ -24,7 +24,9 @@ services:
         "--host",
         "0.0.0.0",
         "--log-level",
-        "debug"
+        "debug",
+        "--workers",
+        "1"
       ]
 
   valmi-app-backend:
