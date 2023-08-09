@@ -83,6 +83,7 @@ services:
       DAGSTER_POSTGRES_PASSWORD: ${DAGSTER_POSTGRES_PASSWORD}
       DAGSTER_POSTGRES_DB: ${DAGSTER_POSTGRES_DB}
       DAGSTER_CURRENT_IMAGE: ${DAGSTER_CURRENT_IMAGE}
+      ACTIVATION_ENGINE_URL: ${ACTIVATION_ENGINE_URL}
     networks:
       - valmi-network
     volumes: # Make docker client accessible so we can terminate containers from dagit
