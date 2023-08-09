@@ -41,6 +41,8 @@ from api.schemas import SyncScheduleCreate
 from api.services import get_syncs_service
 from metastore.session import get_session
 from .dagster_client import ValmiDagsterClient
+from api.services import SyncsService, SyncRunsService
+from .run_manager import SyncRunnerThread
 
 logger = logging.getLogger(v.get("LOGGER_NAME"))
 GENERATED_DIR = "generated"
@@ -53,12 +55,15 @@ repo_ready = False
 
 
 class JobCreatorThread(threading.Thread):
-    def __init__(self, thread_id: int, name: str, dagster_client: ValmiDagsterClient) -> None:
+    def __init__(self, thread_id: int, name: str, dagster_client: ValmiDagsterClient,
+                 sync_service: SyncsService, run_service: SyncRunsService) -> None:
         threading.Thread.__init__(self)
         self.thread_id = thread_id
         self.exit_flag = False
         self.name = name
         self.dagster_client = dagster_client
+        self.sync_service = sync_service
+        self.run_service = run_service
 
     def run(self) -> None:
         global repo_ready
@@ -123,7 +128,6 @@ class JobCreatorThread(threading.Thread):
             time.sleep(1)
 
     def insert_syncs_into_metastore(self, syncs: Json[any]):
-        sync_service = get_syncs_service(next(get_session()))
 
         sync_schedules = {}
         for sync in syncs:
@@ -136,7 +140,9 @@ class JobCreatorThread(threading.Thread):
             )
             sync_schedules[obj.sync_id] = obj
 
-        sync_service.insert_or_update_list_of_schedules(sync_schedules)
+        self.sync_service.insert_or_update_list_of_schedules(sync_schedules)
+        # Not sure why the dbsession is giving stale values in run_manager - Check this later with active/disable sync run
+        SyncRunnerThread.refresh_db_session()
 
     @exception_to_sys_exit
     @retry_on_exception

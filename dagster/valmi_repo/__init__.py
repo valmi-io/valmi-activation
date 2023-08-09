@@ -72,8 +72,7 @@ def get_jobs_schedules_from_py_files(files):
 
     jobs = [getattr(mod, "job") for mod in modules]
     schedules = [getattr(mod, "schedule") for mod in modules] 
-    sensors = {"success_sensor": finalise_on_run_success,
-               "failure_sensor": finalise_on_run_failure,
+    sensors = {"failure_sensor": finalise_on_run_failure,
                "canceled_sensor": finalise_on_run_canceled}
 
     return {
@@ -94,13 +93,6 @@ def finalise_on_run_canceled(context: RunStatusSensorContext):
                    default_status=DefaultSensorStatus.RUNNING, minimum_interval_seconds=3)
 def finalise_on_run_failure(context: RunStatusSensorContext):
     context.log.info("finalizer on run failure")
-    finalise_this_run(context.dagster_run.job_name)
-
-
-@run_status_sensor(name="success_sensor", run_status=DagsterRunStatus.SUCCESS,
-                   default_status=DefaultSensorStatus.RUNNING, minimum_interval_seconds=3)
-def finalise_on_run_success(context: RunStatusSensorContext):
-    context.log.info("finalizer on run success")
     finalise_this_run(context.dagster_run.job_name)
 
 

@@ -33,6 +33,7 @@ from typing import Any, Dict, List
 from fastapi import Depends
 
 from fastapi.routing import APIRouter
+from orchestrator.run_manager import SyncRunnerThread
 from pydantic import UUID4, Json
 from vyper import v
 
@@ -54,7 +55,7 @@ from api.schemas.sync_run import ConnectorSynchronization, SyncRunTimeArgs
 from metastore.models import SyncStatus, SyncConfigStatus
 from api.schemas import SyncRunCreate
 from metrics import MetricDisplayOrder
-
+from metastore.models import SyncStatus
 
 router = APIRouter(prefix="/syncs")
 
@@ -186,28 +187,24 @@ async def abort(
     sync_service: SyncsService = Depends(get_syncs_service),
     sync_runs_service: SyncRunsService = Depends(get_sync_runs_service),
 ) -> GenericResponse:
+    # Acquire lock as run_manager also updates the run status and this call is from api
+    logger.info("Acuqiring lock in abort api")
 
-    sync = sync_service.get_sync(sync_id)
-    run = sync_runs_service.get(run_id)
+    with sync_service.api_and_run_manager_mutex:
+        sync = sync_service.get_sync(sync_id)
+        run = sync_runs_service.get(run_id)
 
-    if run.status == SyncStatus.RUNNING or run.status == SyncStatus.SCHEDULED: 
-        # Set connector run_manager status to terminated to stop source and destination connections
-        run_status = {
-            "status": "terminated",
-            "message": "Run aborted by user",
-        }
-        sync_runs_service.update_sync_run_extra_data(run_id, "run_manager", "status", run_status)
+        if run.status == SyncStatus.RUNNING or run.status == SyncStatus.SCHEDULED:
+            # Update sync and run status to "ABORTING" so that
+            # current running sync will get aborted by run manager
+            sync.run_status = SyncStatus.ABORTING
+            run.status = SyncStatus.ABORTING
+            sync_service.update_sync_and_run(sync, run)
+            SyncRunnerThread.refresh_db_session()
+        else:
+            return GenericResponse(success=False, message=f"Cannot stop sync run with status '{run.status}'")
 
-        # Update sync and run status to "ABORTING" so that
-        # current running sync will get aborted by run manager
-        sync.run_status = SyncStatus.ABORTING
-        run.status = SyncStatus.ABORTING
-        sync_service.update_sync_and_run(sync, run)
-
-    else:
-        return GenericResponse(success=False, message=f"Cannot stop sync run with status '{run.status}'")
-
-    return GenericResponse(success=True, message="success")
+        return GenericResponse(success=True, message="success")
 
 
 @router.post("/{sync_id}/runs/create", response_model=GenericResponse)
@@ -217,37 +214,38 @@ async def new_run(
     sync_service: SyncsService = Depends(get_syncs_service),
     sync_runs_service: SyncRunsService = Depends(get_sync_runs_service),
 ):
-    sync = sync_service.get_sync(sync_id)
-    runs = sync_runs_service.get_runs(sync_id, datetime.now(), 2)
-    previous_run = runs[1] if len(runs) > 1 else None
-    previous_run_status = previous_run.status if previous_run is not None else None
+    # Acquire lock as run_manager also updates the run status and this call is from api
+    with sync_service.api_and_run_manager_mutex:
+        sync = sync_service.get_sync(sync_id)
+        runs = sync_runs_service.get_runs(sync_id, datetime.now(), 2)
+        previous_run = runs[0] if len(runs) > 1 else None
+        previous_run_status = previous_run.status if previous_run is not None else None
 
-    if sync.status == SyncConfigStatus.ACTIVE and (
-        previous_run is None or previous_run.status == SyncStatus.STOPPED
-    ):
-        sync.run_status = SyncStatus.ABORTING
+        if sync.status == SyncConfigStatus.ACTIVE and (
+            previous_run is None or previous_run.status == SyncStatus.STOPPED
+        ):
+            run = SyncRunCreate(
+                run_id=uuid.uuid4(),
+                sync_id=sync.sync_id,
+                run_at=datetime.now(),
+                status=SyncStatus.SCHEDULED,
+                run_time_args=run_time_args.run_time_args
+            )
 
-        run = SyncRunCreate(
-            run_id=uuid.uuid4(),
-            sync_id=sync.sync_id,
-            run_at=datetime.now(),
-            status=SyncStatus.SCHEDULED,
-            run_time_args=run_time_args.run_time_args
-        )
+            sync.last_run_at = run.run_at
+            sync.run_status = SyncStatus.SCHEDULED
+            sync.last_run_id = run.run_id
 
-        sync.last_run_at = run.run_at
-        sync.run_status = SyncStatus.SCHEDULED
-        sync.last_run_id = run.run_id
+            sync_service.update_sync_and_create_run(sync, run)
+            SyncRunnerThread.refresh_db_session()
 
-        sync_service.update_sync_and_create_run(sync, run)
-
-        return GenericResponse(success=True, message=f"Sync run started with run_id: {run.run_id}")
-    else:
-        return GenericResponse(
-            success=False, 
-            message=f"Cannot start the sync run with status: {sync.status}, "
-            f"with previous run status: {previous_run_status}"
-        )
+            return GenericResponse(success=True, message=f"Sync run started with run_id: {run.run_id}")
+        else:
+            return GenericResponse(
+                success=False, 
+                message=f"Cannot start the sync run with status: {sync.status}, "
+                f"with previous run status: {previous_run_status}"
+            )
 
 
 @router.get("/{sync_id}/runs/", response_model=List[SyncRun])
@@ -278,25 +276,33 @@ async def get_sync_runs(
 @router.get("/{sync_id}/runs/finalise_last_run", response_model=GenericResponse)
 async def finalise_last_run(
     sync_id: UUID4,
+    status: str = None,
+    msg: str = None,
     metric_service: MetricsService = Depends(get_metrics_service),
     sync_runs_service: SyncRunsService = Depends(get_sync_runs_service),
     sync_service: SyncsService = Depends(get_syncs_service),
 ) -> GenericResponse:
-    # get metrics from Metric service
-    sync_schedule = sync_service.get(sync_id)
-    metrics = metric_service.get_metrics(MetricBase(run_id=sync_schedule.last_run_id, sync_id=sync_id))
-    sync_run = sync_runs_service.get(sync_schedule.last_run_id)
-    sync_runs_service.db_session.refresh(sync_run)
+    with sync_service.api_and_run_manager_mutex:
+        # get metrics from Metric service
+        sync_schedule = sync_service.get(sync_id)
+        metrics = metric_service.get_metrics(MetricBase(run_id=sync_schedule.last_run_id, sync_id=sync_id))
+        sync_run = sync_runs_service.get(sync_schedule.last_run_id)
+        sync_runs_service.db_session.refresh(sync_run)
 
-    if metrics:
-        sync_run.metrics = metrics
-        flag_modified(sync_run, "metrics")
-        metric_service.clear_metrics(MetricBase(run_id=sync_id, sync_id=sync_run.run_id))
+        # TODO: Handle the case when the sensor is skipped because of userrepo not reachable and the run is not finalized.
+        # In that case, force the finalise_run to be called from run_manager itself.
 
-    sync_run.run_end_at = datetime.now()
-    sync_runs_service.commit()
+        # TODO: merge the two operations on the sync_runs table below into one transaction
+        if metrics:
+            sync_run.metrics = metrics
+            flag_modified(sync_run, "metrics")
+        sync_run.run_end_at = datetime.now()
+        sync_runs_service.commit()
 
-    return GenericResponse(success=True, message="success")
+        if metrics:
+            metric_service.clear_metrics(MetricBase(run_id=sync_id, sync_id=sync_run.run_id))
+
+        return GenericResponse(success=True, message="success")
 
 
 @router.get("/{sync_id}/runs/{run_id}", response_model=SyncRun)

@@ -4,6 +4,8 @@ from vyper import v
 from orchestrator.job_generator import JobCreatorThread
 from orchestrator.run_manager import SyncRunnerThread
 from .dagster_client import ValmiDagsterClient
+from api.services import get_syncs_service, get_sync_runs_service
+from metastore.session import get_session
 
 logger = logging.getLogger(v.get("LOGGER_NAME"))
 
@@ -23,11 +25,13 @@ class Repo:
         Repo.__initialized = True
 
         self.client = ValmiDagsterClient(v.get("DAGIT_HOST"), port_number=v.get_int("DAGIT_PORT"))
+        self.sync_service = get_syncs_service(next(get_session()))
+        self.run_service = get_sync_runs_service(next(get_session()))
 
-        self.jobCreatorThread = JobCreatorThread(1, "JobCreatorThread", self.client)
+        self.jobCreatorThread = JobCreatorThread(1, "JobCreatorThread", self.client, self.sync_service, self.run_service)
         self.jobCreatorThread.start()
 
-        self.syncRunnerThread = SyncRunnerThread(2, "SyncRunnerThread", self.client)
+        self.syncRunnerThread = SyncRunnerThread(2, "SyncRunnerThread", self.client, self.sync_service, self.run_service)
         self.syncRunnerThread.start()
 
     def destroy(self) -> None:

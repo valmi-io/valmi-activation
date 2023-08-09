@@ -31,14 +31,3 @@ def get_session() -> Generator[scoped_session, None, None]:
         yield Session
     finally:
         Session.remove()
-
-
-@contextmanager
-def acquire_lock(session: scoped_session):
-    try:
-        session.execute(text("SELECT 1 FOR UPDATE"))
-        yield
-        session.commit()
-    except (FlushError, IntegrityError):
-        session.rollback()
-        raise
