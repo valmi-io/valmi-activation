@@ -38,13 +38,24 @@ from vyper import v
 from api.schemas import DockerItem
 from api.schemas.connector import ConnectorConfig
 
+from opentelemetry.metrics import get_meter_provider
+
 router = APIRouter(prefix="/connectors")
 
 logger = logging.getLogger(v.get("LOGGER_NAME"))
 
 
+meter = get_meter_provider().get_meter("activation_engine_connectors/api", "test_version_number")
+
+
+# Create /connector/spec api counter
+connector_spec_api_counter = meter.create_counter("connector_spec_api_counter")
+
+
 @router.post("/{connector_type}/spec", response_model=str)
 async def spec(connector_type: str, docker_item: DockerItem) -> str:
+
+    connector_spec_api_counter.add(1)
     logger.debug("Getting spec for source: %s", connector_type)
     lines = []
     proc = subprocess.Popen(

@@ -33,9 +33,13 @@ from vyper import v
 import logging
 from contextlib import asynccontextmanager
 from utils.request_logger import RouterLoggingMiddleware
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+from observability import setup_observability
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+
     from orchestrator.repo import Repo
     from docker import ImageWarmupManager, ContainerCleaner
     from datastore.datastore_cleaner import DatastoreCleaner
@@ -68,6 +72,7 @@ async def lifespan(app: FastAPI):
 
 def create_app() -> FastAPI:
     app = FastAPI(title="valmi.io", description="Rest API for valmi engine", version="1.0", lifespan=lifespan)
+    setup_observability(app)
 
     if v.get_bool("DEBUG"):
 

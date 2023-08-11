@@ -57,9 +57,18 @@ from api.schemas import SyncRunCreate
 from metrics import MetricDisplayOrder
 from metastore.models import SyncStatus
 
+from opentelemetry.metrics import get_meter_provider
+
+
 router = APIRouter(prefix="/syncs")
 
 logger = logging.getLogger(v.get("LOGGER_NAME"))
+
+meter = get_meter_provider().get_meter("activation_engine_syncs/api", "test_version_number")
+
+
+# Create /{sync_id}/runs api counter
+activation_sync_runs_api_counter = meter.create_counter("activation_sync_runs_api_counter")
 
 
 @router.get("/", response_model=List[SyncSchedule])
@@ -256,6 +265,10 @@ async def get_sync_runs(
     sync_runs_service: SyncRunsService = Depends(get_sync_runs_service),
     metric_service: MetricsService = Depends(get_metrics_service),
 ) -> List[models.SyncRun]:
+    
+    # opentelemetry add metric
+    activation_sync_runs_api_counter.add(1)
+
     runs = sync_runs_service.get_runs(sync_id=sync_id, before=before, limit=limit)
     metrics_display_order = MetricDisplayOrder()
 

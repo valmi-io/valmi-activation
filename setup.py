@@ -14,7 +14,10 @@ install_requires = [
     "airbyte-cdk",
     "jinja2",
     "duckdb==0.7.1",
-    "python-json-logger"
+    "python-json-logger",
+    "opentelemetry-instrumentation-fastapi",
+    "opentelemetry-instrumentation-requests",
+    "opentelemetry-exporter-otlp"
 ]
 
 
