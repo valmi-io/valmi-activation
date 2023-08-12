@@ -115,7 +115,7 @@ class SyncRunnerThread(threading.Thread):
 
             try:
                 # Acquire lock with_for_update as API calls can update the run statuses, for instance, abort and start sync api calls
-                logger.info("Acuqiring lock in run_manager")
+                logger.debug("Acquiring lock in run_manager")
                 with self.sync_service.api_and_run_manager_mutex:
                     if self.refresh_session_needed():
                         self.sync_service.db_session.expire_all()

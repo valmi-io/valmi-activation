@@ -197,7 +197,7 @@ async def abort(
     sync_runs_service: SyncRunsService = Depends(get_sync_runs_service),
 ) -> GenericResponse:
     # Acquire lock as run_manager also updates the run status and this call is from api
-    logger.info("Acuqiring lock in abort api")
+    logger.debug("Acquiring lock in abort api")
 
     with sync_service.api_and_run_manager_mutex:
         sync = sync_service.get_sync(sync_id)

@@ -51,13 +51,11 @@ def setup_observability(app: FastAPI):
     # Initialize logging and an exporter that can send data to an OTLP endpoint by attaching OTLP handler to root logger
     _logs.set_logger_provider(LoggerProvider())
 
+    # TODO:Setting the log format to include trace_id, span_id, and resource.service.name. But, this is formatting is not supported yet in OTLPExporter.
     format_str = os.environ.get('OTEL_PYTHON_LOG_FORMAT',
-                                "%(asctime)s %(levelname)s [%(name)s] [%(filename)s:%(lineno)d] [trace_id=%(otelTraceID)s span_id=%(otelSpanID)s resource.service.name=%(otelServiceName)s trace_sampled=%(otelTraceSampled)s] - %(message)s")
-
-    _logs.set_logger_provider(LoggerProvider())
+                                "%(asctime)s %(levelname)s [%(name)s] [%(filename)s:%(lineno)d] [trace_id=%(otelTraceID)s span_id=%(otelSpanID)s resource.service.name=%(otelServiceName)s trace_sampled=%(otelTraceSampled)s] - %(message)s")    
     '''
     # TODO: This is not working. Check this. The root handler is duplicating the logs. Disabled root hander.
-
     # Adding Handler to root logger
     root_log_handler = LoggingHandler(
         logger_provider=_logs.get_logger_provider().add_log_record_processor(
