@@ -69,12 +69,13 @@ def setup_observability(app: FastAPI):
     '''
 
     # Adding Handler to core.engine_api
-    engine_api_log_handler = LoggingHandler(
+    valmi_log_handler = LoggingHandler(
         logger_provider=_logs.get_logger_provider().add_log_record_processor(
             BatchLogRecordProcessor(OTLPLogExporter())
         )
     )
-    engine_api_log_handler.setFormatter(logging.Formatter(format_str))
+    valmi_log_handler.setFormatter(logging.Formatter(format_str))
+    valmi_log_handler.setLevel(os.environ.get('OTEL_PYTHON_LOG_LEVEL', "debug").upper())
     logging.getLogger(v.get("LOGGER_NAME")).addHandler(
-        engine_api_log_handler
+        valmi_log_handler
     )
