@@ -37,6 +37,7 @@ class DestinationWriteWrapper:
         self.configured_catalog = configured_catalog
         self.configured_destination_catalog = configured_destination_catalog
         self.run_time_args = RunTimeArgs.parse_obj(config["run_time_args"] if "run_time_args" in config else {})
+        self.previous_state = state
 
     @abstractmethod
     def initialise_message_handling(self) -> None:

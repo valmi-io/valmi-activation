@@ -50,15 +50,17 @@ class StdoutWriter:
 
 
 class StoreReader:
-    def __init__(self, engine: NullEngine) -> None:
+    def __init__(self, engine: NullEngine, state: str) -> None:
         self.engine = engine
         self.connector_state: ConnectorState = self.engine.connector_state
+        self.loaded_state = state
+
         store_config = json.loads(os.environ["VALMI_INTERMEDIATE_STORE"])
         if store_config["provider"] == "local":
             path_name = join(store_config["local"]["directory"], self.connector_state.run_time_args["run_id"])
 
             self.path_name = path_name
-            self.last_handled_fn = None
+            self.last_handled_fn = self.get_file_name_from_chunk_id(self.read_chunk_id_checkpoint())
 
     def read(self):
         while True:
@@ -91,6 +93,17 @@ class StoreReader:
                 return
             time.sleep(3)
             yield ""
+
+    def read_chunk_id_checkpoint(self):
+        # TODO: connector_state is not being used for destination, clean it up.
+        if self.loaded_state is not None:
+            return self.loaded_state['state']['data']['chunk_id']
+        return None
+    
+    def get_file_name_from_chunk_id(self, chunk_id):
+        if chunk_id is not None:
+            return f"{chunk_id}.vald"
+        return None
 
 
 class DefaultHandler:

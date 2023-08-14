@@ -110,9 +110,8 @@ class Engine(NullEngine):
     def current_run_details(self):
         sync_id = du(os.environ.get("DAGSTER_RUN_JOB_NAME", "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"))
         r = self.session_with_retries.get(
-            f"{self.engine_url}/syncs/{sync_id}/runs/current_run_details",
-            params={'connector': f'{CONNECTOR_STRING}'},
-            timeout=HTTP_TIMEOUT
+            f"{self.engine_url}/syncs/{sync_id}/runs/current_run_details/{CONNECTOR_STRING}",
+            timeout=HTTP_TIMEOUT,
         )
         return r.json()
 

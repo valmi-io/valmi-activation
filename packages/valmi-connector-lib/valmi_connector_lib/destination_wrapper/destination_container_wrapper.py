@@ -28,6 +28,7 @@ import os
 import sys
 import subprocess
 import io
+from typing import Any, Dict
 from .proc_stdout_handler import ProcStdoutHandlerThread
 from .proc_stdout_event_handlers import (
     Engine,
@@ -84,16 +85,23 @@ def populate_run_time_args(airbyte_command, engine, config_file_path):
             # create a new state file alongside the config file
             state_file_path = os.path.join(os.path.dirname(config_file_path), 'state.json')
             set_state_file_path(state_file_path)
+            set_loaded_state(run_time_args['state'])
             with open(state_file_path, "w") as f:
                 f.write(json.dumps(run_time_args['state']))
 
 
 state_file_path = None
+loaded_state = None
 
 
 def set_state_file_path(file_path: str):
     global state_file_path
     state_file_path = file_path
+
+
+def set_loaded_state(state: Dict[str, Any]):
+    global loaded_state
+    loaded_state = state
 
 
 def is_state_available():
@@ -129,7 +137,7 @@ def main():
         if is_state_available():
             subprocess_args.append("--state")
             subprocess_args.append(state_file_path)
-            
+
         proc = subprocess.Popen(
             sys.argv[1:],
             stdout=subprocess.PIPE,
@@ -155,8 +163,8 @@ def main():
         for key in handlers.keys():
             handlers[key] = handlers[key](engine=engine, store_writer=None, stdout_writer=None)
 
-        # TODO: read checkpoint from the engine
-        store_reader = StoreReader(engine=engine)
+        global loaded_state
+        store_reader = StoreReader(engine=engine, state=loaded_state)
 
         proc = subprocess.Popen(sys.argv[1:], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
