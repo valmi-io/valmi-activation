@@ -80,6 +80,26 @@ def populate_run_time_args(airbyte_command, engine, config_file_path):
             config["run_time_args"] = run_time_args
             f.write(json.dumps(config))
 
+        if 'state' in run_time_args:
+            # create a new state file alongside the config file
+            state_file_path = os.path.join(os.path.dirname(config_file_path), 'state.json')
+            set_state_file_path(state_file_path)
+            with open(state_file_path, "w") as f:
+                f.write(json.dumps(run_time_args['state']))
+
+
+state_file_path = None
+
+
+def set_state_file_path(file_path: str):
+    global state_file_path
+    state_file_path = file_path
+
+
+def is_state_available():
+    global state_file_path
+    return state_file_path is not None
+
 
 def main():
     airbyte_command = get_airbyte_command()
@@ -105,6 +125,11 @@ def main():
             stdout_handlers[key] = stdout_handlers[key](engine=engine, store_writer=None, stdout_writer=None)
 
         # create the subprocess
+        subprocess_args = sys.argv[1:]
+        if is_state_available():
+            subprocess_args.append("--state")
+            subprocess_args.append(state_file_path)
+            
         proc = subprocess.Popen(
             sys.argv[1:],
             stdout=subprocess.PIPE,

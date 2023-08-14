@@ -1,0 +1,10 @@
+{
+    "type": "STATE",
+    "state": {
+      "type": "STREAM",
+      "data": {
+        "chunk_id": 255
+      }
+    },
+    "emitted_at": 1692008244000
+  }

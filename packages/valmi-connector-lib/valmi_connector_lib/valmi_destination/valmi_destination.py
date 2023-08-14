@@ -27,7 +27,7 @@ import argparse
 import io
 import logging
 import sys
-from typing import Any, Iterable, List, Mapping
+from typing import Any, Dict, Iterable, List, Mapping
 
 from airbyte_cdk.destinations import Destination
 from airbyte_cdk.models import AirbyteMessage, Type, AirbyteConnectionStatus, Status
@@ -70,6 +70,12 @@ class ValmiDestination(Destination):
             required=True,
             help="path to the configured destination catalog JSON file",
         )
+        write_required.add_argument(
+            "--state",
+            type=str,
+            required=False,
+            help="path to the state JSON file",
+        )
 
         # discover
         discover_parser = subparsers.add_parser(
@@ -101,6 +107,16 @@ class ValmiDestination(Destination):
 
         return parsed_args
 
+    # can be overridden to change an input state
+    def read_state(self, state_path: str) -> Dict[str, Any]:
+        """
+        Retrieves the input state of a sync by reading from the specified JSON file.
+        """
+        if state_path:
+            state_obj = self._read_json_file(state_path)
+            return state_obj
+        return None
+ 
     def run_cmd(self, parsed_args: argparse.Namespace) -> Iterable[AirbyteMessage]:
         cmd = parsed_args.command
 
@@ -123,7 +139,7 @@ class ValmiDestination(Destination):
             return
 
         elif cmd == "write":
-            # state = self.read_state(parsed_args.state)
+            state = self.read_state(parsed_args.state)
 
             # Wrap in UTF-8 to override any other input encodings
             wrapped_stdin = io.TextIOWrapper(sys.stdin.buffer, encoding="utf-8")
@@ -133,6 +149,7 @@ class ValmiDestination(Destination):
                 configured_catalog_path=parsed_args.catalog,
                 configured_destination_catalog_path=parsed_args.destination_catalog,
                 input_stream=wrapped_stdin,
+                state=state,
             )
             return
 
@@ -162,6 +179,7 @@ class ValmiDestination(Destination):
         input_messages: Iterable[AirbyteMessage],
         configured_destination_catalog: ConfiguredValmiDestinationCatalog,
         logger: AirbyteLogger,
+        state: Dict[str, Any] = None,
     ) -> Iterable[AirbyteMessage]:
         """Implement to define how the connector writes data to the destination"""
 
@@ -171,7 +189,7 @@ class ValmiDestination(Destination):
         configured_catalog_path: str,
         configured_destination_catalog_path: str,
         input_stream: io.TextIOWrapper,
-        # state: Dict[str, any],
+        state: Dict[str, Any] = None,
     ) -> Iterable[AirbyteMessage]:
         catalog = ConfiguredValmiCatalog.parse_file(configured_catalog_path)
         destination_catalog = ConfiguredValmiDestinationCatalog.parse_file(configured_destination_catalog_path)
@@ -184,5 +202,6 @@ class ValmiDestination(Destination):
             configured_destination_catalog=destination_catalog,
             input_messages=input_messages,
             logger=logger,
+            state=state,
         )
         logger.info("Writing complete.")

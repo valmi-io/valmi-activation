@@ -25,7 +25,7 @@ SOFTWARE.
 
 
 import json
-from typing import Any, Iterable, Mapping
+from typing import Any, Dict, Iterable, Mapping
 import socket
 from contextlib import closing
 from airbyte_cdk import AirbyteLogger
@@ -86,8 +86,9 @@ class DestinationWebhook(ValmiDestination):
         configured_catalog: ConfiguredValmiCatalog,
         configured_destination_catalog: ConfiguredValmiDestinationCatalog,
         input_messages: Iterable[AirbyteMessage],
-        # state: Dict[str, any],
+        state: Dict[str, any],
     ) -> Iterable[AirbyteMessage]:
+        logger.info(state)
         webhook_writer = WebhookWriter(logger, config, configured_catalog, configured_destination_catalog, None)
         return webhook_writer.start_message_handling(input_messages)
 
