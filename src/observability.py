@@ -42,7 +42,8 @@ def setup_observability(app: FastAPI):
     provider = MeterProvider(metric_readers=[reader])
     set_meter_provider(provider)
 
-    FastAPIInstrumentor.instrument_app(app)
+    if os.environ.get('OTEL_FASTAPI_INSTRUMENT', False):
+        FastAPIInstrumentor.instrument_app(app)
 
     ########
     # Logs # - OpenTelemetry Logs are still in the "experimental" state, so function names may change in the future
