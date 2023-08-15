@@ -131,6 +131,19 @@ class SourceRedshift(Source):
             catalog.__setattr__("more", more)
             return catalog
 
+    def is_dbt_run_finished(self, state: Dict[str, any]):
+        if state is None or 'state' not in state:
+            return False
+        return True
+    
+    def read_chunk_id_checkpoint(self, state: Dict[str, any]):
+        if state is not None \
+                and 'state' in state \
+                and 'data' in state['state'] \
+                and 'chunk_id' in state['state']['data']:
+            return state['state']['data']['chunk_id'] + 1
+        return 1
+
     def read(
         self, logger: AirbyteLogger, config: json, catalog: ConfiguredValmiCatalog, state: Dict[str, any]
     ) -> Generator[AirbyteMessage, None, None]:
@@ -147,27 +160,28 @@ class SourceRedshift(Source):
         self.dbt_adapter.generate_source_yml(logger, config, catalog, sync_id)
         self.dbt_adapter.append_sql_files_with_sync_id(sync_id)
 
-        try:
-            self.dbt_adapter.execute_dbt(logger=logger)
-        except Exception as e:
-            error_msg = str(e)
-            faldbt: FalDbt = self.dbt_adapter.get_fal_dbt(_basic=False)
-            # Accessing hidden variable _run_results
-            if faldbt._run_results is not None:
-                results: Sequence[RunResultOutput] = faldbt._run_results.results
-                for result in results:
-                    if result.status == RunStatus.Error:
-                        error_msg = result.message
-                        break
-            yield AirbyteMessage(
-                type=Type.TRACE,
-                trace=AirbyteTraceMessage(
-                    type=TraceType.ERROR,
-                    error=AirbyteErrorTraceMessage(message=error_msg),
-                    emitted_at=int(datetime.now().timestamp()) * 1000,
-                ),
-            )
-            return
+        if not self.is_dbt_run_finished(state):
+            try:
+                self.dbt_adapter.execute_dbt(logger=logger)
+            except Exception as e:
+                error_msg = str(e)
+                faldbt: FalDbt = self.dbt_adapter.get_fal_dbt(_basic=False)
+                # Accessing hidden variable _run_results
+                if faldbt._run_results is not None:
+                    results: Sequence[RunResultOutput] = faldbt._run_results.results
+                    for result in results:
+                        if result.status == RunStatus.Error:
+                            error_msg = result.message
+                            break
+                yield AirbyteMessage(
+                    type=Type.TRACE,
+                    trace=AirbyteTraceMessage(
+                        type=TraceType.ERROR,
+                        error=AirbyteErrorTraceMessage(message=error_msg),
+                        emitted_at=int(datetime.now().timestamp()) * 1000,
+                    ),
+                )
+                return
 
         # initialise chunk_size
         if "run_time_args" in config and "chunk_size" in config["run_time_args"]:
@@ -178,9 +192,10 @@ class SourceRedshift(Source):
         # now read data from the dbt transit snapshot
         faldbt = self.dbt_adapter.get_fal_dbt()
 
-        # release metrics
-        for metric_msg in self.generate_sync_metrics(faldbt, logger=logger, sync_id=sync_id, catalog=catalog):
-            yield metric_msg
+        # release metrics :: if state is present, metrics were already released in the previous instance
+        if not self.is_dbt_run_finished(state):
+            for metric_msg in self.generate_sync_metrics(faldbt, logger=logger, sync_id=sync_id, catalog=catalog):
+                yield metric_msg
 
         # set the below two values from the checkpoint state
         chunk_id = 0
