@@ -96,10 +96,13 @@ class StoreReader:
 
     def read_chunk_id_checkpoint(self):
         # TODO: connector_state is not being used for destination, clean it up.
-        if self.loaded_state is not None:
+        if self.loaded_state is not None \
+                and 'state' in self.loaded_state \
+                and 'data' in self.loaded_state['state'] \
+                and 'chunk_id' in self.loaded_state['state']['data']:
             return self.loaded_state['state']['data']['chunk_id']
         return None
-    
+
     def get_file_name_from_chunk_id(self, chunk_id):
         if chunk_id is not None:
             return f"{chunk_id}.vald"

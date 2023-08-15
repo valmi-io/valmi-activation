@@ -51,10 +51,18 @@ class DestinationWriteWrapper:
     def finalise_message_handling(self) -> HandlerResponseData:
         pass
 
+    def read_chunk_id_checkpoint(self):
+        if self.previous_state is not None \
+                and 'state' in self.previous_state \
+                and 'data' in self.previous_state['state'] \
+                and 'chunk_id' in self.previous_state['state']['data']:
+            return self.previous_state['state']['data']['chunk_id'] + 1
+        return 1
+
     def start_message_handling(self, input_messages: Iterable[AirbyteMessage]) -> AirbyteMessage:
         counter: int = 0
         counter_by_type: dict[str, int] = defaultdict(lambda: 0)
-        chunk_id = 0
+        chunk_id = self.read_chunk_id_checkpoint()
         run_time_args = RunTimeArgs.parse_obj(self.config["run_time_args"] if "run_time_args" in self.config else {})
 
         self.initialise_message_handling()

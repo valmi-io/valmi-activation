@@ -88,8 +88,7 @@ class DestinationWebhook(ValmiDestination):
         input_messages: Iterable[AirbyteMessage],
         state: Dict[str, any],
     ) -> Iterable[AirbyteMessage]:
-        logger.info(state)
-        webhook_writer = WebhookWriter(logger, config, configured_catalog, configured_destination_catalog, None)
+        webhook_writer = WebhookWriter(logger, config, configured_catalog, configured_destination_catalog, state)
         return webhook_writer.start_message_handling(input_messages)
 
     def discover(self, logger: AirbyteLogger, config: json) -> ValmiDestinationCatalog:

@@ -134,12 +134,8 @@ def main():
 
         # create the subprocess
         subprocess_args = sys.argv[1:]
-        if is_state_available():
-            subprocess_args.append("--state")
-            subprocess_args.append(state_file_path)
-
         proc = subprocess.Popen(
-            sys.argv[1:],
+            subprocess_args,
             stdout=subprocess.PIPE,
         )
 
@@ -166,7 +162,12 @@ def main():
         global loaded_state
         store_reader = StoreReader(engine=engine, state=loaded_state)
 
-        proc = subprocess.Popen(sys.argv[1:], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        # create the subprocess
+        subprocess_args = sys.argv[1:]
+        if is_state_available():
+            subprocess_args.append("--state")
+            subprocess_args.append(state_file_path)
+        proc = subprocess.Popen(subprocess_args, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
         try:
             proc_stdout_handler_thread = ProcStdoutHandlerThread(
