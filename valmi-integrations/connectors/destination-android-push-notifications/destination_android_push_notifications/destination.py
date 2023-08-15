@@ -26,7 +26,7 @@ SOFTWARE.
 import json
 import firebase_admin
 
-from typing import Any, Iterable, Mapping
+from typing import Any, Dict, Iterable, Mapping
 
 from airbyte_cdk import AirbyteLogger
 from airbyte_cdk.destinations import Destination
@@ -102,11 +102,11 @@ class DestinationAndroidPushNotifications(ValmiDestination):
         configured_catalog: ConfiguredValmiCatalog,
         configured_destination_catalog: ConfiguredValmiDestinationCatalog,
         input_messages: Iterable[AirbyteMessage],
-        # state: Dict[str, any],
+        state: Dict[str, any],
     ) -> Iterable[AirbyteMessage]:
 
         # Start handling messages
-        fcm_writer = FCMWriter(logger, config, configured_catalog, configured_destination_catalog, None)
+        fcm_writer = FCMWriter(logger, config, configured_catalog, configured_destination_catalog, state)
         return fcm_writer.start_message_handling(input_messages)
 
     def discover(self, logger: AirbyteLogger, config: json) -> ValmiDestinationCatalog:

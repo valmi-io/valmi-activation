@@ -24,7 +24,7 @@ SOFTWARE.
 """
 
 import json
-from typing import Any, Iterable, Mapping
+from typing import Any, Dict, Iterable, Mapping
 from airbyte_cdk import AirbyteLogger
 from airbyte_cdk.destinations import Destination
 from airbyte_cdk.models import (
@@ -111,9 +111,9 @@ class DestinationGong(ValmiDestination):
         configured_catalog: ConfiguredValmiCatalog,
         configured_destination_catalog: ConfiguredValmiDestinationCatalog,
         input_messages: Iterable[AirbyteMessage],
-        # state: Dict[str, any],
+        state: Dict[str, any],
     ) -> Iterable[AirbyteMessage]:
-        gong_writer = GongWriter(logger, config, configured_catalog, configured_destination_catalog, None)
+        gong_writer = GongWriter(logger, config, configured_catalog, configured_destination_catalog, state)
         return gong_writer.start_message_handling(input_messages)
 
     def discover(self, logger: AirbyteLogger, config: json) -> ValmiDestinationCatalog:

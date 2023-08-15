@@ -24,7 +24,7 @@ SOFTWARE.
 """
 
 import json
-from typing import Any, Iterable, Mapping
+from typing import Any, Dict, Iterable, Mapping
 
 from airbyte_cdk import AirbyteLogger
 from airbyte_cdk.destinations import Destination
@@ -89,12 +89,12 @@ class DestinationFacebookAds(ValmiDestination):
         configured_catalog: ConfiguredValmiCatalog,
         configured_destination_catalog: ConfiguredValmiDestinationCatalog,
         input_messages: Iterable[AirbyteMessage],
-        # state: Dict[str, any],
+        state: Dict[str, any],
     ) -> Iterable[AirbyteMessage]:
         
         # Start handling messages
 
-        fbAds_writer = FBAdsWriter(logger, config, configured_catalog, configured_destination_catalog, None)
+        fbAds_writer = FBAdsWriter(logger, config, configured_catalog, configured_destination_catalog, state)
         return fbAds_writer.start_message_handling(input_messages)
 
     # TODO: engine support required to support `create` command

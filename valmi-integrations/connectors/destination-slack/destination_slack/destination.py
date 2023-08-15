@@ -26,7 +26,7 @@ SOFTWARE.
 
 import json
 import time
-from typing import Any, Iterable, Mapping
+from typing import Any, Dict, Iterable, Mapping
 
 from airbyte_cdk import AirbyteLogger
 from airbyte_cdk.destinations import Destination
@@ -102,9 +102,9 @@ class DestinationSlack(ValmiDestination):
         configured_catalog: ConfiguredValmiCatalog,
         configured_destination_catalog: ConfiguredValmiDestinationCatalog,
         input_messages: Iterable[AirbyteMessage],
-        # state: Dict[str, any],
+        state: Dict[str, any],
     ) -> Iterable[AirbyteMessage]:
-        slack_writer = SlackWriter(logger, config, configured_catalog, configured_destination_catalog, None)
+        slack_writer = SlackWriter(logger, config, configured_catalog, configured_destination_catalog, state)
         return slack_writer.start_message_handling(input_messages)
 
     def discover(self, logger: AirbyteLogger, config: json) -> ValmiDestinationCatalog:

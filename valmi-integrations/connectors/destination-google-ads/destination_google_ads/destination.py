@@ -94,10 +94,10 @@ class DestinationGoogleAds(ValmiDestination):
         configured_catalog: ConfiguredValmiCatalog,
         configured_destination_catalog: ConfiguredValmiDestinationCatalog,
         input_messages: Iterable[AirbyteMessage],
-        # state: Dict[str, any],
+        state: Dict[str, any],
     ) -> Iterable[AirbyteMessage]:
 
-        google_ads_writer = GoogleAdsWriter(logger, config, configured_catalog, configured_destination_catalog, None)
+        google_ads_writer = GoogleAdsWriter(logger, config, configured_catalog, configured_destination_catalog, state)
         return google_ads_writer.start_message_handling(input_messages)
 
     def create(

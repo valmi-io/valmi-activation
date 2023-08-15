@@ -25,7 +25,7 @@ SOFTWARE.
 
 
 import json
-from typing import Any, Iterable, Mapping
+from typing import Any, Dict, Iterable, Mapping
 
 from airbyte_cdk import AirbyteLogger
 from airbyte_cdk.destinations import Destination
@@ -97,9 +97,9 @@ class DestinationGoogleSheets(ValmiDestination):
         configured_catalog: ConfiguredValmiCatalog,
         configured_destination_catalog: ConfiguredValmiDestinationCatalog,
         input_messages: Iterable[AirbyteMessage],
-        # state: Dict[str, any],
+        state: Dict[str, any],
     ) -> Iterable[AirbyteMessage]:
-        sheets_writer = SheetsWriter(logger, config, configured_catalog, configured_destination_catalog, None)
+        sheets_writer = SheetsWriter(logger, config, configured_catalog, configured_destination_catalog, state)
         return sheets_writer.start_message_handling(input_messages)
 
     def discover(self, logger: AirbyteLogger, config: json) -> ValmiDestinationCatalog:

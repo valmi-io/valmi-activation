@@ -25,7 +25,7 @@ SOFTWARE.
 
 
 import json
-from typing import Any, Iterable, Mapping
+from typing import Any, Dict, Iterable, Mapping
 
 from airbyte_cdk import AirbyteLogger
 from airbyte_cdk.destinations import Destination
@@ -77,11 +77,11 @@ class DestinationHubspot(ValmiDestination):
         configured_catalog: ConfiguredValmiCatalog,
         configured_destination_catalog: ConfiguredValmiDestinationCatalog,
         input_messages: Iterable[AirbyteMessage],
-        # state: Dict[str, any],
+        state: Dict[str, any],
     ) -> Iterable[AirbyteMessage]:
         # Start handling messages
 
-        hubspot_writer = HubspotWriter(logger, config, configured_catalog, configured_destination_catalog, None)
+        hubspot_writer = HubspotWriter(logger, config, configured_catalog, configured_destination_catalog, state)
         return hubspot_writer.start_message_handling(input_messages)
 
     def discover(self, logger: AirbyteLogger, config: json) -> ValmiDestinationCatalog:
