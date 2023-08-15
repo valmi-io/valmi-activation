@@ -29,6 +29,7 @@ import sys
 from os.path import join
 import subprocess
 import io
+from typing import Any, Dict
 import uuid
 from pydantic import UUID4
 import requests
@@ -40,6 +41,9 @@ HTTP_TIMEOUT = 3  # seconds
 MAX_HTTP_RETRIES = 5
 CONNECTOR_STRING = "src"
 
+state_file_path = None
+loaded_state = None
+
 
 # desanitise uuid
 def du(uuid_str: str) -> UUID4:
@@ -47,11 +51,21 @@ def du(uuid_str: str) -> UUID4:
 
 
 class ConnectorState:
-    def __init__(self, run_time_args=[]) -> None:
-        self.num_chunks = run_time_args["chunk_id"]
+    def __init__(self, run_time_args={}) -> None:
+        self.num_chunks = 1
         self.records_in_chunk = 0
-        self.total_records = self.num_chunks * run_time_args["chunk_size"]
         self.run_time_args = run_time_args
+        self.total_records = 0
+        
+    def reset_chunk_id_from_state(self, state):
+        if state is not None \
+            and 'state' in state \
+                and 'data' in state['state'] \
+                    and 'chunk_id' in state['state']['data']:
+            self.num_chunks = state['state']['data']['chunk_id'] + 1
+        else:
+            self.num_chunks = 1
+        self.total_records = (self.num_chunks - 1) * self.run_time_args["chunk_size"]
 
     def register_chunk(self):
         self.num_chunks = self.num_chunks + 1
@@ -345,11 +359,38 @@ def populate_run_time_args(airbyte_command, engine, config_file_path):
             config["run_time_args"] = run_time_args
             f.write(json.dumps(config))
 
+        print("checking state")
+        if 'state' in run_time_args:
+            # create a new state file alongside the config file
+            state_file_path = os.path.join(os.path.dirname(config_file_path), 'state.json')
+            set_state_file_path(state_file_path)
+            set_loaded_state(run_time_args['state'])
+            print(loaded_state)
+            engine.connector_state.reset_chunk_id_from_state(loaded_state)
+            print("num_chunks", engine.connector_state.num_chunks)
+            with open(state_file_path, "w") as f:
+                f.write(json.dumps(run_time_args['state']))
+
 
 def sync_engine_for_error(proc: subprocess, engine: NullEngine):
     if engine.abort_required():
         proc.kill()
         sys.exit(0)  # Not this connector's fault
+        
+
+def set_state_file_path(file_path: str):
+    global state_file_path
+    state_file_path = file_path
+
+
+def set_loaded_state(state: Dict[str, Any]):
+    global loaded_state
+    loaded_state = state
+
+
+def is_state_available():
+    global state_file_path
+    return state_file_path is not None
 
 
 def main():
@@ -362,6 +403,7 @@ def main():
     # if arg in read, write:
     # read checkpoint from the engine
 
+    engine = None
     if airbyte_command == "read":
         engine = Engine()
         store_writer = StoreWriter(engine)
@@ -379,8 +421,12 @@ def main():
         handlers[key] = handlers[key](engine=engine, store_writer=store_writer, stdout_writer=stdout_writer)
 
     # create the subprocess
+    subprocess_args = sys.argv[1:]
+    if is_state_available():
+        subprocess_args.append("--state")
+        subprocess_args.append(state_file_path)
     proc = subprocess.Popen(
-        sys.argv[1:],
+        subprocess_args,
         stdout=subprocess.PIPE,
     )
 

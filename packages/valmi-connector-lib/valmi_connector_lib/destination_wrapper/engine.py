@@ -42,7 +42,7 @@ def du(uuid_str: str) -> UUID4:
 
 
 class ConnectorState:
-    def __init__(self, run_time_args=[]) -> None:
+    def __init__(self, run_time_args={}) -> None:
         self.num_chunks = run_time_args["chunk_id"]
         self.begin_records = self.num_chunks * run_time_args["chunk_size"]
         self.records_in_chunk = 0
