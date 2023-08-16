@@ -80,7 +80,7 @@ class StoreReader:
                     self.last_handled_fn = fn
                 # print(fn)
                 # print(f"magic num {MAGIC_NUM}")
-                if fn.startswith(f"{MAGIC_NUM+1}"):
+                if fn.startswith(f"{MAGIC_NUM}"):
                     # print("returning")
                     return
 
