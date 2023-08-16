@@ -43,22 +43,25 @@ def du(uuid_str: str) -> UUID4:
 
 class ConnectorState:
     def __init__(self, run_time_args={}) -> None:
-        self.num_chunks = run_time_args["chunk_id"]
-        self.begin_records = self.num_chunks * run_time_args["chunk_size"]
+        # self.num_chunks = run_time_args["chunk_id"]
+        # self.begin_records = self.num_chunks * run_time_args["chunk_size"]
         self.records_in_chunk = 0
         self.records_in_this_connector_intance = 0
 
         self.run_time_args = run_time_args
 
     def register_chunk(self):
-        self.num_chunks = self.num_chunks + 1
+        pass
+        # self.num_chunks = self.num_chunks + 1
 
     def total_records(self):
-        return self.begin_records + self.records_in_this_connector_intance
+        pass
+        # return self.begin_records + self.records_in_this_connector_intance
 
     def register_records(self, num_records):
-        self.records_in_this_connector_intance = num_records
-        self.records_in_chunk = self.total_records() - (self.num_chunks * self.run_time_args["chunk_size"])
+        pass
+        # self.records_in_this_connector_intance = num_records
+        # self.records_in_chunk = self.total_records() - (self.num_chunks * self.run_time_args["chunk_size"])
 
 
 class NullEngine:
@@ -115,7 +118,8 @@ class Engine(NullEngine):
         return r.json()
 
     def metric(self, commit=False):
-        self.metric_ext({"succeeded": self.connector_state.records_in_chunk}, commit=commit)
+        pass
+        #self.metric_ext({"succeeded": self.connector_state.records_in_chunk}, commit=commit)
 
     def metric_ext(self, metric_json, chunk_id, commit=False):
         print("Sending metric")
