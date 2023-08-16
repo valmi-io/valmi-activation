@@ -233,12 +233,12 @@ class SourceRedshift(Source):
             if len(agate_table.rows) <= 0:
                 return
             else:
-                chunk_id += 1
                 yield AirbyteMessage(
                     type=Type.STATE,
                     state=AirbyteStateMessage(type=AirbyteStateType.STREAM, data={"chunk_id": chunk_id}),
                     emitted_at=int(datetime.now().timestamp()) * 1000,
                 )
+                chunk_id += 1
 
     def read_catalog(self, catalog_path: str) -> ConfiguredValmiCatalog:
         return ConfiguredValmiCatalog.parse_obj(self._read_json_file(catalog_path))

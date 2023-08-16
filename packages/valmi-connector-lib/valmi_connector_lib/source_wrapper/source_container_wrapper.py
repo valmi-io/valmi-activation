@@ -246,7 +246,7 @@ class StoreWriter(NullWriter):
     def flush(self, last=False):
         # list_dir = sorted([f.lower() for f in os.listdir(self.path_name)], key=lambda x: int(x[:-5]))
         new_file_name = f"{MAGIC_NUM}.vald" if last else f"{self.engine.connector_state.num_chunks}.vald"
-        with open(join(self.path_name, f"{int(new_file_name[:-5])+1}.vald"), "w") as f:
+        with open(join(self.path_name, new_file_name), "w") as f:
             for record in self.records:
                 f.write(json.dumps(record))
                 f.write("\n")
