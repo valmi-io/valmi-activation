@@ -26,14 +26,13 @@ SOFTWARE.
 import json
 from typing import Any
 
-from fastapi import FastAPI, Response
+from fastapi import FastAPI
 from pydantic import Json
 
 from vyper import v
 import logging
 from contextlib import asynccontextmanager
 from utils.request_logger import RouterLoggingMiddleware
-from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from observability import setup_observability
 
 
@@ -44,13 +43,18 @@ async def lifespan(app: FastAPI):
     from docker import ImageWarmupManager, ContainerCleaner
     from datastore.datastore_cleaner import DatastoreCleaner
     from api.services import get_metrics_service
+    from api.services import get_log_handling_service
 
     img_manager = ImageWarmupManager()
     container_cleaner = ContainerCleaner()
     datastore_cleaner = DatastoreCleaner()
     repo = Repo()
-
+    log_handling_service = get_log_handling_service()
+    
     yield
+
+    logging.info("Shutting down Log Handling Service")
+    log_handling_service.exit_log_serving_process()
 
     logging.info("Shutting down Metrics service")
     get_metrics_service().shutdown()
@@ -58,14 +62,14 @@ async def lifespan(app: FastAPI):
     logging.info("Shutting down Repo manager")
     repo.destroy()
 
-    logging.info("Shutting down Image manager")
-    img_manager.destroy()
+    logging.info("Shutting down DataStore Cleaner")
+    datastore_cleaner.destroy()
 
     logging.info("Shutting down Container Cleaner")
     container_cleaner.destroy()
 
-    logging.info("Shutting down DataStore Cleaner")
-    datastore_cleaner.destroy()
+    logging.info("Shutting down Image manager")
+    img_manager.destroy()
 
     logging.info("All services shut down successfully")
 
@@ -76,10 +80,13 @@ def create_app() -> FastAPI:
 
     if v.get_bool("DEBUG"):
 
+        '''
         app.add_middleware(
             RouterLoggingMiddleware,
             logger=logging.getLogger(v.get("LOGGER_NAME"))
         )
+        '''
+        
         '''
         @app.middleware("http")
         async def log_request(request, call_next):

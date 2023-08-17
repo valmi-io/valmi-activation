@@ -26,6 +26,7 @@ SOFTWARE.
 import copy
 import logging
 import uuid
+import json
 
 from datetime import datetime
 from typing import Any, Dict, List
@@ -46,7 +47,10 @@ from api.services import (
     get_syncs_service,
     SyncRunsService,
     get_sync_runs_service,
+    LogHandlingService,
+    get_log_handling_service,
 )
+from log_handling.log_retriever import LogRetrieverTask
 from api.schemas.utils import assign_metrics_to_run
 from sqlalchemy.orm.attributes import flag_modified
 
@@ -55,10 +59,7 @@ from api.schemas.sync_run import ConnectorSynchronization, SyncRunTimeArgs
 from metastore.models import SyncStatus, SyncConfigStatus
 from api.schemas import SyncRunCreate
 from metrics import MetricDisplayOrder
-from metastore.models import SyncStatus
-
 from opentelemetry.metrics import get_meter_provider
-
 
 router = APIRouter(prefix="/syncs")
 
@@ -340,3 +341,16 @@ async def get_run_samples(
     ## MAJOR ITEM
     pass
     # return sync_runs_service.list()
+
+
+@router.get("/{sync_id}/runs/{run_id}/logs", response_model=Json[Any])
+async def get_logs(
+        sync_id: UUID4,
+        run_id: UUID4,
+        collector: str,
+        before: int,
+        after: int,
+        log_handling_service: LogHandlingService = Depends(get_log_handling_service)) -> Json[Any]:
+    log_handling_service.add_log_retriever_task(
+        log_retriever_task=LogRetrieverTask(sync_id, run_id, collector, before, after))
+    return json.dumps([])

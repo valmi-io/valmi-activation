@@ -35,9 +35,11 @@ LOGGING_CONF:
       stream: ext://sys.stdout 
   loggers:
     valmi:
+      propagate: false
       level: DEBUG
       handlers: [console] 
     vyper:
+      propagate: false
       level: INFO
       handlers: [console]
     requests:
