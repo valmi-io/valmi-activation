@@ -226,7 +226,7 @@ class StoreWriter(NullWriter):
         self.connector_state: ConnectorState = self.engine.connector_state
         store_config = json.loads(os.environ["VALMI_INTERMEDIATE_STORE"])
         if store_config["provider"] == "local":
-            path_name = join(store_config["local"]["directory"], self.connector_state.run_time_args["run_id"])
+            path_name = join(store_config["local"]["directory"], self.connector_state.run_time_args["run_id"], "data")
             os.makedirs(path_name, exist_ok=True)
 
             self.path_name = path_name

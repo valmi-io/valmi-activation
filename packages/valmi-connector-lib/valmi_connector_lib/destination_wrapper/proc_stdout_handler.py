@@ -27,6 +27,8 @@ import json
 import os
 import io
 import threading
+
+from valmi_connector_lib.common.logs import SingletonLogWriter
 from .proc_stdout_event_handlers import LogHandler, CheckpointHandler, DefaultHandler, Engine, TraceHandler
 import logging
 
@@ -65,6 +67,7 @@ class ProcStdoutHandlerThread(threading.Thread):
                     # STATE record is written after every chunk
                     if json_record["type"] == "STATE":
                         if self.engine.abort_required():
+                            SingletonLogWriter.instance().check_for_flush()
                             self.proc.kill()
                             os._exit(0)
 
@@ -83,6 +86,7 @@ class ProcStdoutHandlerThread(threading.Thread):
                 # panic
                 print("Panicking ", str(e))
                 self.engine.error(msg=str(e))
+                SingletonLogWriter.instance().check_for_flush()
                 os._exit(1)
 
     def destroy(self) -> None:

@@ -64,6 +64,8 @@ class LogHandlingService():
             if (str(log_retriever_task) not in self.log_serving_process.result_dict):
                 await asyncio.sleep(0.5)
             else:
-                return self.log_serving_process.result_dict[str(log_retriever_task)]
+                response = self.log_serving_process.result_dict[str(log_retriever_task)]
+                del self.log_serving_process.result_dict[str(log_retriever_task)]
+                return response
 
         raise Exception("Log Serving Process is not alive!")

@@ -87,7 +87,8 @@ class DatastoreCleanerThread(threading.Thread):
                 pruneset = set(dirlist) - set([str(run.run_id) for run in runs])
                 logger.debug("pruneset %s", pruneset)
                 for dir in pruneset:
-                    dir_path = join(store_path, dir)
+                    # cleaning only data folder and not the entire run folder
+                    dir_path = join(store_path, dir, "data")
                     if os.path.exists(dir_path):
                         shutil.rmtree(dir_path)
 

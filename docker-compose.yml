@@ -41,6 +41,7 @@ services:
       DAGSTER_POSTGRES_PASSWORD: ${DAGSTER_POSTGRES_PASSWORD}
       DAGSTER_POSTGRES_DB: ${DAGSTER_POSTGRES_DB}
       ACTIVATION_ENGINE_URL: ${ACTIVATION_ENGINE_URL}
+      VALMI_INTERMEDIATE_STORE: ${VALMI_INTERMEDIATE_STORE}
     volumes: # Make docker client accessible so we can launch containers using host docker
       - /var/run/docker.sock:/var/run/docker.sock
       - /tmp/io_manager_storage:/tmp/io_manager_storage

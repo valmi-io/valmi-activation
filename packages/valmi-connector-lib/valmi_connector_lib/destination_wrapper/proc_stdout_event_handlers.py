@@ -27,6 +27,8 @@ import json
 import os
 from os.path import join
 import time
+
+from valmi_connector_lib.common.logs import SingletonLogWriter
 from .engine import NullEngine, ConnectorState, Engine
 
 # TODO: Constants - need to become env vars
@@ -57,8 +59,8 @@ class StoreReader:
 
         store_config = json.loads(os.environ["VALMI_INTERMEDIATE_STORE"])
         if store_config["provider"] == "local":
-            path_name = join(store_config["local"]["directory"], self.connector_state.run_time_args["run_id"])
-
+            path_name = join(store_config["local"]["directory"], self.connector_state.run_time_args["run_id"], "data")
+            os.makedirs(path_name, exist_ok=True)
             self.path_name = path_name
             self.last_handled_fn = self.get_file_name_from_chunk_id(self.read_chunk_id_checkpoint())
 
@@ -125,6 +127,7 @@ class DefaultHandler:
 
     def handle(self, record) -> bool:
         print(json.dumps(record))
+        SingletonLogWriter.instance().check_for_flush()
         return True
 
 
@@ -133,7 +136,9 @@ class LogHandler(DefaultHandler):
         super(LogHandler, self).__init__(*args, **kwargs)
 
     def handle(self, record) -> bool:
-        print(json.dumps(record))
+        log_str = json.dumps(record)
+        print(log_str)
+        SingletonLogWriter.instance().write(log_str)
         return
 
 
@@ -161,6 +166,9 @@ class CheckpointHandler(DefaultHandler):
             # self.engine.connector_state.register_chunk()
         if commit_state:
             self.engine.checkpoint(record)
+            SingletonLogWriter.instance().data_chunk_flush_callback()
+        else:
+            SingletonLogWriter.instance().check_for_flush()
 
         return True
 
@@ -170,6 +178,7 @@ class RecordHandler(DefaultHandler):
         super(RecordHandler, self).__init__(*args, **kwargs)
 
     def handle(self, record) -> bool:
+        SingletonLogWriter.instance().check_for_flush()
         return True  # to continue reading
 
 
@@ -179,5 +188,6 @@ class TraceHandler(DefaultHandler):
 
     def handle(self, record):
         print(json.dumps(record))
+        SingletonLogWriter.instance().check_for_flush()
         self.engine.error(record["trace"]["error"]["message"])
         return False

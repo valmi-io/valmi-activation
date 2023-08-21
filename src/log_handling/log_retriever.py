@@ -52,13 +52,14 @@ class LogRetrieverTask(object):
 
     def __call__(self):
         store_config = json.loads(v.get("VALMI_INTERMEDIATE_STORE"))
+        '''
         #  TESTING
         store_config['local']['directory'] = "/workspace/test_data/logs/runs/"
         #  TESTING
-
+        '''
         storage = StorageFactory.get_storage(
             store_config,
-            'f4bd1a4e-27ba-4347-a83a-8a7fc29b1141', self.collector, self.before, self.since)
+            self.run_id, self.collector, self.before, self.since)
         files, meta = storage.list_files()
 
         # There is a possibility with this scheme that we might return the same line twice,
@@ -121,7 +122,7 @@ class LocalStorage(Storage):
         if self.since is None and self.before is None:
             return []
 
-        dir_name = join(self.store_config["local"]["directory"], self.run_id, self.collector)
+        dir_name = join(self.store_config["local"]["directory"], str(self.run_id), "logs", self.collector)
         list_dir = sorted([f.lower() for f in os.listdir(dir_name) if f.endswith('.vall')], key=lambda x: int(x[:-5]))
 
         filtered_list = []
@@ -157,23 +158,23 @@ class LocalStorage(Storage):
                     "lines": []}
 
         con = db.connect(':memory:')
-        '''
         time_filter = ""
         if self.since is not None:
             time_filter = "WHERE timestamp_micros >= %s" % self.since
         elif self.before is not None:
             time_filter = "WHERE timestamp_micros < %s" % self.before
         con.execute(
-            "SELECT * FROM read_csv(%s, sep='%s', columns={'timestamp_micros': 'INTEGER', 'message': 'VARCHAR'}) \
+            "SELECT * FROM read_csv(%s, sep='%s', columns={'timestamp_micros': 'BIGINT', 'message': 'VARCHAR'}) \
             %s \
             ORDER BY timestamp_micros ASC"
             % (files_list, MAGIC_DELIM, time_filter))
         '''
         con.execute(
-            "SELECT * FROM read_csv(%s, sep='%s', columns={'timestamp_micros': 'INTEGER', 'message': 'VARCHAR'}) \
+            "SELECT * FROM read_csv(%s, sep='%s', columns={'timestamp_micros': 'BIGINT', 'message': 'VARCHAR'}) \
             \
             ORDER BY timestamp_micros ASC"
             % (files_list, MAGIC_DELIM))
+        '''
         lines = con.fetchall()
         return {"meta": meta, "lines": lines}
 

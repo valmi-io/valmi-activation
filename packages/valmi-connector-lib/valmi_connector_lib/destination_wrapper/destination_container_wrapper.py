@@ -29,6 +29,10 @@ import sys
 import subprocess
 import io
 from typing import Any, Dict
+
+from valmi_connector_lib.common.logs import SingletonLogWriter, TimeAndChunkEndFlushPolicy
+from valmi_connector_lib.destination_wrapper.engine import CONNECTOR_STRING
+
 from .proc_stdout_handler import ProcStdoutHandlerThread
 from .proc_stdout_event_handlers import (
     Engine,
@@ -155,7 +159,14 @@ def main():
             sys.exit(return_code)
 
     elif airbyte_command in ["write"]:
-        # initialize handlers
+        # initialize LogWriter
+        SingletonLogWriter(os.environ["VALMI_INTERMEDIATE_STORE"],
+                           TimeAndChunkEndFlushPolicy(os.environ["VALMI_INTERMEDIATE_STORE"]),
+                           engine.connector_state.run_time_args["sync_id"],
+                           engine.connector_state.run_time_args["run_id"],
+                           CONNECTOR_STRING)
+
+        # initialize handler
         for key in handlers.keys():
             handlers[key] = handlers[key](engine=engine, store_writer=None, stdout_writer=None)
 
