@@ -29,7 +29,7 @@ import uuid
 import json
 
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from fastapi import Depends
 
@@ -343,14 +343,15 @@ async def get_run_samples(
     # return sync_runs_service.list()
 
 
-@router.get("/{sync_id}/runs/{run_id}/logs", response_model=Json[Any])
+@router.get("/{sync_id}/runs/{run_id}/logs", response_model=dict)
 async def get_logs(
         sync_id: UUID4,
         run_id: UUID4,
         collector: str,
-        before: int,
-        after: int,
-        log_handling_service: LogHandlingService = Depends(get_log_handling_service)) -> Json[Any]:
+        since: Optional[int] = None,
+        before: Optional[int] = None,
+        log_handling_service: LogHandlingService = Depends(get_log_handling_service)) -> dict:
+    log_retriever_task = LogRetrieverTask(sync_id, run_id, collector, before, since)
     log_handling_service.add_log_retriever_task(
-        log_retriever_task=LogRetrieverTask(sync_id, run_id, collector, before, after))
-    return json.dumps([])
+        log_retriever_task=log_retriever_task)
+    return await log_handling_service.read_log_retriever_data(log_retriever_task=log_retriever_task)

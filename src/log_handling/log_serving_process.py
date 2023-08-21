@@ -88,6 +88,12 @@ class LogServingProcess(multiprocessing.Process):
                     self.task_queue.task_done()
                 break
             self.logger.info('%s: %s' % (proc_name, next_task))
-            answer = next_task()
-            self.result_dict[next_task] = answer
+            try:
+                answer = next_task()
+            except:
+                self.logger.exception("Exception occurred while processing task")
+                answer = None
+                pass
+            self.result_dict[str(next_task)] = answer
+
             self.task_queue.task_done()
