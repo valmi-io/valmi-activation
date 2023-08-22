@@ -1,19 +1,19 @@
 import os
 connectors = {
-    "destination-webhook": "0.1.10",
-    "destination-stripe": "0.1.5",
-    "destination-slack": "0.1.5",
-    "destination-hubspot": "0.1.5",
-    "destination-google-sheets": "0.1.5",
-    "destination-google-ads": "0.1.5",
-    "destination-gong": "0.1.5",
-    "destination-facebook-ads": "0.1.5",
-    "destination-customer-io": "0.1.5",
-    "destination-android-push-notifications": "0.1.6",
+    "destination-webhook": "0.1.11",
+    "destination-stripe": "0.1.6",
+    "destination-slack": "0.1.6",
+    "destination-hubspot": "0.1.6",
+    "destination-google-sheets": "0.1.6",
+    "destination-google-ads": "0.1.6",
+    "destination-gong": "0.1.6",
+    "destination-facebook-ads": "0.1.6",
+    "destination-customer-io": "0.1.6",
+    "destination-android-push-notifications": "0.1.7",
                                         
-    "source-redshift": "0.1.8",
-    "source-snowflake": "0.1.8",
-    "source-postgres": "0.1.8"
+    "source-redshift": "0.1.9",
+    "source-snowflake": "0.1.9",
+    "source-postgres": "0.1.9"
 }
 
 valmi_core = "0.1.13"
