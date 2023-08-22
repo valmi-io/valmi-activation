@@ -127,7 +127,8 @@ class DefaultHandler:
 
     def handle(self, record) -> bool:
         print(json.dumps(record))
-        SingletonLogWriter.instance().check_for_flush()
+        if SingletonLogWriter.instance() is not None:
+            SingletonLogWriter.instance().check_for_flush()
         return True
 
 
@@ -138,7 +139,8 @@ class LogHandler(DefaultHandler):
     def handle(self, record) -> bool:
         log_str = json.dumps(record)
         print(log_str)
-        SingletonLogWriter.instance().write(log_str)
+        if SingletonLogWriter.instance() is not None:
+            SingletonLogWriter.instance().write(log_str)
         return
 
 
@@ -166,9 +168,11 @@ class CheckpointHandler(DefaultHandler):
             # self.engine.connector_state.register_chunk()
         if commit_state:
             self.engine.checkpoint(record)
-            SingletonLogWriter.instance().data_chunk_flush_callback()
+            if SingletonLogWriter.instance() is not None:
+                SingletonLogWriter.instance().data_chunk_flush_callback()
         else:
-            SingletonLogWriter.instance().check_for_flush()
+            if SingletonLogWriter.instance() is not None:
+                SingletonLogWriter.instance().check_for_flush()
 
         return True
 
@@ -178,7 +182,8 @@ class RecordHandler(DefaultHandler):
         super(RecordHandler, self).__init__(*args, **kwargs)
 
     def handle(self, record) -> bool:
-        SingletonLogWriter.instance().check_for_flush()
+        if SingletonLogWriter.instance() is not None:
+            SingletonLogWriter.instance().check_for_flush()
         return True  # to continue reading
 
 
@@ -188,6 +193,7 @@ class TraceHandler(DefaultHandler):
 
     def handle(self, record):
         print(json.dumps(record))
-        SingletonLogWriter.instance().check_for_flush()
+        if SingletonLogWriter.instance() is not None:
+            SingletonLogWriter.instance().check_for_flush()
         self.engine.error(record["trace"]["error"]["message"])
         return False

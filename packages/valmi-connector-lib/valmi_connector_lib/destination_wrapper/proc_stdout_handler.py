@@ -67,7 +67,8 @@ class ProcStdoutHandlerThread(threading.Thread):
                     # STATE record is written after every chunk
                     if json_record["type"] == "STATE":
                         if self.engine.abort_required():
-                            SingletonLogWriter.instance().check_for_flush()
+                            if SingletonLogWriter.instance() is not None:
+                                SingletonLogWriter.instance().check_for_flush()
                             self.proc.kill()
                             os._exit(0)
 
@@ -86,7 +87,8 @@ class ProcStdoutHandlerThread(threading.Thread):
                 # panic
                 print("Panicking ", str(e))
                 self.engine.error(msg=str(e))
-                SingletonLogWriter.instance().check_for_flush()
+                if SingletonLogWriter.instance() is not None:
+                    SingletonLogWriter.instance().check_for_flush()
                 os._exit(1)
 
     def destroy(self) -> None:

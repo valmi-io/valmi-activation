@@ -35,6 +35,8 @@ from pydantic import UUID4
 import requests
 from requests.adapters import HTTPAdapter, Retry
 
+from valmi_connector_lib.common.logs import SingletonLogWriter, TimeAndChunkEndFlushPolicy
+
 # TODO: Constants - need to become env vars
 MAGIC_NUM = 0x7FFFFFFF
 HTTP_TIMEOUT = 3  # seconds
@@ -267,6 +269,8 @@ class DefaultHandler:
 
     def handle(self, record):
         print(json.dumps(record))
+        if SingletonLogWriter.instance() is not None:
+            SingletonLogWriter.instance().check_for_flush()
 
     def finalize(self):
         pass
@@ -277,7 +281,10 @@ class LogHandler(DefaultHandler):
         super(LogHandler, self).__init__(*args, **kwargs)
 
     def handle(self, record):
-        print(json.dumps(record))
+        log_str = json.dumps(record)
+        print(log_str)
+        if SingletonLogWriter.instance() is not None:
+            SingletonLogWriter.instance().write(log_str)
 
 
 class CheckpointHandler(DefaultHandler):
@@ -287,6 +294,8 @@ class CheckpointHandler(DefaultHandler):
     def handle(self, record):
         print(json.dumps(record))
         self.engine.checkpoint(record)
+        if SingletonLogWriter.instance() is not None:
+            SingletonLogWriter.instance().data_chunk_flush_callback()
 
 
 class RecordHandler(DefaultHandler):
@@ -295,6 +304,8 @@ class RecordHandler(DefaultHandler):
 
     def handle(self, record):
         self.store_writer.write(record)
+        if SingletonLogWriter.instance() is not None:
+            SingletonLogWriter.instance().check_for_flush()
 
     def finalize(self):
         self.store_writer.finalize()
@@ -306,6 +317,8 @@ class TraceHandler(DefaultHandler):
 
     def handle(self, record):
         print(json.dumps(record))
+        if SingletonLogWriter.instance() is not None:
+            SingletonLogWriter.instance().check_for_flush()
         if record["trace"]["type"] == "ERROR":
             self.engine.error(record["trace"]["error"]["message"])
             sys.exit(0)
@@ -414,6 +427,14 @@ def main():
     # populate run_time_args
     populate_run_time_args(airbyte_command, engine, config_file_path=config_file)
 
+    if airbyte_command == "read":
+        # initialize LogWriter
+        SingletonLogWriter(os.environ["VALMI_INTERMEDIATE_STORE"],
+                           TimeAndChunkEndFlushPolicy(os.environ["VALMI_INTERMEDIATE_STORE"]),
+                           engine.connector_state.run_time_args["sync_id"],
+                           engine.connector_state.run_time_args["run_id"],
+                           CONNECTOR_STRING)
+
     stdout_writer = StdoutWriter(engine)
 
     # initialize handlers
@@ -448,6 +469,11 @@ def main():
                 sync_engine_for_error(proc, engine=engine)
 
     return_code = proc.poll()
+
+    # littered code with log flushes. What's better?
+    if SingletonLogWriter.instance() is not None:
+        SingletonLogWriter.instance().check_for_flush()
+
     if return_code is not None and return_code != 0:
         engine.error("Connector exited with non-zero return code")
         sys.exit(return_code)

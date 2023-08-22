@@ -164,13 +164,15 @@ class SingletonLogWriter(LogWriter):
     def __init__(self, store_config, flush_policy, sync_id, run_id, connector):
         if SingletonLogWriter.__initialized:
             return
-        
+
         SingletonLogWriter.__initialized = True
         super(SingletonLogWriter, self).__init__(store_config, flush_policy, sync_id, run_id, connector)
 
     @classmethod
     def instance(cls):
-        return cls._instance
+        if hasattr(cls, "_instance"):
+            return cls._instance
+        return None
 
 
 def main():
