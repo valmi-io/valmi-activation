@@ -9,8 +9,7 @@ from airbyte_cdk.models import (
     Type
 )
 from uuid import uuid4
-
-MAGIC_DELIM = ":zZ9Vy9:"
+from .constants import MAGIC_DELIM
 
 
 class SampleWriter:

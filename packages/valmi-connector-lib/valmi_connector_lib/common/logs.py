@@ -28,8 +28,7 @@ import json
 from os.path import join
 import time
 import os
-
-MAGIC_DELIM = ":zZ9Vy9:"
+from .constants import MAGIC_DELIM
 
 
 class LogWriter:
