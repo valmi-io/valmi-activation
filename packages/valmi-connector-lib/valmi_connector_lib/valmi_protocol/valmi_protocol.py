@@ -162,3 +162,5 @@ class ValmiFinalisedRecordMessage(AirbyteRecordMessage):
     rejection_message: str = Field(..., description="Message for rejection.")
     rejection_code: str = Field(..., description="Code for rejection.")
     metric_type: str = Field(..., description="Metric type for rejection.")
+    synthetic_record_id: str = Field(..., description="Artificial unique record id for the record, \
+                                     used for dedup within a sync.")
