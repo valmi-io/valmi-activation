@@ -1,7 +1,7 @@
 '''
 Copyright (c) 2023 valmi.io <https://github.com/valmi-io>
 
-Created Date: Thursday, August 17th 2023, 2:02:46 pm
+Created Date: Wednesday, August 23rd 2023, 2:45:49 pm
 Author: Rajashekar Varkala @ valmi.io
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -23,25 +23,25 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 '''
 
-from log_handling.log_serving_process import LogServingProcess
-from log_handling.log_retriever import LogRetrieverTask
+from sample_handling.sample_serving_process import SampleServingProcess
+from sample_handling.sample_retriever import SampleRetrieverTask
 import multiprocessing
 import asyncio
 
 
-class LogHandlingService():
+class SampleHandlingService():
     __initialized = False
 
     def __new__(cls) -> object:
         if not hasattr(cls, "instance"):
-            cls.instance = super(LogHandlingService, cls).__new__(cls)
+            cls.instance = super(SampleHandlingService, cls).__new__(cls)
         return cls.instance
 
     def __init__(self):
-        if LogHandlingService.__initialized:
+        if SampleHandlingService.__initialized:
             return
         
-        LogHandlingService.__initialized = True
+        SampleHandlingService.__initialized = True
         
         multiprocessing.set_start_method("spawn", force=True)
         self.mgr = multiprocessing.Manager()
@@ -49,24 +49,24 @@ class LogHandlingService():
         self.task_queue = multiprocessing.JoinableQueue()
         self.exit_flag_event = multiprocessing.Event()
 
-        self.log_serving_process = LogServingProcess(task_queue=self.task_queue,
-                                                     result_dict=self.result_dict, exit_flag_event=self.exit_flag_event)
-        self.log_serving_process.start()
+        self.sample_serving_process = SampleServingProcess(task_queue=self.task_queue,
+                                                           result_dict=self.result_dict, exit_flag_event=self.exit_flag_event)
+        self.sample_serving_process.start()
 
-    def exit_log_serving_process(self):
-        self.log_serving_process.exit_flag_event.set()
-        self.log_serving_process.join()
+    def exit_sample_serving_process(self):
+        self.sample_serving_process.exit_flag_event.set()
+        self.sample_serving_process.join()
 
-    def add_log_retriever_task(self, log_retriever_task: LogRetrieverTask):
-        self.log_serving_process.task_queue.put(log_retriever_task)
+    def add_sample_retriever_task(self, sample_retriever_task: SampleRetrieverTask):
+        self.sample_serving_process.task_queue.put(sample_retriever_task)
 
-    async def read_log_retriever_data(self, log_retriever_task: LogRetrieverTask):
-        while self.log_serving_process.is_alive():
-            if (str(log_retriever_task) not in self.log_serving_process.result_dict):
+    async def read_sample_retriever_data(self, sample_retriever_task: SampleRetrieverTask):
+        while self.sample_serving_process.is_alive():
+            if (str(sample_retriever_task) not in self.sample_serving_process.result_dict):
                 await asyncio.sleep(0.5)
             else:
-                response = self.log_serving_process.result_dict[str(log_retriever_task)]
-                del self.log_serving_process.result_dict[str(log_retriever_task)]
+                response = self.sample_serving_process.result_dict[str(sample_retriever_task)]
+                del self.sample_serving_process.result_dict[str(sample_retriever_task)]
                 return response
 
-        raise Exception("Log Serving Process is not alive!")
+        raise Exception("Sample Serving Process is not alive!")

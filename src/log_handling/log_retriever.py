@@ -176,7 +176,7 @@ class LocalStorage(Storage):
             % (files_list, MAGIC_DELIM))
         '''
         lines = con.fetchall()
-        return {"meta": meta, "lines": lines}
+        return {"meta": meta, "logs": lines}
 
 
 def main():

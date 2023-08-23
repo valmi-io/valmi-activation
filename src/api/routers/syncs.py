@@ -48,9 +48,13 @@ from api.services import (
     SyncRunsService,
     get_sync_runs_service,
     LogHandlingService,
+    SampleHandlingService,
     get_log_handling_service,
+    get_sample_handling_service,
 )
 from log_handling.log_retriever import LogRetrieverTask
+from sample_handling.sample_retriever import SampleRetrieverTask
+
 from api.schemas.utils import assign_metrics_to_run
 from sqlalchemy.orm.attributes import flag_modified
 
@@ -355,3 +359,16 @@ async def get_logs(
     log_handling_service.add_log_retriever_task(
         log_retriever_task=log_retriever_task)
     return await log_handling_service.read_log_retriever_data(log_retriever_task=log_retriever_task)
+
+
+@router.get("/{sync_id}/runs/{run_id}/samples", response_model=dict)
+async def get_samples(
+        sync_id: UUID4,
+        run_id: UUID4,
+        collector: str,
+        metric_type: str,
+        sample_handling_service: SampleHandlingService = Depends(get_sample_handling_service)) -> dict:
+    sample_retriever_task = SampleRetrieverTask(sync_id, run_id, collector, metric_type)
+    sample_handling_service.add_sample_retriever_task(
+        sample_retriever_task=sample_retriever_task)
+    return await sample_handling_service.read_sample_retriever_data(sample_retriever_task=sample_retriever_task)

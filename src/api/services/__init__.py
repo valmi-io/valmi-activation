@@ -8,6 +8,7 @@ from .syncs import SyncsService
 from .sync_runs import SyncRunsService
 from .metrics import MetricsService
 from .log_handling_service import LogHandlingService
+from .sample_handling_service import SampleHandlingService
 
 
 def get_syncs_service(db_session: Session = Depends(get_session)) -> SyncsService:
@@ -24,6 +25,11 @@ def get_metrics_service() -> MetricsService:
 
 def get_log_handling_service() -> LogHandlingService:
     return LogHandlingService()
+
+
+def get_sample_handling_service() -> SampleHandlingService:
+    return SampleHandlingService()
+
 
 
 __all__ = (

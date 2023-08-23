@@ -62,7 +62,7 @@ class SampleWriter:
                 for record in self.records:
                     f.write(record.record.rejection_code if record.record.rejected else "200")
                     f.write(MAGIC_DELIM)
-                    f.write(record.record.synthetic_record_id if record.record.synthetic_record_id else str(uuid4()))
+                    f.write(record.record.synthetic_internal_id if record.record.synthetic_internal_id else str(uuid4()))
                     f.write(MAGIC_DELIM)
                     f.write(json.dumps(record.record.data if record.record.data else {}))
                     f.write(MAGIC_DELIM)
@@ -113,7 +113,7 @@ def main():
     for i in range(100000):
         sample_writer = SampleWriter.get_writer_by_metric_type(store_config_str, "sync_id", "run_id", "connector", "succeeded")
         sample_writer.write(AirbyteMessage(type=Type.RECORD,
-                                           record=ValmiFinalisedRecordMessage(synthetic_record_id="",
+                                           record=ValmiFinalisedRecordMessage(synthetic_internal_id="",
                                             data={"a": "b"},
                                             rejected=False if i%2 == 0 else True,
                                             metric_type="success" if i%2 == 0 else "failed",
