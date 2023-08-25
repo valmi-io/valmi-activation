@@ -36,6 +36,7 @@ import requests
 from requests.adapters import HTTPAdapter, Retry
 
 from valmi_connector_lib.common.logs import SingletonLogWriter, TimeAndChunkEndFlushPolicy
+from valmi_connector_lib.common.samples import SampleWriter
 
 # TODO: Constants - need to become env vars
 MAGIC_NUM = 0x7FFFFFFF
@@ -296,6 +297,7 @@ class CheckpointHandler(DefaultHandler):
         self.engine.checkpoint(record)
         if SingletonLogWriter.instance() is not None:
             SingletonLogWriter.instance().data_chunk_flush_callback()
+        SampleWriter.data_chunk_flush_callback()
 
 
 class RecordHandler(DefaultHandler):
@@ -306,6 +308,9 @@ class RecordHandler(DefaultHandler):
         self.store_writer.write(record)
         if SingletonLogWriter.instance() is not None:
             SingletonLogWriter.instance().check_for_flush()
+        # print(record)
+        sample_writer = SampleWriter.get_writer_by_metric_type(metric_type=record["record"]["metric_type"])
+        sample_writer.write(record)
 
     def finalize(self):
         self.store_writer.finalize()
@@ -434,6 +439,12 @@ def main():
                            engine.connector_state.run_time_args["sync_id"],
                            engine.connector_state.run_time_args["run_id"],
                            CONNECTOR_STRING)
+
+        # initialize SampleWriter
+        SampleWriter.get_writer_by_metric_type(store_config_str=os.environ["VALMI_INTERMEDIATE_STORE"],
+                                               sync_id=engine.connector_state.run_time_args["sync_id"],
+                                               run_id=engine.connector_state.run_time_args["run_id"],
+                                               connector=CONNECTOR_STRING)
 
     stdout_writer = StdoutWriter(engine)
 

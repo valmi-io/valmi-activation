@@ -29,6 +29,8 @@ from os.path import join
 import time
 
 from valmi_connector_lib.common.logs import SingletonLogWriter
+from valmi_connector_lib.common.samples import SampleWriter
+
 from .engine import NullEngine, ConnectorState, Engine
 
 # TODO: Constants - need to become env vars
@@ -170,6 +172,7 @@ class CheckpointHandler(DefaultHandler):
             self.engine.checkpoint(record)
             if SingletonLogWriter.instance() is not None:
                 SingletonLogWriter.instance().data_chunk_flush_callback()
+            SampleWriter.data_chunk_flush_callback()
         else:
             if SingletonLogWriter.instance() is not None:
                 SingletonLogWriter.instance().check_for_flush()
@@ -184,6 +187,9 @@ class RecordHandler(DefaultHandler):
     def handle(self, record) -> bool:
         if SingletonLogWriter.instance() is not None:
             SingletonLogWriter.instance().check_for_flush()
+
+        sample_writer = SampleWriter.get_writer_by_metric_type(metric_type=record["record"]["metric_type"])
+        sample_writer.write(record)
         return True  # to continue reading
 
 

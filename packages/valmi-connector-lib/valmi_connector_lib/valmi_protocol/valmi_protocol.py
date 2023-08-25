@@ -157,10 +157,10 @@ class ConfiguredValmiCatalog(ConfiguredAirbyteCatalog):
 
 
 class ValmiFinalisedRecordMessage(AirbyteRecordMessage):
-    rejected: bool = Field(..., description="Record is rejected.")
-    rejection_metadata: Dict[str, Any] = Field(..., description="Metadata for rejection.")
-    rejection_message: str = Field(..., description="Message for rejection.")
-    rejection_code: str = Field(..., description="Code for rejection.")
-    metric_type: str = Field(..., description="Metric type for rejection.")
-    synthetic_internal_id: str = Field(..., description="Artificial unique record id for the record, \
+    rejected: Optional[bool] = Field(default=False, description="Record is rejected.")
+    rejection_metadata: Optional[Dict[str, Any]] = Field(description="Metadata for rejection.")
+    rejection_message: Optional[str] = Field(description="Message for rejection.")
+    rejection_code: Optional[str] = Field(description="Code for rejection.")
+    metric_type: str = Field(..., description="Metric type for the record.")
+    synthetic_internal_id: Optional[str] = Field(description="Artificial unique record id for the record, \
                                      used for dedup within a sync.")

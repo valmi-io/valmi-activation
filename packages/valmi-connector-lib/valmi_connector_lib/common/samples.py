@@ -1,12 +1,10 @@
 from abc import abstractmethod
 import json
 from os.path import join
-import time
 import os
 from typing import List
 from airbyte_cdk.models import (
-    AirbyteMessage,
-    Type
+    AirbyteMessage
 )
 from uuid import uuid4
 from .constants import MAGIC_DELIM
@@ -14,17 +12,36 @@ from .constants import MAGIC_DELIM
 
 class SampleWriter:
     writers = {}
+    sync_id = None
+    store_config_str = None
+    run_id = None
+    connector = None
+    metric_type = None
 
     @classmethod
-    def get_writer_by_metric_type(cls, store_config_str, sync_id, run_id, connector, metric_type):
-        if metric_type not in SampleWriter.writers or SampleWriter.writers[metric_type] is None:
-            SampleWriter.writers[metric_type] = SampleWriter(store_config_str,
-                                                             ChunkEndFlushPolicy(store_config_str=store_config_str),
-                                                             sync_id,
-                                                             run_id,
-                                                             connector,
+    def get_writer_by_metric_type(cls, store_config_str=None,
+                                  sync_id=None, run_id=None, connector=None, metric_type=None):
+        if sync_id is not None:
+            SampleWriter.sync_id = sync_id
+        if store_config_str is not None:
+            SampleWriter.store_config_str = store_config_str
+        if run_id is not None:
+            SampleWriter.run_id = run_id
+        if connector is not None:
+            SampleWriter.connector = connector
+
+        if metric_type is not None and \
+            (metric_type not in SampleWriter.writers
+             or SampleWriter.writers[metric_type] is None):
+            SampleWriter.writers[metric_type] = SampleWriter(SampleWriter.store_config_str,
+                                                             ChunkEndFlushPolicy(store_config_str=SampleWriter.store_config_str),
+                                                             SampleWriter.sync_id,
+                                                             SampleWriter.run_id,
+                                                             SampleWriter.connector,
                                                              metric_type)
-        return SampleWriter.writers[metric_type]
+        if metric_type is not None:
+            return SampleWriter.writers[metric_type]
+        return None
 
     def __new__(cls, *args, **kwargs):
         return object.__new__(cls)
@@ -60,20 +77,22 @@ class SampleWriter:
             os.makedirs(dir_name, exist_ok=True)
             with open(file_path, "a+") as f:
                 for record in self.records:
-                    f.write(record.record.rejection_code if record.record.rejected else "200")
+                    f.write(record["record"]["rejection_code"] if "rejected" in record["record"] and record["record"]["rejected"] else "200")
                     f.write(MAGIC_DELIM)
-                    f.write(record.record.synthetic_internal_id if record.record.synthetic_internal_id else str(uuid4()))
+                    f.write(record["record"]["synthetic_internal_id"] if "synthetic_internal_id" in record["record"] and record["record"]["synthetic_internal_id"] else str(uuid4()))
                     f.write(MAGIC_DELIM)
-                    f.write(json.dumps(record.record.data if record.record.data else {}))
+                    f.write(json.dumps(record["record"]["data"] if "data" in record["record"] and record["record"]["data"] else {}))
                     f.write(MAGIC_DELIM)
-                    f.write(record.record.rejection_message if record.record.rejection_message else "")
+                    f.write(record["record"]["rejection_message"] if "rejection_message" in record["record"] and record["record"]["rejection_message"] else "")
                     f.write(MAGIC_DELIM)
-                    f.write(json.dumps(record.record.rejection_metadata if record.record.rejection_metadata else {}))
+                    f.write(json.dumps(record["record"]["rejection_metadata"] if "rejection_metadata" in record["record"] and record["record"]["rejection_metadata"] else {}))
                     f.write("\n")
 
-    def data_chunk_flush_callback(self):
-        self.flush_policy.set_data_chunk_flushed()
-        self.check_for_flush()
+    @classmethod
+    def data_chunk_flush_callback(cls):
+        for k, writer in SampleWriter.writers.items():
+            writer.flush_policy.set_data_chunk_flushed()
+            writer.check_for_flush()
 
 
 class FlushPolicy:
@@ -108,6 +127,7 @@ class ChunkEndFlushPolicy(FlushPolicy):
 
 def main():
     from ..valmi_protocol import ValmiFinalisedRecordMessage
+    import time
     store_config_str = "{\"provider\": \"local\", \"local\": {\"directory\": \"/tmp/shared_dir/test_logs\", \"max_lines_per_file_hint\" : 100, \"log_flush_interval\": 5}}"
 
     for i in range(100000):

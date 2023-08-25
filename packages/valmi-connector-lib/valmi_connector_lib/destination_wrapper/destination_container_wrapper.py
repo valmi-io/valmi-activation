@@ -31,6 +31,7 @@ import io
 from typing import Any, Dict
 
 from valmi_connector_lib.common.logs import SingletonLogWriter, TimeAndChunkEndFlushPolicy
+from valmi_connector_lib.common.samples import SampleWriter
 from valmi_connector_lib.destination_wrapper.engine import CONNECTOR_STRING
 
 from .proc_stdout_handler import ProcStdoutHandlerThread
@@ -165,6 +166,12 @@ def main():
                            engine.connector_state.run_time_args["sync_id"],
                            engine.connector_state.run_time_args["run_id"],
                            CONNECTOR_STRING)
+        
+        # initialize SampleWriter
+        SampleWriter.get_writer_by_metric_type(store_config_str=os.environ["VALMI_INTERMEDIATE_STORE"],
+                                               sync_id=engine.connector_state.run_time_args["sync_id"],
+                                               run_id=engine.connector_state.run_time_args["run_id"],
+                                               connector=CONNECTOR_STRING)
 
         # initialize handler
         for key in handlers.keys():

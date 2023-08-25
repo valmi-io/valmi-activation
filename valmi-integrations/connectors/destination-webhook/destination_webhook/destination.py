@@ -61,6 +61,7 @@ class WebhookWriter(DestinationWriteWrapper):
         msg,
         counter,
     ) -> HandlerResponseData:
+        # self.logger.info(f"Handling message {msg}")
         self.http_handler.handle(
             self.config,
             self.configured_destination_catalog,
