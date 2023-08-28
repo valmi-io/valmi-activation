@@ -1,6 +1,6 @@
 import os
 connectors = {
-    "destination-webhook": "0.1.11",
+    "destination-webhook": "0.1.12",
     "destination-stripe": "0.1.6",
     "destination-slack": "0.1.6",
     "destination-hubspot": "0.1.6",
@@ -11,9 +11,9 @@ connectors = {
     "destination-customer-io": "0.1.6",
     "destination-android-push-notifications": "0.1.7",
                                         
-    "source-redshift": "0.1.9",
-    "source-snowflake": "0.1.9",
-    "source-postgres": "0.1.9"
+    "source-redshift": "0.1.10",
+    "source-snowflake": "0.1.10",
+    "source-postgres": "0.1.10"
 }
 
 valmi_core = "0.1.13"

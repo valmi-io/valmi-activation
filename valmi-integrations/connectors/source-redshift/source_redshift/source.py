@@ -47,7 +47,7 @@ from airbyte_cdk.models import (
 from airbyte_cdk.sources import Source
 from valmi_dbt.dbt_airbyte_adapter import DbtAirbyteAdpater
 from valmi_connector_lib.valmi_protocol import add_event_meta
-from valmi_connector_lib.valmi_protocol import ValmiCatalog, ValmiStream, ConfiguredValmiCatalog, DestinationSyncMode
+from valmi_connector_lib.valmi_protocol import ValmiFinalisedRecordMessage, ValmiCatalog, ValmiStream, ConfiguredValmiCatalog, DestinationSyncMode
 from fal import FalDbt
 from dbt.contracts.results import RunResultOutput, RunStatus
 
@@ -224,10 +224,12 @@ class SourceRedshift(Source):
 
                 yield AirbyteMessage(
                     type=Type.RECORD,
-                    record=AirbyteRecordMessage(
+                    record=ValmiFinalisedRecordMessage(
                         stream=catalog.streams[0].stream.name,
                         data=data,
                         emitted_at=int(datetime.now().timestamp()) * 1000,
+                        metric_type="success",
+                        rejected=False
                     ),
                 )
             if len(agate_table.rows) <= 0:

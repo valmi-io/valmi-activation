@@ -305,7 +305,9 @@ class RecordHandler(DefaultHandler):
         super(RecordHandler, self).__init__(*args, **kwargs)
 
     def handle(self, record):
-        self.store_writer.write(record)
+        if not record["record"]["rejected"]:
+            self.store_writer.write(record)
+
         if SingletonLogWriter.instance() is not None:
             SingletonLogWriter.instance().check_for_flush()
         # print(record)

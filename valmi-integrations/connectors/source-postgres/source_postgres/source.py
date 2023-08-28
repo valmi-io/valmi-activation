@@ -236,7 +236,8 @@ class SourcePostgres(Source):
                         stream=catalog.streams[0].stream.name,
                         data=data,
                         emitted_at=int(datetime.now().timestamp()) * 1000,
-                        metric_type="success"
+                        metric_type="success",
+                        rejected=False
                     ),
                 )
             if len(agate_table.rows) <= 0:
@@ -252,6 +253,36 @@ class SourcePostgres(Source):
     def read_catalog(self, catalog_path: str) -> ConfiguredValmiCatalog:
         return ConfiguredValmiCatalog.parse_obj(self._read_json_file(catalog_path))
 
+    '''
+    def generate_samples_for_ignored_data(self, faldbt, logger, sync_id, catalog) -> Generator[AirbyteMessage, None, None]:
+        columns = catalog.streams[0].stream.json_schema["properties"].keys()
+        adapter_resp, agate_table = self.dbt_adapter.execute_sql(
+            faldbt,
+             "SELECT {1} \
+                    FROM {{{{ ref('ignored_snapshot_{0}') }}}} LIMIT {2}".format(sync_id, ",".join([f'"{col}"' for col in columns]),)
+        )
+
+        for row in agate_table.rows:
+            data: Dict[str, Any] = {}
+            for i in range(len(row)):
+                if agate_table.column_names[i].startswith("_valmi"):
+                    add_event_meta(data, agate_table.column_names[i], row[i])
+                else:
+                    data[agate_table.column_names[i]] = row[i]
+            last_row_num = row[0]
+
+            yield AirbyteMessage(
+                type=Type.RECORD,
+                record=ValmiFinalisedRecordMessage(
+                    stream=catalog.streams[0].stream.name,
+                    data=data,
+                    emitted_at=int(datetime.now().timestamp()) * 1000,
+                    metric_type="success",
+                    rejected=True
+                ),
+            )
+    '''
+    
     def generate_sync_metrics(self, faldbt, logger, sync_id, catalog) -> Generator[AirbyteMessage, None, None]:
         adapter_resp, agate_table = self.dbt_adapter.execute_sql(
             faldbt,

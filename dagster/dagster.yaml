@@ -16,6 +16,7 @@ run_launcher:
       - DAGSTER_POSTGRES_DB
       - ACTIVATION_ENGINE_URL
       - VALMI_INTERMEDIATE_STORE
+      - NUM_SAMPLES_PER_CODE
     network: valmi-network
     container_kwargs:
       volumes: # Make docker client accessible to any launched containers as well

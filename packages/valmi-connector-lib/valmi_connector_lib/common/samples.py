@@ -1,4 +1,5 @@
 from abc import abstractmethod
+from collections import defaultdict
 import json
 from os.path import join
 import os
@@ -54,6 +55,8 @@ class SampleWriter:
         self.run_id = run_id
         self.connector = connector
         self.metric_type = metric_type
+        self.num_samples_per_code = os.environ.get("NUM_SAMPLES_PER_CODE", 10)
+        self.sample_counter: dict[str, int] = defaultdict(lambda: 0)
 
     def reset(self):
         self.records.clear()
@@ -65,8 +68,11 @@ class SampleWriter:
             self.reset()
 
     def write(self, json_log_record):
-        # TODO: Use sampling logic here
-        self.records.append(json_log_record)
+        rejection_code = json_log_record["record"]["rejection_code"] \
+            if "rejected" in json_log_record["record"] and json_log_record["record"]["rejected"] else "200"
+        if (self.sample_counter[rejection_code] < self.num_samples_per_code):
+            self.sample_counter[rejection_code] += 1
+            self.records.append(json_log_record)
 
     def flush(self):
         if len(self.records) > 0:

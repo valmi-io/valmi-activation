@@ -24,6 +24,7 @@ SOFTWARE.
 """
 
 
+from datetime import datetime
 import json
 from typing import Any, Dict, Iterable, Mapping
 import socket
@@ -43,6 +44,7 @@ from valmi_connector_lib.valmi_protocol import (
     ValmiSink,
     DestinationSyncMode,
     FieldCatalog,
+    ValmiFinalisedRecordMessage,
 )
 from valmi_connector_lib.destination_wrapper.destination_write_wrapper import (
     DestinationWriteWrapper,
@@ -62,6 +64,7 @@ class WebhookWriter(DestinationWriteWrapper):
         counter,
     ) -> HandlerResponseData:
         # self.logger.info(f"Handling message {msg}")
+
         self.http_handler.handle(
             self.config,
             self.configured_destination_catalog,
@@ -69,7 +72,16 @@ class WebhookWriter(DestinationWriteWrapper):
             counter,
             run_time_args=self.run_time_args,
         )
-        return HandlerResponseData(flushed=True)
+        out_records = [
+            ValmiFinalisedRecordMessage(
+                stream=msg.record.stream,
+                data=msg.record.data,
+                rejected=False,
+                metric_type="delivered",
+                emitted_at=int(datetime.now().timestamp()) * 1000,
+            )
+        ]
+        return HandlerResponseData(flushed=True, rejected_records=out_records)
 
     def finalise_message_handling(self):
         pass
