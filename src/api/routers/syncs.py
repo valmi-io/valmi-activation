@@ -336,26 +336,15 @@ async def get_run(
     return assign_metrics_to_run(sync_run, metric_service)
 
 
-@router.get("/{sync_id}/runs/{run_id}/samples/{connector_id}", response_model=Json[Any])
-async def get_run_samples(
-    sync_id: UUID4,
-    run_id: UUID4,
-    sync_runs_service: SyncRunsService = Depends(get_sync_runs_service),
-) -> Json[Any]:
-    ## MAJOR ITEM
-    pass
-    # return sync_runs_service.list()
-
-
 @router.get("/{sync_id}/runs/{run_id}/logs", response_model=dict)
 async def get_logs(
         sync_id: UUID4,
         run_id: UUID4,
-        collector: str,
+        connector: str,
         since: Optional[int] = None,
         before: Optional[int] = None,
         log_handling_service: LogHandlingService = Depends(get_log_handling_service)) -> dict:
-    log_retriever_task = LogRetrieverTask(sync_id, run_id, collector, before, since)
+    log_retriever_task = LogRetrieverTask(sync_id, run_id, connector, before, since)
     log_handling_service.add_log_retriever_task(
         log_retriever_task=log_retriever_task)
     return await log_handling_service.read_log_retriever_data(log_retriever_task=log_retriever_task)
@@ -365,10 +354,10 @@ async def get_logs(
 async def get_samples(
         sync_id: UUID4,
         run_id: UUID4,
-        collector: str,
+        connector: str,
         metric_type: str,
         sample_handling_service: SampleHandlingService = Depends(get_sample_handling_service)) -> dict:
-    sample_retriever_task = SampleRetrieverTask(sync_id, run_id, collector, metric_type)
+    sample_retriever_task = SampleRetrieverTask(sync_id, run_id, connector, metric_type)
     sample_handling_service.add_sample_retriever_task(
         sample_retriever_task=sample_retriever_task)
     return await sample_handling_service.read_sample_retriever_data(sample_retriever_task=sample_retriever_task)

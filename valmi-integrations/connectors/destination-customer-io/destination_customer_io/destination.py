@@ -66,13 +66,13 @@ class CustomerIOWriter(DestinationWriteWrapper):
         counter,
     ) -> HandlerResponseData:
         flushed, metrics, rejected_records = self.cio.add_to_queue(counter, msg, configured_stream=self.configured_catalog.streams[0], sink=self.configured_destination_catalog.sinks[0])
-        return HandlerResponseData(flushed=flushed, metrics=metrics, rejected_records=rejected_records)
+        return HandlerResponseData(flushed=flushed, metrics=metrics, emittable_records=rejected_records)
     
     def finalise_message_handling(self) -> HandlerResponseData:
         sync_op = self.configured_destination_catalog.sinks[0].destination_sync_mode.value
 
         metrics, rejected_records = self.cio.flush(sync_op)
-        return HandlerResponseData(flushed=True, metrics=metrics, rejected_records=rejected_records)
+        return HandlerResponseData(flushed=True, metrics=metrics, emittable_records=rejected_records)
 
 
 class DestinationCustomerIO(ValmiDestination):

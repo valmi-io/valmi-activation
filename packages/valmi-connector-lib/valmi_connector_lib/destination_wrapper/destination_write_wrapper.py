@@ -19,7 +19,7 @@ from valmi_connector_lib.valmi_protocol import (
 from valmi_connector_lib.common.run_time_args import RunTimeArgs
 
 HandlerResponseData = namedtuple(
-    "HandlerResponseData", ["flushed", "metrics", "rejected_records"], defaults=(False, {}, [])
+    "HandlerResponseData", ["flushed", "metrics", "emittable_records"], defaults=(False, {}, [])
 )
 
 
@@ -74,11 +74,11 @@ class DestinationWriteWrapper:
                 handler_response = HandlerResponseData()
                 try:
                     handler_response = self.handle_message(msg, counter)
-                    if handler_response.rejected_records:
-                        for rejected_record in handler_response.rejected_records:
+                    if handler_response.emittable_records:
+                        for record in handler_response.emittable_records:
                             yield AirbyteMessage(
                                 type=Type.RECORD,
-                                rejected_record=rejected_record,
+                                record=record,
                             )
                 except Exception as e:
                     yield AirbyteMessage(
@@ -126,11 +126,11 @@ class DestinationWriteWrapper:
                     self.logger.info("A log every 5 seconds - is this required??")
 
         handler_response = self.finalise_message_handling()
-        if handler_response and handler_response.rejected_records:
-            for rejected_record in handler_response.rejected_records:
+        if handler_response and handler_response.emittable_records:
+            for record in handler_response.emittable_records:
                 yield AirbyteMessage(
                     type=Type.RECORD,
-                    rejected_record=rejected_record,
+                    record=record,
                 )
 
         if handler_response:

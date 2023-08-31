@@ -166,7 +166,7 @@ def main():
                            engine.connector_state.run_time_args["sync_id"],
                            engine.connector_state.run_time_args["run_id"],
                            CONNECTOR_STRING)
-        
+       
         # initialize SampleWriter
         SampleWriter.get_writer_by_metric_type(store_config_str=os.environ["VALMI_INTERMEDIATE_STORE"],
                                                sync_id=engine.connector_state.run_time_args["sync_id"],

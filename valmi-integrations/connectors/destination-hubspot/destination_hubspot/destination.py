@@ -58,11 +58,11 @@ class HubspotWriter(DestinationWriteWrapper):
             configured_stream=self.configured_catalog.streams[0],
             sink=self.configured_destination_catalog.sinks[0])
 
-        return HandlerResponseData(flushed=flushed, metrics=metrics, rejected_records=rejected_records)
+        return HandlerResponseData(flushed=flushed, metrics=metrics, emittable_records=rejected_records)
 
     def finalise_message_handling(self):
         flushed, metrics, rejected_records = self.hub_client.flush(self.last_seen_sync_op, config=self.config, sink=self.configured_destination_catalog.sinks[0])
-        return HandlerResponseData(flushed=flushed, metrics=metrics, rejected_records=rejected_records)
+        return HandlerResponseData(flushed=flushed, metrics=metrics, emittable_records=rejected_records)
 
 
 class DestinationHubspot(ValmiDestination):

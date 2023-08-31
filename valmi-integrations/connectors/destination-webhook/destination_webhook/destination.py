@@ -45,6 +45,7 @@ from valmi_connector_lib.valmi_protocol import (
     DestinationSyncMode,
     FieldCatalog,
     ValmiFinalisedRecordMessage,
+    get_metric_type,
 )
 from valmi_connector_lib.destination_wrapper.destination_write_wrapper import (
     DestinationWriteWrapper,
@@ -72,16 +73,18 @@ class WebhookWriter(DestinationWriteWrapper):
             counter,
             run_time_args=self.run_time_args,
         )
+
+        sync_op = msg.record.data["_valmi_meta"]["_valmi_sync_op"]
         out_records = [
             ValmiFinalisedRecordMessage(
                 stream=msg.record.stream,
                 data=msg.record.data,
                 rejected=False,
-                metric_type="delivered",
+                metric_type=get_metric_type(sync_op),
                 emitted_at=int(datetime.now().timestamp()) * 1000,
             )
         ]
-        return HandlerResponseData(flushed=True, rejected_records=out_records)
+        return HandlerResponseData(flushed=True, emittable_records=out_records)
 
     def finalise_message_handling(self):
         pass

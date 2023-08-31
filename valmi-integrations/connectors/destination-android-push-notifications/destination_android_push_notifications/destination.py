@@ -73,21 +73,21 @@ class FCMWriter(DestinationWriteWrapper):
         metrics = {}
         metrics[get_metric_type(sync_op)] = 0
 
-        flushed, new_metrics, rejected_records = self.fcm_utils.add_to_queue(
+        flushed, new_metrics, emittable_records = self.fcm_utils.add_to_queue(
             counter,
             msg,
             configured_stream=self.configured_catalog.streams[0],
             sink=self.configured_destination_catalog.sinks[0],
         )
         metrics = self.fcm_utils.merge_metric_dictionaries(metrics, new_metrics)
-        return HandlerResponseData(flushed=flushed, metrics=metrics, rejected_records=rejected_records)
+        return HandlerResponseData(flushed=flushed, metrics=metrics, emittable_records=emittable_records)
 
     def finalise_message_handling(self):
-        flushed, metrics, rejected_records = self.fcm_utils.flush(
+        flushed, metrics, emittable_records = self.fcm_utils.flush(
             configured_stream=self.configured_catalog.streams[0],
             sink=self.configured_destination_catalog.sinks[0]
         )
-        return HandlerResponseData(flushed=flushed, metrics=metrics, rejected_records=rejected_records)
+        return HandlerResponseData(flushed=flushed, metrics=metrics, emittable_records=emittable_records)
 
 
 class DestinationAndroidPushNotifications(ValmiDestination):

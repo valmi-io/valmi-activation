@@ -70,11 +70,11 @@ class FBAdsWriter(DestinationWriteWrapper):
             sink=self.configured_destination_catalog.sinks[0],
         )
         metrics = self.fb_utils.merge_metric_dictionaries(metrics, new_metrics)
-        return HandlerResponseData(flushed=flushed, metrics=metrics, rejected_records=rejected_records)
+        return HandlerResponseData(flushed=flushed, metrics=metrics, emittable_records=rejected_records)
 
     def finalise_message_handling(self):
         flushed, metrics, rejected_records = self.fb_utils.flush(configured_stream=self.configured_catalog.streams[0], sink=self.configured_destination_catalog.sinks[0])
-        return HandlerResponseData(flushed=flushed, metrics=metrics, rejected_records=rejected_records)
+        return HandlerResponseData(flushed=flushed, metrics=metrics, emittable_records=rejected_records)
 
 
 class DestinationFacebookAds(ValmiDestination):

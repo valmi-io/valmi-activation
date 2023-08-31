@@ -93,7 +93,7 @@ class GongWriter(DestinationWriteWrapper):
             else:
                 metrics[get_metric_type("ignore")] = 1
 
-        return HandlerResponseData(flushed=True, metrics=metrics, rejected_records=rejected_records)
+        return HandlerResponseData(flushed=True, metrics=metrics, emittable_records=rejected_records)
 
     def finalise_message_handling(self):
         pass
