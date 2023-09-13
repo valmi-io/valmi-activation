@@ -16,9 +16,9 @@ connectors = {
     "source-postgres": "0.1.12"
 }
 
-valmi_core = "0.1.15"
+valmi_core = "0.1.16"
 
-valmi_app_backend = "0.1.15"
+valmi_app_backend = "0.1.16"
 
 valmi_app = "0.1.14"
 
