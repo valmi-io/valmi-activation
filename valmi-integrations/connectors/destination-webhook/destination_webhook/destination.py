@@ -45,8 +45,8 @@ from valmi_connector_lib.valmi_protocol import (
     DestinationSyncMode,
     FieldCatalog,
     ValmiFinalisedRecordMessage,
-    get_metric_type,
 )
+from valmi_connector_lib.common.metrics import get_metric_type
 from valmi_connector_lib.destination_wrapper.destination_write_wrapper import (
     DestinationWriteWrapper,
     HandlerResponseData,
