@@ -1,26 +1,26 @@
 import os
 connectors = {
-    "destination-webhook": "0.1.14",
-    "destination-stripe": "0.1.8",
-    "destination-slack": "0.1.8",
-    "destination-hubspot": "0.1.8",
-    "destination-google-sheets": "0.1.8",
-    "destination-google-ads": "0.1.8",
-    "destination-gong": "0.1.8",
-    "destination-facebook-ads": "0.1.8",
-    "destination-customer-io": "0.1.8",
-    "destination-android-push-notifications": "0.1.9",
+    "destination-webhook": "0.1.17",
+    "destination-stripe": "0.1.9",
+    "destination-slack": "0.1.9",
+    "destination-hubspot": "0.1.9",
+    "destination-google-sheets": "0.1.9",
+    "destination-google-ads": "0.1.9",
+    "destination-gong": "0.1.9",
+    "destination-facebook-ads": "0.1.9",
+    "destination-customer-io": "0.1.9",
+    "destination-android-push-notifications": "0.1.10",
              
-    "source-redshift": "0.1.12",
-    "source-snowflake": "0.1.12",
-    "source-postgres": "0.1.12"
+    "source-redshift": "0.1.13",
+    "source-snowflake": "0.1.13",
+    "source-postgres": "0.1.13"
 }
 
-valmi_core = "0.1.16"
+valmi_core = "0.1.18"
 
-valmi_app_backend = "0.1.16"
+valmi_app_backend = "0.1.17"
 
-valmi_app = "0.1.14"
+valmi_app = "0.1.15"
 
 def tag_and_push(tag_name, message):
     os.system("git tag -a %s -m '%s'" % (tag_name, message))

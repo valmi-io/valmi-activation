@@ -55,7 +55,7 @@ class SampleWriter:
         self.run_id = run_id
         self.connector = connector
         self.metric_type = metric_type
-        self.num_samples_per_code = os.environ.get("NUM_SAMPLES_PER_CODE", 10)
+        self.num_samples_per_code = int(os.environ.get("NUM_SAMPLES_PER_CODE", 10))
         self.sample_counter: dict[str, int] = defaultdict(lambda: 0)
 
     def reset(self):
