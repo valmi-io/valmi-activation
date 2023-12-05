@@ -71,4 +71,4 @@ CONNECTOR_RUN_CONFIG:
   POSTGRES:
     records_per_metric: 100
 
-VALMI_INTERMEDIATE_STORE: "{\"provider\": \"local\", \"local\": {\"directory\": \"/tmp/shared_dir/intermediate_store\"}}"
+VALMI_INTERMEDIATE_STORE: "{\"provider\": \"local\", \"local\": {\"directory\": \"/tmp/shared_dir/intermediate_store\", \"max_lines_per_file_hint\" : 100, \"log_flush_interval\": 5}}"
