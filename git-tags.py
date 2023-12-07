@@ -22,6 +22,8 @@ valmi_app_backend = "0.1.17"
 
 valmi_app = "0.1.15"
 
+valmi_dagster = "0.1.5"
+
 def tag_and_push(tag_name, message):
     os.system("git tag -a %s -m '%s'" % (tag_name, message))
     os.system("git push origin %s" % tag_name)
@@ -36,10 +38,19 @@ def tag_valmi_app():
     os.system("cd valmi-app; git tag -a %s -m '%s'" % (tag_name, 'creating tag %s' % tag_name))
     os.system("cd valmi-app; git push origin %s" % tag_name)
 
+def tag_dagster():
+    tag_name = 'valmi-dagster/%s' % valmi_dagster
+    os.system("git tag -a %s -m '%s'" % (tag_name, 'creating tag %s' % tag_name))
+    os.system("git push origin %s" % tag_name)
+
 for k, v in connectors.items():
     print("Tagging connector %s:%s" % (k, v))
     tag_and_push("valmi-connector/%s/%s" % (k, v), "Tagging %s:%s" % (k, v))
 
+
+
+
 tag_and_push("valmi-activation/%s" % valmi_core, "Tagging valmi-activation/%s" % valmi_core)
 tag_valmi_app()
 tag_valmi_app_backend()
+tag_dagster()
