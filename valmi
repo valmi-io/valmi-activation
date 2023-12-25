@@ -11,9 +11,10 @@ fi
 if [[ "${1-}" =~ ^-*h(elp)?$ ]]; then
     echo 'Usage: 
     ./valmi [STAGE] [COMMAND]
-    ./valmi prod/dev 
+    ./valmi prod/dev [docker-compose args]
+    ./valmi prod/dev --with-jitsu [docker-compose args]
     
-    Script to manage valmi-activaiton services.
+    Script to manage valmi-activation services.
     '
     exit
 fi
@@ -30,7 +31,14 @@ main() {
     echo "Setting environment variables from .env file"
     source $src_dir/.env
     
+    jitsu_enabled=false
+
     cmd_args=${@:2}
+    if [[ "$2" == "--with-jitsu" ]]; then
+            jitsu_enabled=true
+            cmd_args=${@:3}
+    fi
+
     # Check if the arguments are empty or not
     if [ -z "$cmd_args" ]
     then
@@ -38,8 +46,17 @@ main() {
         cmd_args="up -d"
     fi
 
-    echo "Running: ${mode} ${cmd_args}"
-    docker compose -f docker-compose.yml -f docker-compose.$mode.yml $cmd_args
+
+    if [ $jitsu_enabled == true ]
+    then
+        echo "Running: ${mode} --with-jitsu ${cmd_args}"
+        echo "Running: ${mode} ${cmd_args} with jitsu"
+        docker compose -f docker-compose.yml -f docker-compose.$mode.yml -f docker-compose.jitsu.yml $cmd_args
+    else
+        echo "Running: ${mode} ${cmd_args}"
+        echo "Running: ${mode} ${cmd_args} without jitsu"
+        docker compose -f docker-compose.yml -f docker-compose.$mode.yml $cmd_args
+    fi
 }
 
 main "$@"

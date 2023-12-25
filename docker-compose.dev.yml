@@ -57,3 +57,8 @@ services:
     volumes:
       - ./valmi-app:/workspace:z
       - ./valmi-app/.env:/app/.env
+
+networks:
+  valmi-network:
+    driver: bridge
+    name: valmi-network
