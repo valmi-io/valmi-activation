@@ -165,10 +165,10 @@ services:
 
   valmi-app:
     environment:
-      ENABLE_JITSU: "True"
+      ENABLE_JITSU: "true"
 
   valmi-app-backend:
     environment:
-      ENABLE_JITSU: "True"
+      ENABLE_JITSU: "true"
 
 
