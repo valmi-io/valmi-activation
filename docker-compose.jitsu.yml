@@ -170,5 +170,6 @@ services:
   valmi-app-backend:
     environment:
       ENABLE_JITSU: "true"
+      STREAM_API_URL: "http://console:3000"
 
 
