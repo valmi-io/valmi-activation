@@ -18,9 +18,9 @@ connectors = {
 
 valmi_core = "0.1.18"
 
-valmi_app_backend = "0.1.17"
+valmi_app_backend = "0.1.18"
 
-valmi_app = "0.1.15"
+valmi_app = "0.1.16"
 
 valmi_dagster = "0.1.5"
 
