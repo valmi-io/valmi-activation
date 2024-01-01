@@ -3,12 +3,16 @@ version: "3.8"
 services:
   dagit:
     image: valmiio/valmi-dagster:latest
+    ports:
+      - "4002:4002"
 
   dagster_daemon:
     image: valmiio/valmi-dagster:latest
 
   valmi-db:
     command: ["postgres"]
+    ports:
+      - "5432:5432"
 
   valmi-repo:
     image: valmiio/valmi-repo:latest
@@ -45,3 +49,8 @@ services:
       - valmi-app-backend
     volumes:
       - ./valmi-app/.env:/app/.env
+
+networks:
+  valmi-network:
+    driver: bridge
+    name: valmi-network
