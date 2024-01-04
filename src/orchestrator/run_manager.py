@@ -40,6 +40,7 @@ from dagster_graphql import DagsterGraphQLClientError
 from sqlalchemy.orm.attributes import flag_modified
 from queue import Queue
 from api.services import SyncsService, SyncRunsService
+from alerts import AlertGenerator
 
 logger = logging.getLogger(v.get("LOGGER_NAME"))
 TICK_INTERVAL = 1
@@ -149,6 +150,15 @@ class SyncRunnerThread(threading.Thread):
                             self.sync_service.update_sync_and_run(sync, run)
 
                         elif sync.run_status == SyncStatus.ABORTING:
+                            # Corner Case: if already succeeded, then just consider it finished
+                            run = self.run_service.get(sync.last_run_id)
+                            dagster_run_status = self.dc.get_run_status(run.dagster_run_id)
+                            if dagster_run_status == DagsterRunStatus.SUCCESS:
+                                sync.run_status = SyncStatus.RUNNING
+                                run.status = SyncStatus.RUNNING
+                                self.sync_service.update_sync_and_run(sync, run)
+                                continue
+
                             logger.info(sync.run_status)
                             run = self.run_service.get(sync.last_run_id)
                             self.abort_active_run(sync, run)
@@ -222,6 +232,9 @@ class SyncRunnerThread(threading.Thread):
                                                 run.status = SyncStatus.FAILED
                                                 status = "failed"
                                                 error_msg = run.extra[key]["status"]["message"]
+
+                                                # Send an alert
+                                                AlertGenerator().sync_status_alert(sync.sync_id, run.run_id, status, error_msg)
                                                 break
 
                                     if error_msg is None:
@@ -256,7 +269,12 @@ class SyncRunnerThread(threading.Thread):
 
                                     status = "failed" if dagster_run_status == DagsterRunStatus.FAILURE else "terminated"
 
-                                    run.extra["run_manager"]["status"] = {"status": status, "message": "FILL THIS IN!"}
+                                    msg = "FILL THIS IN!"
+                                    run.extra["run_manager"]["status"] = {"status": status, "message": msg}
+
+                                    # Send an alert
+                                    AlertGenerator().sync_status_alert(sync.sync_id, run.run_id, status, msg)
+
                                     flag_modified(run, "extra")
                                     flag_modified(run, "status")
 
