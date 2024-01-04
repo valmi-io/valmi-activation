@@ -34,7 +34,7 @@ import logging
 from contextlib import asynccontextmanager
 from utils.request_logger import RouterLoggingMiddleware
 from observability import setup_observability
-
+from alerts import AlertGenerator
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -70,6 +70,9 @@ async def lifespan(app: FastAPI):
 
     logging.info("Shutting down Image manager")
     img_manager.destroy()
+
+    logging.info("Shutting down Alert Generator")
+    AlertGenerator().destroy()
 
     logging.info("All services shut down successfully")
 
