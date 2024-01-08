@@ -7,8 +7,9 @@
 2. Setup protected permissions
    ### partner dashboard and set to custom distribution
    ### npm run dev (preview the store)
+   Now, you should your store events being tracked.
    
-3. Pull & Host the docker container && Ask to update urls in the app. as described by shopify (fly.io or heroku).
+4. For production: Pull & Host the docker container && Ask to update urls in the app. as described by shopify (fly.io or heroku).
 
 
 # Will be published on the shopify app store for single click deploy, once the Privacy and Terms are set straight.
