@@ -175,3 +175,4 @@ valmi-integrations/connectors/source-postgres/valmi_dbt/valmi_dbt_source_transfo
 valmi-integrations/connectors/source-postgres/valmi_dbt/valmi_dbt_source_transform/macros/quote.sql
 valmi-integrations/connectors/destination-facebook-ads/secrets/.config.json
 valmi-integrations/connectors/destination-gong/secrets/.config.json
+valmi-shopify-app/shopify.app.valmi-io.toml

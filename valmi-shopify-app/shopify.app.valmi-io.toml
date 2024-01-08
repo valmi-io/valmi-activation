@@ -2,7 +2,7 @@
 
 name = "valmi-io"
 client_id = "723f508680a0733c81c28412effa6d2b"
-application_url = "https://office-february-rhode-smallest.trycloudflare.com"
+application_url = "https://crisis-viewing-alternative-story.trycloudflare.com"
 embedded = true
 
 [access_scopes]
@@ -11,9 +11,9 @@ scopes = "write_products,write_pixels,read_customer_events,read_customers,read_c
 
 [auth]
 redirect_urls = [
-  "https://office-february-rhode-smallest.trycloudflare.com/auth/callback",
-  "https://office-february-rhode-smallest.trycloudflare.com/auth/shopify/callback",
-  "https://office-february-rhode-smallest.trycloudflare.com/api/auth/callback"
+  "https://crisis-viewing-alternative-story.trycloudflare.com/auth/callback",
+  "https://crisis-viewing-alternative-story.trycloudflare.com/auth/shopify/callback",
+  "https://crisis-viewing-alternative-story.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
