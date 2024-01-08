@@ -29,7 +29,7 @@ import { Link, Outlet, useLoaderData, useRouteError ,useActionData, useSubmit} f
 import polarisStyles from "@shopify/polaris/build/esm/styles.css";
 import { boundary, shopifyApp } from "@shopify/shopify-app-remix/server";
 import { AppProvider } from "@shopify/shopify-app-remix/react";
-import { apiVersion, authenticate, registerWebhooks, valmiHooks } from "../shopify.server";
+import { apiUrl, apiVersion, authenticate, registerWebhooks, valmiHooks } from "../shopify.server"; 
 import { useEffect } from "react";
 
 export const links = () => [{ rel: "stylesheet", href: polarisStyles }];
@@ -41,28 +41,67 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 const verifyWebhookCreated = (data: any) => {
-  const hookArr = Object.keys(valmiHooks).map((key) => {
-    const lastIndex = key.lastIndexOf('_');
+  const topic_formatter = (key: string) => {
+    const lastIndex = key.lastIndexOf("_");
     const lc = key.toLowerCase();
-    return lc.slice(0,lastIndex)+"/"+lc.slice(lastIndex+1);
-  }); 
+    return lc.slice(0, lastIndex) + "/" + lc.slice(lastIndex + 1);
+  };
+
+  //console.log(data.data);
 
   const registeredHooks = Object.keys(data.data).map((key) => {
-    return data.data[key]['topic'];
+    return data.data[key]["topic"];
   });
 
-  return hookArr.every((key) => {  
-    console.log(key);
-    if (registeredHooks.includes(key)){
-      console.log("found webhook");
-      return true;
-    }
-    else
-    {
+  const registeredHookAddrs = Object.keys(data.data).map((key) => {
+    return data.data[key]["address"];
+  });
+
+  const registeredHookData = (key: string) => {
+    data.data.map((hook: any) => {
+      if (hook["topic"] == key) return data.data["id"];
+      return null;
+    });
+  };
+
+  return Object.keys(valmiHooks).map((key) => {
+    //console.log(key);
+    if (registeredHooks.includes(topic_formatter(key))) {
+      if (
+        registeredHookAddrs.includes(
+          apiUrl.replace(/\/+$/, "") + valmiHooks[key]["callbackUrl"]
+        )
+      ) {
+        return { exists: true, webhook_id: null };
+      } else {
+        return {
+          exists: false,
+          webhook_id: registeredHookData(topic_formatter(key)),
+        };
+      }
+    } else {
       console.log("webhook not found");
-      return false;
+      return { exists: false, webhook_id: null };
     }
-  }); 
+  });
+}
+
+export const clearWebhooks = async ({admin, session, webHooksToDelete} : any) => {
+  try{
+    await webHooksToDelete.map( async (webhook_id: any) => { 
+        try{
+          console.log(`deleting webhook ${webhook_id}`);
+          await admin.rest.resources.Webhook.delete({
+            session: session,
+            id: webhook_id,
+          }); 
+      }catch(e){
+        console.error(e);
+      }
+    });
+  } catch(e){
+    console.error(e);
+  }
 }
 
 export const webhookReregistration = async ({ request } : any) => {
@@ -70,9 +109,25 @@ export const webhookReregistration = async ({ request } : any) => {
 
   try{
     const data = await admin.rest.resources.Webhook.all({session: session});
-    if(! verifyWebhookCreated(data)){
+    const retval = verifyWebhookCreated(data);
+    const webHooksExist = retval.every((val: any) => {
+      const {exists} = val;
+      return exists;
+    });
+
+
+
+    if(!webHooksExist){
+      //look for webhooks to delete
+      const webHooksToDelete = retval.filter((val: any) => {
+        const {exists} = val;
+        if (!exists){
+          return val['webhook_id'];
+        }
+      });
       // register webhooks again
       console.log("registering webhooks again");
+      await clearWebhooks({admin, session, webHooksToDelete});
       await registerWebhooks({session});
     }; 
   } catch(e){
