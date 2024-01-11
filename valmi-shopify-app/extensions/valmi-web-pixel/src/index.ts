@@ -25,11 +25,12 @@
 
 import {register} from "@shopify/web-pixels-extension";
 import {jitsuAnalytics} from "@jitsu/js";
+import {transform} from "../../../event_lib/transformer";
 
 register(({ configuration, analytics, browser }) => {
 
   const valmiAnalytics = jitsuAnalytics({
-    host: "https://www.valmi.io",
+    host: "https://www.mywavia.com",
     // Browser Write Key configured on Jitsu Site entity.
     // If no Browser Write Key is added for Site entity, Site ID value can be used a Write Key.
     // On Jitsu.Cloud can be omitted if Site has explicitly mapped domain name that is used in host parameter
@@ -46,8 +47,10 @@ register(({ configuration, analytics, browser }) => {
 
   // Subscribe to events
   analytics.subscribe('all_events', (event) => {
+    console.log("adfasdfasdfasdfadsfasdfasdffasdf",event);
+    transform(valmiAnalytics, event);
     // Transform the event payload to fit your schema (optional)
-     valmiAnalytics.track(event.name, {"myprop":JSON.stringify(event)});
+     //valmiAnalytics.track(event.name, {"myprop":JSON.stringify(event)});
 
   });
 });

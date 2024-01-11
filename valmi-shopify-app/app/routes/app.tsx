@@ -180,7 +180,7 @@ export const action: ActionFunction = async ({request }) => {
 export default function App() {
   const { apiKey } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
-  console.log(`actionData`, actionData);
+  //console.log(`actionData`, actionData);
   const submit = useSubmit();
   useEffect(() => {
     if(!actionData)

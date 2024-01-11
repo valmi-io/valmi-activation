@@ -33,126 +33,74 @@ import {
 import { PrismaSessionStorage } from "@shopify/shopify-app-session-storage-prisma";
 import { restResources } from "@shopify/shopify-api/rest/admin/2023-10";
 import prisma from "./db.server";
-import JSONPath from "jsonpath";
+import { transform } from "event_lib/transformer";
 
-const setDataAtCurrentPath = (
-  sourcedata: any[],
-  mappeddata: any,
-  currentPath: any[],
-  arrayIdx: number,
-  key: string
-) => {
-  if (sourcedata.length > 0) {
-    let x = [mappeddata];
-    for (let i = 0; i < currentPath.length; i++) {
-      x = x.flatMap((obj) => {
-        return obj[currentPath[i]];
-      });
-    }
-    for (let i = 0; i < x.length; i++) {
-      if (sourcedata.length <= i) {
-        x[i][key] = {}; // setting empty object
-      } else {
-        x[i][key] = sourcedata[i];
+const obj = {
+  "id": "sh-f7c5e721-6971-4DED-1DEE-FAD710538DC1",
+  "name": "page_viewed",
+  "clientId": "1fd529f6-8f05-4118-ba6b-a4e20691aa0c",
+  "timestamp": "2024-01-11T09:06:30.490Z",
+  "context": { 
+      "document": {
+          "location": {
+              "href": "https://quickstart-6ebc0909.myshopify.com/products/the-collection-snowboard-liquid",
+              "hash": "",
+              "host": "quickstart-6ebc0909.myshopify.com",
+              "hostname": "quickstart-6ebc0909.myshopify.com",
+              "origin": "https://quickstart-6ebc0909.myshopify.com",
+              "pathname": "/products/the-collection-snowboard-liquid",
+              "port": "",
+              "protocol": "https:",
+              "search": ""
+          },
+          "referrer": "https://quickstart-6ebc0909.myshopify.com/",
+          "characterSet": "UTF-8",
+          "title": "The Collection Snowboard: Liquid – Quickstart (6ebc0909)"
+      },
+      "navigator": {
+          "language": "en-GB",
+          "cookieEnabled": true,
+          "languages": [
+              "en-GB",
+              "en-US",
+              "en"
+          ],
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+      },
+      "window": {
+          "innerHeight": 688,
+          "innerWidth": 617,
+          "outerHeight": 775,
+          "outerWidth": 1235,
+          "pageXOffset": 0,
+          "pageYOffset": 0,
+          "location": {
+              "href": "https://quickstart-6ebc0909.myshopify.com/products/the-collection-snowboard-liquid",
+              "hash": "",
+              "host": "quickstart-6ebc0909.myshopify.com",
+              "hostname": "quickstart-6ebc0909.myshopify.com",
+              "origin": "https://quickstart-6ebc0909.myshopify.com",
+              "pathname": "/products/the-collection-snowboard-liquid",
+              "port": "",
+              "protocol": "https:",
+              "search": "" 
+          }, 
+          "origin": "https://quickstart-6ebc0909.myshopify.com",
+          "screen": {
+              "height": 800,
+              "width": 1280
+          },
+          "screenX": 0,
+          "screenY": 25,
+          "scrollX": 0,
+          "scrollY": 0
       }
-    }
   }
-};
+}; 
+const fn  = {page:() =>{
 
-const checkForPropertyAtPath = (
-  mappeddata: any,
-  currentPath: any[],
-  arrayIdx: number,
-  key: string
-) => {
-  // go to the end
-  let x = mappeddata;
-  for (let i = 0; i < currentPath.length; i++) {
-    console.log(key, x, currentPath);
-    if (arrayIdx == i) {
-      x = x[currentPath[i]][0];
-    } else {
-      x = x[currentPath[i]];
-    }
-  }
-  if (x.hasOwnProperty(key)) return true;
-  return false;
-};
-
-// build the mappeddata structure --  only one wildcard supported.
-const setDataForJsonPath = (
-  sourcedata: any[],
-  mappeddata: any,
-  pathexp: string
-) => {
-  var path = JSONPath.parse(pathexp);
-
-  const currentPath = [];
-  let arrayIdx = -1;
-  for (var idx = 0; idx < path.length; idx++) {
-    const element = path[idx];
-    if (element.expression.type == "identifier") {
-      if (idx < path.length - 1) {
-        if (
-          checkForPropertyAtPath(
-            mappeddata,
-            currentPath,
-            arrayIdx,
-            element.expression.value
-          )
-        ) {
-        } else {
-          if (
-            idx < path.length - 1 &&
-            path[idx + 1].expression.type == "wildcard" &&
-            path[idx + 1].expression.value == "*"
-          ) {
-            setDataAtCurrentPath(
-              [
-                sourcedata.map((el) => {
-                  return {};
-                }),
-              ], //setting an  array with empty objects
-              mappeddata,
-              currentPath,
-              arrayIdx,
-              element.expression.value
-            );
-          } else {
-            setDataAtCurrentPath(
-              [{}], //setting an empty object
-              mappeddata,
-              currentPath,
-              arrayIdx,
-              element.expression.value
-            );
-          }
-        }
-        currentPath.push(element.expression.value);
-      } else {
-        setDataAtCurrentPath(
-          sourcedata,
-          mappeddata,
-          currentPath,
-          arrayIdx,
-          element.expression.value
-        );
-      }
-    } else if (
-      element.expression.type == "wildcard" &&
-      element.expression.value == "*"
-    ) {
-      arrayIdx = currentPath.length - 1;
-    }
-  }
-};
-
-const path = "$.store.book.author[*].n";
-console.log("path", path);
-const mappeddata = { store: { book: { author: [{ b: "x" }, { b: "y" }] } } };
-//const mappeddata = {};
-setDataForJsonPath(["x", "y"], mappeddata, path);
-console.log("mappeddata", JSON.stringify(mappeddata));
+}};
+transform(fn,obj);
 
 export const valmiHooks: any = {
   APP_UNINSTALLED: {
