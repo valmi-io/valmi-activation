@@ -35,8 +35,7 @@ register(({ configuration, analytics, browser, init }) => {
 }); 
   // Subscribe to events
   analytics.subscribe('all_events', (event) => {
-    console.log("adfasdfasdfasdfadsfasdfasdffasdf",event);
-    
+    console.log("event",event);
 
     // To capture PAYMENT FAILED event, we need to credit the theme app extension and edit the liquid file.
     // And then publish a custom pixel event and then subscribe to it on the custom pixel .
@@ -44,6 +43,6 @@ register(({ configuration, analytics, browser, init }) => {
     // https://help.shopify.com/en/manual/promoting-marketing/pixels/custom-pixels/code
     // https://help.shopify.com/en/manual/promoting-marketing/pixels/custom-pixels#custom-pixel-setup
 
-    //transform(valmiAnalytics, event);
+    transform(valmiAnalytics, event);
   });
 });

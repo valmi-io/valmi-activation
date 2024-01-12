@@ -35,7 +35,7 @@ setDataForJsonPath(["x"], mappeddata, path);
 console.log("mappeddata", JSON.stringify(mappeddata));
 */
 const default_mapping = (): any => {
-  return {
+  return [{
     "$.clientId": {
       to: "$.clientId",
       //return to continue updating, false to stop updating
@@ -43,25 +43,27 @@ const default_mapping = (): any => {
         return value == null || value == undefined ? false : true;
       },
     },
-  };
+  }];
 };
 
 const stage_map = (valmiAnalytics: AnalyticsInterface, event: any, pixel_event: any, event_mapping: any): any => {
     const mapping = default_mapping(); 
-    Object.keys(mapping).forEach((key) => {
-        const { to, beforeUpdate } = mapping[key];
+    mapping.forEach((obj: any) => {
+        const key = Object.keys(obj)[0];
+        const { to, beforeUpdate } = obj[key];
         const value =  query(pixel_event, key);
         //console.log("value", value);
         if (beforeUpdate == undefined ||beforeUpdate(value)) {
-            setDataForJsonPath(value??[""], event, to);
+            setDataForJsonPath(value??[], event, to);
         }
     }); 
     const cmapping: any = event_mapping();
-    Object.keys(cmapping).forEach((key) => {
-        const { to, beforeUpdate } = cmapping[key];
+    cmapping.forEach((obj: any) => {
+      const key = Object.keys(obj)[0];
+        const { to, beforeUpdate } = obj[key];
         const value = query(pixel_event, key);
         if (beforeUpdate == undefined || beforeUpdate(value)) {
-            setDataForJsonPath(value??[""], event, to);
+            setDataForJsonPath(value??[], event, to);
         }
     });
     return event;

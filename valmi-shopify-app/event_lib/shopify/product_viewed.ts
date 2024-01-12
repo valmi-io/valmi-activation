@@ -23,6 +23,51 @@
  * SOFTWARE.
  */
 
+import { AnalyticsInterface } from "@jitsu/js";
+
+export const mapping = (): any => {
+  return [
+    //   "$.context.document.location.search": {to: "$.brand"},
+    //   "$.context.document.location.search": {to: "$.variant"},
+    //   "$.context.document.location.search": {to: "$.quantity"},
+    //   "$.context.document.location.search": {to: "$.coupon"},
+    //   "$.context.document.location.search": {to: "$.position"},
+    //   "$.context.document.location.search": {to: "$.value"},
+
+    { "$.data.productVariant.price.currencyCode": { to: "$.currency" } },
+    { "$.data.productVariant.price.amount": { to: "$.price" } },
+    { "$.data.productVariant.image.src": { to: "$.image_url" } },
+    { "$.data.productVariant.product.url": { to: "$.url" } },
+    { "$.data.productVariant.product.title": { to: "$.name" } },
+    { "$.data.productVariant.product.sku": { to: "$.sku" } },
+    { "$.data.productVariant.product.id": { to: "$.product_id" } },
+    { "$.data.productVariant.product.type": { to: "$.category" } },
+    { "$.data.productVariant.product.vendor": { to: "$.brand" } },
+    { "$.data.productVariant.price.amount": { to: "$.value" } },
+  ];
+};
+
+export const fn = (valmiAnalytics: AnalyticsInterface) => valmiAnalytics.track;
+
+
+/*
+analytics.track('Product Viewed', {
+    product_id: '507f1f77bcf86cd799439011',
+    sku: 'G-32',
+    category: 'Games',
+    name: 'Monopoly: 3rd Edition',
+    brand: 'Hasbro',
+    variant: '200 pieces',
+    price: 18.99,
+    quantity: 1,
+    coupon: 'MAYDEALS',
+    currency: 'usd',
+    position: 3,
+    value: 18.99,
+    url: 'https://www.example.com/product/path',
+    image_url: 'https://www.example.com/product/path.jpg'
+  });
+
 const src = {
     "id": "sh-fc02d5d7-B147-4D38-659D-BCF75AE8DB75",
     "name": "product_viewed",
@@ -108,3 +153,4 @@ const src = {
         }
     }
 };
+*/

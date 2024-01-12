@@ -24,9 +24,21 @@
  */
 
 import { AnalyticsInterface } from "@jitsu/js";
-import {mapping} from "./shopify/page_viewed";
-export const event_handlers = (valmiAnalytics: AnalyticsInterface, event: any): any => {
-    if (event.name == "page_viewed"){
-        return {fn: valmiAnalytics.page, mapping};
-    }
+import { mapping as pv_mapping } from "./shopify/page_viewed";
+import { mapping as product_viewed_mapping } from "./shopify/product_viewed";
+
+export const event_handlers = (
+  valmiAnalytics: AnalyticsInterface,
+  event: any
+): any => {
+  if (event.name == "page_viewed") {
+    return { fn: valmiAnalytics.page, mapping: pv_mapping };
+  } else if (event.name == "product_viewed") {
+    return {
+      fn: valmiAnalytics.track.bind(null, "Product Viewed"),
+      mapping: product_viewed_mapping,
+    };
+  } else {
+    return { fn: () => {}, mapping: () => [] };
+  }
 };
