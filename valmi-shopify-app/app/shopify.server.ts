@@ -96,7 +96,7 @@ const obj = {
           "scrollY": 0
       }
   }
-}; 
+};
 const fn  = {page:() =>{
 
 }};
@@ -119,7 +119,51 @@ export const valmiHooks: any = {
     deliveryMethod: DeliveryMethod.Http,
     callbackUrl: "/webhooks",
   },
+  CUSTOMERS_UPDATE: {
+    deliveryMethod: DeliveryMethod.Http,
+    callbackUrl: "/webhooks",
+  },
+  // CUSTOMERS_MERGE: {
+  //   deliveryMethod: DeliveryMethod.Http,
+  //   callbackUrl: "/webhooks",
+  // },
   CHECKOUTS_CREATE: {
+    deliveryMethod: DeliveryMethod.Http,
+    callbackUrl: "/webhooks",
+  },
+  CHECKOUTS_UPDATE: {
+    deliveryMethod: DeliveryMethod.Http,
+    callbackUrl: "/webhooks",
+  },
+  FULFILLMENTS_CREATE: {
+    deliveryMethod: DeliveryMethod.Http,
+    callbackUrl: "/webhooks",
+  },
+  FULFILLMENTS_UPDATE: {
+    deliveryMethod: DeliveryMethod.Http,
+    callbackUrl: "/webhooks",
+  },
+  ORDERS_CREATE: {
+    deliveryMethod: DeliveryMethod.Http,
+    callbackUrl: "/webhooks",
+  },
+  ORDERS_CANCELLED: {
+    deliveryMethod: DeliveryMethod.Http,
+    callbackUrl: "/webhooks",
+  },
+  ORDERS_UPDATED: {
+    deliveryMethod: DeliveryMethod.Http,
+    callbackUrl: "/webhooks",
+  },
+  ORDERS_FULFILLED: {
+    deliveryMethod: DeliveryMethod.Http,
+    callbackUrl: "/webhooks",
+  },
+  ORDERS_EDITED: {
+    deliveryMethod: DeliveryMethod.Http,
+    callbackUrl: "/webhooks",
+  },
+  REFUNDS_CREATE: {
     deliveryMethod: DeliveryMethod.Http,
     callbackUrl: "/webhooks",
   },

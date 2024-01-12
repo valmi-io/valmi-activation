@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2024 valmi.io <https://github.com/valmi-io>
  * 
- * Created Date: Wednesday, January 3rd 2024, 10:41:59 pm
+ * Created Date: Friday, January 12th 2024, 1:02:36 pm
  * Author: Rajashekar Varkala @ valmi.io
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -23,27 +23,39 @@
  * SOFTWARE.
  */
 
-import {register} from "@shopify/web-pixels-extension";
-import {jitsuAnalytics} from "@jitsu/js";
-import {transform} from "../../../event_lib/transformer";
-
-register(({ configuration, analytics, browser, init }) => {
-
-  const valmiAnalytics = jitsuAnalytics({
-    host: "https://www.mywavia.com",
-    writeKey: "Yze5gDoyX2w8Kk5doGK0qF59sF6CHxkJ:************",
-}); 
-  // Subscribe to events
-  analytics.subscribe('all_events', (event) => {
-    console.log("adfasdfasdfasdfadsfasdfasdffasdf",event);
-    
-
-    // To capture PAYMENT FAILED event, we need to credit the theme app extension and edit the liquid file.
-    // And then publish a custom pixel event and then subscribe to it on the custom pixel .
-    // https://shopify.dev/docs/api/admin-graphql/2024-04/mutations/webPixelCreate
-    // https://help.shopify.com/en/manual/promoting-marketing/pixels/custom-pixels/code
-    // https://help.shopify.com/en/manual/promoting-marketing/pixels/custom-pixels#custom-pixel-setup
-
-    //transform(valmiAnalytics, event);
-  });
-});
+const src = {
+    id: 'Z2NwLXVzLWNlbnRyYWwxOjAxSEtZOUJXMDdHVldNNjBSWlZZVkUxQ1o3',
+    token: 'Z2NwLXVzLWNlbnRyYWwxOjAxSEtZOUJXMDdHVldNNjBSWlZZVkUxQ1o3',
+    line_items: [
+      {
+        id: 44843038015702, 
+        properties: null,
+        quantity: 1,
+        variant_id: 44843038015702,
+        key: '44843038015702:924e31e59aecfb44d43f64d4d6f83b1f',
+        discounted_price: '749.95',
+        discounts: [],
+        gift_card: false,
+        grams: 0,
+        line_price: '749.95',   
+        original_line_price: '749.95', 
+        original_price: '749.95',
+        price: '749.95',
+        product_id: 8273464099030,
+        sku: '',
+        taxable: true,
+        title: 'The Collection Snowboard: Liquid',
+        total_discount: '0.00', 
+        vendor: 'Hydrogen Vendor',
+        discounted_price_set: [Object],
+        line_price_set: [Object],
+        original_line_price_set: [Object],
+        price_set: [Object],    
+        total_discount_set: [Object]
+      }
+    ],
+    note: '',
+    updated_at: '2024-01-12T07:32:14.142Z',
+    created_at: '2024-01-12T07:32:14.142Z'
+  };
+  

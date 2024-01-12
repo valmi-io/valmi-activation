@@ -2,18 +2,18 @@
 
 name = "valmi-io"
 client_id = "723f508680a0733c81c28412effa6d2b"
-application_url = "https://crisis-viewing-alternative-story.trycloudflare.com"
+application_url = "https://phys-control-issues-thumbnails.trycloudflare.com"
 embedded = true
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "write_products,write_pixels,read_customer_events,read_customers,read_checkouts,read_orders,read_fulfillments"
+scopes = "write_pixels,read_customer_events,read_customers,read_checkouts,read_orders,read_fulfillments,read_products"
 
 [auth]
 redirect_urls = [
-  "https://crisis-viewing-alternative-story.trycloudflare.com/auth/callback",
-  "https://crisis-viewing-alternative-story.trycloudflare.com/auth/shopify/callback",
-  "https://crisis-viewing-alternative-story.trycloudflare.com/api/auth/callback"
+  "https://phys-control-issues-thumbnails.trycloudflare.com/auth/callback",
+  "https://phys-control-issues-thumbnails.trycloudflare.com/auth/shopify/callback",
+  "https://phys-control-issues-thumbnails.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]

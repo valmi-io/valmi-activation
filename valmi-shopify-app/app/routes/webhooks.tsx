@@ -35,8 +35,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   if (!admin) {
     // The admin context isn't returned if the webhook fired after a shop was uninstalled.
     throw new Response();
-  } 
-  console.log(topic,payload);
+  }
  
   switch (topic) {
     case "APP_UNINSTALLED":
@@ -47,10 +46,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     case "CUSTOMERS_DATA_REQUEST":
     case "CUSTOMERS_REDACT":
     case "SHOP_REDACT":
-      console.log(topic, payload);
       throw new Response("Unhandled webhook topic", { status: 404 });
     default:
-      console.log(topic, payload);
+      console.log(topic, JSON.stringify({value:payload,space:2}));
       throw new Response("valmi webhook events", { status: 200 });
   }
   throw new Response();
