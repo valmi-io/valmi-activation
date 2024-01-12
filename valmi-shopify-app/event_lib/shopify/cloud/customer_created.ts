@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2024 valmi.io <https://github.com/valmi-io>
  * 
- * Created Date: Wednesday, January 3rd 2024, 10:41:59 pm
+ * Created Date: Friday, January 12th 2024, 1:15:58 pm
  * Author: Rajashekar Varkala @ valmi.io
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -23,27 +23,32 @@
  * SOFTWARE.
  */
 
-import {register} from "@shopify/web-pixels-extension";
-import {jitsuAnalytics} from "@jitsu/js";
-import {transform} from "../../../event_lib/transformer";
-
-register(({ configuration, analytics, browser, init }) => {
-
-  const valmiAnalytics = jitsuAnalytics({
-    host: "https://www.mywavia.com",
-    writeKey: "Yze5gDoyX2w8Kk5doGK0qF59sF6CHxkJ:************",
-}); 
-  // Subscribe to events
-  analytics.subscribe('all_events', (event) => {
-    console.log("adfasdfasdfasdfadsfasdfasdffasdf",event);
-    
-
-    // To capture PAYMENT FAILED event, we need to credit the theme app extension and edit the liquid file.
-    // And then publish a custom pixel event and then subscribe to it on the custom pixel .
-    // https://shopify.dev/docs/api/admin-graphql/2024-04/mutations/webPixelCreate
-    // https://help.shopify.com/en/manual/promoting-marketing/pixels/custom-pixels/code
-    // https://help.shopify.com/en/manual/promoting-marketing/pixels/custom-pixels#custom-pixel-setup
-
-    //transform(valmiAnalytics, event);
-  });
-});
+const src = {
+    id: 6971943256278,
+    email: 'raj+1@valmi.io',    
+    created_at: '2024-01-12T02:42:44-05:00',
+    updated_at: '2024-01-12T02:42:44-05:00',
+    first_name: 'raj',
+    last_name: 'Varkala',
+    orders_count: 0,
+    state: 'disabled',
+    total_spent: '0.00',
+    last_order_id: null,
+    note: null,
+    verified_email: true,
+    multipass_identifier: null,
+    tax_exempt: false,
+    tags: '',
+    last_order_name: null,  
+    currency: 'INR',
+    phone: null,
+    addresses: [],
+    tax_exemptions: [],
+    email_marketing_consent: {
+      state: 'not_subscribed',
+      opt_in_level: 'single_opt_in',
+      consent_updated_at: null
+    },
+    sms_marketing_consent: null,
+    admin_graphql_api_id: 'gid://shopify/Customer/6971943256278'
+  };
