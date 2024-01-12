@@ -3,10 +3,10 @@
 
 // Need partner program
 1. Create the app -
-   ### npm run dev — —reset (create a new app)
+   ### `npm run dev — —reset (create a new app)`
 2. Setup protected permissions
-   ### partner dashboard and set to custom distribution
-   ### npm run dev (preview the store)
+   ### `go to partner dashboard and set to custom distribution`
+   ### `npm run dev (preview the store)`
    Now, you should see your store events being tracked.
 3. For production deployment - please follow the shopify guide to deeploy on (fly.io or heroku).
 
