@@ -23,6 +23,31 @@
  * SOFTWARE.
  */
 
+import { AnalyticsInterface } from "@jitsu/js";
+
+export const mapping = (): any => {
+  return [ 
+    { "$.data.searchResult.query": { to: "$.query" } },  
+    { "$.data.searchResult.productVariants[*].price.currencyCode": { to: "$.results.products[*].currency" } },
+    { "$.data.searchResult.productVariants[*].price.amount": { to: "$.results.products[*].price" } },
+    { "$.data.searchResult.productVariants[*].image.src": { to: "$.results.products[*].image_url" } },
+    { "$.data.searchResult.productVariants[*].product.url": { to: "$.results.products[*].url" } },
+    { "$.data.searchResult.productVariants[*].product.title": { to: "$.results.products[*].name" } },
+    { "$.data.searchResult.productVariants[*].product.sku": { to: "$.results.products[*].sku" } },
+    { "$.data.searchResult.productVariants[*].product.id": { to: "$.results.products[*].product_id" } },
+    { "$.data.searchResult.productVariants[*].product.type": { to: "$.results.products[*].category" } },
+    { "$.data.searchResult.productVariants[*].product.vendor": { to: "$.results.products[*].brand" } },
+    { "$.data.searchResult.productVariants[*].price.amount": { to: "$.results.products[*].value" } },
+  ];
+};
+
+export const fn = (valmiAnalytics: AnalyticsInterface) => valmiAnalytics.track;
+
+/*
+analytics.track('Products Searched', {
+    query: 'blue roses'
+  });
+  
 const src= {
     "id": "sh-fc02068a-02CE-456B-E5AE-8CCBA86F6F00",
     "name": "search_submitted",
@@ -343,4 +368,4 @@ const src= {
             "scrollY": 0
         }
     }
-};
+};*/

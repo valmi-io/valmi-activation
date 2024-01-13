@@ -26,13 +26,11 @@
 import { AnalyticsInterface } from "@jitsu/js";
 
 export const mapping = (): any => {
-  return [
-    //   "$.context.document.location.search": {to: "$.brand"},
-    //   "$.context.document.location.search": {to: "$.variant"},
-    //   "$.context.document.location.search": {to: "$.quantity"},
-    //   "$.context.document.location.search": {to: "$.coupon"},
-    //   "$.context.document.location.search": {to: "$.position"},
-    //   "$.context.document.location.search": {to: "$.value"},
+  return [ 
+    //   "$.": {to: "$.variant"},
+    //   "$.": {to: "$.quantity"},
+    //   "$.": {to: "$.coupon"},
+    //   "$.": {to: "$.position"}, 
 
     { "$.data.productVariant.price.currencyCode": { to: "$.currency" } },
     { "$.data.productVariant.price.amount": { to: "$.price" } },

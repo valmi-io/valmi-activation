@@ -26,6 +26,8 @@
 import { AnalyticsInterface } from "@jitsu/js";
 import { mapping as pv_mapping } from "./shopify/page_viewed";
 import { mapping as product_viewed_mapping } from "./shopify/product_viewed";
+import { mapping as search_submitted_mapping } from "./shopify/search_submitted";
+import { mapping as collection_viewed_mapping } from "./shopify/collection_viewed";
 
 export const event_handlers = (
   valmiAnalytics: AnalyticsInterface,
@@ -38,7 +40,24 @@ export const event_handlers = (
       fn: valmiAnalytics.track.bind(null, "Product Viewed"),
       mapping: product_viewed_mapping,
     };
-  } else {
+  } else if (event.name == "search_submitted") {
+    return {
+      fn: valmiAnalytics.track.bind(null, "Products Searched"),
+      mapping: search_submitted_mapping,
+    };
+  } else if (event.name == "collection_viewed") {
+    return {
+      fn: valmiAnalytics.track.bind(null, "Product List Viewed"),
+      mapping: collection_viewed_mapping,
+    };
+  } else if (event.name == "cart_viewed") {
+    return {
+      fn: valmiAnalytics.track.bind(null, "Cart Viewed"),
+      mapping: collection_viewed_mapping,
+    };
+  }
+  
+  else {
     return { fn: () => {}, mapping: () => [] };
   }
 };

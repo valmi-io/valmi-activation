@@ -23,6 +23,54 @@
  * SOFTWARE.
  */
 
+import { AnalyticsInterface } from "@jitsu/js";
+
+export const mapping = (): any => {
+  return [ 
+    { "$.data.collection.id": { to: "$.list_id" } },  
+    { "$.data.collection.title": { to: "$.category" } },  
+    { "$.data.collection.productVariants[*].price.currencyCode": { to: "$.products[*].currency" } },
+    { "$.data.collection.productVariants[*].price.amount": { to: "$.products[*].price" } },
+    { "$.data.collection.productVariants[*].image.src": { to: "$.products[*].image_url" } },
+    { "$.data.collection.productVariants[*].product.url": { to: "$.products[*].url" } },
+    { "$.data.collection.productVariants[*].product.title": { to: "$.products[*].name" } },
+    { "$.data.collection.productVariants[*].product.sku": { to: "$.products[*].sku" } },
+    { "$.data.collection.productVariants[*].product.id": { to: "$.products[*].product_id" } },
+    { "$.data.collection.productVariants[*].product.type": { to: "$.products[*].category" } },
+    { "$.data.collection.productVariants[*].product.vendor": { to: "$.products[*].brand" } },
+    { "$.data.collection.productVariants[*].price.amount": { to: "$.products[*].value" } },
+  ];
+};
+
+export const fn = (valmiAnalytics: AnalyticsInterface) => valmiAnalytics.track;
+
+
+
+/*
+analytics.track('Product List Viewed', {
+    list_id: 'hot_deals_1',
+    category: 'Deals',
+    products: [
+      {
+        product_id: '507f1f77bcf86cd799439011',
+        sku: '45790-32',
+        name: 'Monopoly: 3rd Edition',
+        price: 19,
+        position: 1,
+        category: 'Games',
+        url: 'https://www.example.com/product/path',
+        image_url: 'https://www.example.com/product/path.jpg'
+      },
+      {
+        product_id: '505bd76785ebb509fc183733',
+        sku: '46493-32',
+        name: 'Uno Card Game',
+        price: 3,
+        position: 2,
+        category: 'Games'
+      }
+    ]
+  });
 const src= {
     "id": "sh-fbfe9701-EDCA-4E62-5EAA-4B0AEFFC08DC",
     "name": "collection_viewed",
@@ -366,3 +414,4 @@ const src= {
         }
     }
 };
+*/
