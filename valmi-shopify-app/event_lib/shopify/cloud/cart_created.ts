@@ -22,8 +22,58 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+import { AnalyticsInterface } from "@jitsu/js";
 
-const src = {
+export const mapping = (analytics_state: any): any => {
+  return [  
+    { "$.token": { to: "$.cart_id" } },
+    { "$.line_item.product_id": { to: "$.product_id" } },
+    { "$.line_item.sku": { to: "$.product_id" } },
+    { "$.line_item.title": { to: "$.name" } },
+    { "$.line_item.vendor": { to: "$.brand" } },
+    { "$.line_item.quantity": { to: "$.quantity" } },
+    { "$.line_item.original_price": { to: "$.price" } },
+    { "$.line_item.discounts": { to: "$.coupon" } },
+    { "$.line_item.line_price": { to: "$.value" } },
+    { "$.line_item.total_discount": { to: "$.discount_value" } },  
+    { "$.line_item.price_set.presentment_money.currency_code": { to: "$.currency" } }, 
+  ];
+};
+export const event_data = (valmiAnalytics: AnalyticsInterface, analytics_state: any, event: any) : any => {
+  
+  if(event.line_items.length > 0){
+    event.line_item = event.line_items[0];
+    return [{
+      name: "Product Added",
+      mapping: mapping.bind(null, analytics_state),
+      data: event,
+    }]
+  }
+  else{
+    return [];
+  }
+};
+
+export const fn = (valmiAnalytics: AnalyticsInterface) => valmiAnalytics.track;
+
+/*
+analytics.track('Product Added', {
+  cart_id: 'skdjsidjsdkdj29j',
+  product_id: '507f1f77bcf86cd799439011',
+  sku: 'G-32',
+  category: 'Games',
+  name: 'Monopoly: 3rd Edition',
+  brand: 'Hasbro',
+  variant: '200 pieces',
+  price: 18.99,
+  quantity: 1,
+  coupon: 'MAYDEALS',
+  position: 3,
+  url: 'https://www.example.com/product/path',
+  image_url: 'https://www.example.com/product/path.jpg'
+});
+
+const src = { 
     id: 'Z2NwLXVzLWNlbnRyYWwxOjAxSEtZOUJXMDdHVldNNjBSWlZZVkUxQ1o3',
     token: 'Z2NwLXVzLWNlbnRyYWwxOjAxSEtZOUJXMDdHVldNNjBSWlZZVkUxQ1o3',
     line_items: [
@@ -58,4 +108,4 @@ const src = {
     updated_at: '2024-01-12T07:32:14.142Z',
     created_at: '2024-01-12T07:32:14.142Z'
   };
-  
+*/

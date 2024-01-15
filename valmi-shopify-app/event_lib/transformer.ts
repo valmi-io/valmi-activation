@@ -75,24 +75,29 @@ const stage_prepare = (valmiAnalytics: AnalyticsInterface, pixel_event: any): an
 
 const analytics_call = (
   valmiAnalytics: AnalyticsInterface,
-  pixel_event: any
+  pixel_event: any,
+  analytics_state: any,
 ): any => {
-  const {fn,mapping} = event_handlers(valmiAnalytics, pixel_event);
-  return {
+  const gen_events = event_handlers(valmiAnalytics, pixel_event, analytics_state);
+  return gen_events.map(({fn , data, mapping} : any) => {return {
     method: fn,
-    args: [stage_map(valmiAnalytics, stage_prepare(valmiAnalytics,pixel_event), pixel_event,mapping)],
-  };
+    args: [stage_map(valmiAnalytics, stage_prepare(valmiAnalytics,data), data,mapping)],
+  }}); 
 };
 
 export const transform = (
   valmiAnalytics: AnalyticsInterface,
-  pixel_event: any
+  pixel_event: any,
+  analytics_state: any,
 ): any => {
   const ret = analytics_call(
     valmiAnalytics,
-    pixel_event
+    pixel_event,
+    analytics_state,
   );
   console.log(JSON.stringify(ret));
   // make the call
-  ret["method"]?.(...ret["args"]);
+  ret.forEach((element:any) => {
+    element["method"]?.(...element["args"]);
+  });
 };
