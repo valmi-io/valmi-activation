@@ -36,7 +36,7 @@ export const mapping = () : any => {
 };
 
 export const fn = (valmiAnalytics: AnalyticsInterface) => valmiAnalytics.page;
-
+/*
 
 const src = {
   "id": "sh-fbeff139-B180-4A69-2525-807A04088750",
@@ -131,4 +131,4 @@ const dest = {
       "clientIds": {},
       "campaign": {}
   }
-};
+};*/

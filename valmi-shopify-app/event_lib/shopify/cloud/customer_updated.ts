@@ -22,6 +22,28 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+
+import { AnalyticsInterface } from "@jitsu/js";
+import { ignoreIfEmpty } from "event_lib/common";
+
+export const mapping = () : any => {
+    return [
+      {"$.email":{to: "$.email" , beforeUpdate: ignoreIfEmpty}},
+      {"$.phone": {to: "$.phone", beforeUpdate: ignoreIfEmpty}},
+      {"$.first_name": {to: "$.firstName", beforeUpdate: ignoreIfEmpty}},
+      {"$.last_name": {to: "$.lastName", beforeUpdate: ignoreIfEmpty}},
+    ];
+};
+
+export const event_data = (valmiAnalytics: AnalyticsInterface, analytics_state: any, event: any) : any => {
+   
+    return [{
+      fn: valmiAnalytics.identify.bind(null, event.id.toString().repeat(1)),
+      mapping: mapping,
+      data: event,
+    }];
+}; 
+/*
 const src = {
     id: 6971943256278,
     email: 'raj+1@valmi.io',
@@ -89,4 +111,4 @@ const src = {
       country_name: 'India',
       default: true
     }
-  };  
+  };  */

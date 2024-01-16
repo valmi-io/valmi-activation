@@ -29,8 +29,15 @@ import { mapping as product_viewed_mapping } from "./shopify/product_viewed";
 import { mapping as search_submitted_mapping } from "./shopify/search_submitted";
 import { mapping as collection_viewed_mapping } from "./shopify/collection_viewed";
 import { mapping as cart_viewed_mapping } from "./shopify/cart_viewed";
+import { mapping as checkout_address_info_mapping } from "./shopify/checkout_address_info_submitted";
+import { fn as address_info_fn } from "./shopify/checkout_address_info_submitted";
+import { mapping as checkout_contact_info_mapping } from "./shopify/checkout_contact_info_submitted";
+import { fn as contact_info_fn } from "./shopify/checkout_address_info_submitted";
+
 import { event_data as cart_created_event_data } from "./shopify/cloud/cart_created";
 import { event_data as cart_updated_event_data } from "./shopify/cloud/cart_updated";
+import { event_data as customers_created_event_data } from "./shopify/cloud/customer_created";
+import { event_data as customers_updated_event_data } from "./shopify/cloud/customer_updated";
 
 export const event_handlers = (
   valmiAnalytics: AnalyticsInterface,
@@ -71,12 +78,34 @@ export const event_handlers = (
         data: event,
       },
     ];
-  } else if (event.topic == "CARTS_CREATE") {
+  } else if (event.name == "checkout_address_info_submitted") {
+    return [
+      {
+        fn: address_info_fn(valmiAnalytics),
+        mapping: checkout_address_info_mapping,
+        data: event,
+      },
+    ];
+  } else if (event.name == "checkout_contact_info_submitted") {
+    return [
+      {
+        fn: contact_info_fn(valmiAnalytics),
+        mapping: checkout_contact_info_mapping,
+        data: event,
+      },
+    ];
+  }  
+  
+  else if (event.topic == "CARTS_CREATE") {
     return cart_created_event_data(valmiAnalytics, analytics_state, event);
   } else if (event.topic == "CARTS_UPDATE") {
-    console.log("CARTS_UPDATE", event);
     return cart_updated_event_data(valmiAnalytics, analytics_state, event);
-  } else {
+  } else if (event.topic == "CUSTOMERS_CREATE") {
+    return customers_created_event_data(valmiAnalytics, analytics_state, event);
+  } else if (event.topic == "CUSTOMERS_UPDATE") {
+    return customers_updated_event_data(valmiAnalytics, analytics_state, event);
+  } 
+  else {
     return [{ fn: () => {}, mapping: () => [] }];
   }
 };

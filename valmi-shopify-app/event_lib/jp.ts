@@ -37,9 +37,9 @@ const setDataAtCurrentPath = (
         if (obj && obj.hasOwnProperty(currentPath[i])) {
           return obj[currentPath[i]];
         }
-        else return null;
+        else return undefined;
       });
-      x = x.filter((el: any) => el != null);
+      x = x.filter((el: any) => el !== undefined);
     }
     for (let i = 0; i < x.length; i++) {
       if (sourcedata.length <= i) {
@@ -88,7 +88,7 @@ export const splitJPpath = (p: string) => {
     }
   });
   //console.log(path);
-  path = path.filter((el: any) => el != undefined);
+  path = path.filter((el: any) => el !== undefined);
   return path;
 };
 
@@ -109,17 +109,17 @@ export const query = (obj: any, p: string) => {
             if (el && el.hasOwnProperty(element.expression.value)) {
               return el[element.expression.value];
             }
-            else return null;
+            else return undefined;
           });
-          objs = objs.filter((el: any) => el != null);
+          objs = objs.filter((el: any) => el !== null);
         } else {
           objs = objs.map((el: any) => {
             if (el && el.hasOwnProperty(element.expression.value)) {
               return el[element.expression.value];
             }
-            else return null;
+            else return undefined;
           });
-          objs = objs.filter((el: any) => el != null);
+          objs = objs.filter((el: any) => el !== undefined);
         }
       }
     }

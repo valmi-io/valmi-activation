@@ -22,6 +22,63 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+import { AnalyticsInterface } from "@jitsu/js";
+import { ignoreIfEmpty } from "event_lib/common";
+
+export const mapping = () : any => {
+    return [
+      {"$.data.checkout.shippingAddress.address1":{to: "$.address.address1", beforeUpdate: ignoreIfEmpty}},
+      {"$.data.checkout.shippingAddress.address2": {to: "$.address.address2", beforeUpdate: ignoreIfEmpty}},
+      {"$.data.checkout.shippingAddress.city":{to: "$.address.city", beforeUpdate: ignoreIfEmpty}},
+      {"$.data.checkout.shippingAddress.country": {to: "$.address.country", beforeUpdate: ignoreIfEmpty}},
+      {"$.data.checkout.shippingAddress.countryCode": {to: "$.address.countryCode", beforeUpdate: ignoreIfEmpty}},
+      {"$.data.checkout.shippingAddress.zip": {to: "$.address.postalCode", beforeUpdate: ignoreIfEmpty}},
+      {"$.data.checkout.shippingAddress.provinceCode": {to: "$.address.stateCode", beforeUpdate: ignoreIfEmpty}},
+      {"$.data.checkout.shippingAddress.province": {to: "$.address.state", beforeUpdate: ignoreIfEmpty}},
+      {"$.data.checkout.shippingAddress.firstName": {to: "$.firstName", beforeUpdate: ignoreIfEmpty}},
+      {"$.data.checkout.shippingAddress.lastName": {to: "$.lastName", beforeUpdate: ignoreIfEmpty}},
+      {"$.data.checkout.email":{to: "$.email", beforeUpdate: ignoreIfEmpty}},
+      {"$.data.checkout.phone": {to: "$.phone", beforeUpdate: ignoreIfEmpty}}, 
+    ];
+};
+
+export const fn = (valmiAnalytics: AnalyticsInterface) => valmiAnalytics.identify;
+
+
+/*
+{
+    "anonymousId": "507f191e810c19729de860ea",
+    "channel": "browser",
+    "context": {
+      "ip": "8.8.8.8",
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/40.0.2214.115 Safari/537.36"
+    },
+    "integrations": {
+      "All": false,
+      "Mixpanel": true,
+      "Salesforce": true
+    },
+    "messageId": "022bb90c-bbac-11e4-8dfc-aa07a5b093db",
+    "receivedAt": "2015-02-23T22:28:55.387Z",
+    "sentAt": "2015-02-23T22:28:55.111Z",
+    "timestamp": "2015-02-23T22:28:55.111Z",
+    "traits": {
+      "name": "Peter Gibbons",
+      "email": "peter@example.com",
+      "plan": "premium",
+      "logins": 5,
+      "address": {
+        "street": "6th St",
+        "city": "San Francisco",
+        "state": "CA",
+        "postalCode": "94103",
+        "country": "USA"
+      }
+    },
+    "type": "identify",
+    "userId": "97980cfea0067",
+    "version": "1.1"
+  }
 
 const src  = {
     "id": "sh-fc25464f-3632-473F-8DB7-FF2EFD971824",
@@ -147,4 +204,4 @@ const src  = {
             "scrollY": 0
         }
     }
-};
+};*/

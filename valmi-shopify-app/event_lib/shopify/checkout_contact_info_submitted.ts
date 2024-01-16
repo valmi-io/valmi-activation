@@ -1,3 +1,75 @@
+/*
+ * Copyright (c) 2024 valmi.io <https://github.com/valmi-io>
+ * 
+ * Created Date: Friday, January 12th 2024, 11:00:17 am
+ * Author: Rajashekar Varkala @ valmi.io
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+import { AnalyticsInterface } from "@jitsu/js";
+import {ignoreIfEmpty} from '../common';
+
+export const mapping = () : any => {
+    return [
+      {"$.data.checkout.email":{to: "$.email", beforeUpdate: ignoreIfEmpty}},
+      {"$.data.checkout.phone": {to: "$.phone", beforeUpdate: ignoreIfEmpty}},
+    ];
+};
+
+export const fn = (valmiAnalytics: AnalyticsInterface) => valmiAnalytics.identify;
+
+
+/*
+{
+    "anonymousId": "507f191e810c19729de860ea",
+    "channel": "browser",
+    "context": {
+      "ip": "8.8.8.8",
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/40.0.2214.115 Safari/537.36"
+    },
+    "integrations": {
+      "All": false,
+      "Mixpanel": true,
+      "Salesforce": true
+    },
+    "messageId": "022bb90c-bbac-11e4-8dfc-aa07a5b093db",
+    "receivedAt": "2015-02-23T22:28:55.387Z",
+    "sentAt": "2015-02-23T22:28:55.111Z",
+    "timestamp": "2015-02-23T22:28:55.111Z",
+    "traits": {
+      "name": "Peter Gibbons",
+      "email": "peter@example.com",
+      "plan": "premium",
+      "logins": 5,
+      "address": {
+        "street": "6th St",
+        "city": "San Francisco",
+        "state": "CA",
+        "postalCode": "94103",
+        "country": "USA"
+      }
+    },
+    "type": "identify",
+    "userId": "97980cfea0067",
+    "version": "1.1"
+  }
 
 const src = {
     "id": "sh-fc25464e-65E8-43B0-563A-24EA356C520D",
@@ -123,4 +195,4 @@ const src = {
             "scrollY": 0
         }
     }
-};
+}; */

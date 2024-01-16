@@ -26,6 +26,7 @@
 import { setDataForJsonPath, query} from "./jp";
 import { AnalyticsInterface } from "@jitsu/js";
 import {event_handlers} from './event';
+import { ignoreIfEmpty } from "./common";
 
 /*const path = "$.store.book[*].author.n";
 console.log("path", path);
@@ -39,9 +40,7 @@ const default_mapping = (): any => {
     "$.clientId": {
       to: "$.clientId",
       //return to continue updating, false to stop updating
-      beforeUpdate: (value: any) => {
-        return value == null || value == undefined ? false : true;
-      },
+      beforeUpdate: ignoreIfEmpty,
     },
   }];
 };
@@ -53,7 +52,7 @@ const stage_map = (valmiAnalytics: AnalyticsInterface, event: any, pixel_event: 
         const { to, beforeUpdate } = obj[key];
         const value =  query(pixel_event, key);
         //console.log("value", value);
-        if (beforeUpdate == undefined ||beforeUpdate(value)) {
+        if (beforeUpdate === undefined ||beforeUpdate(value)) {
             setDataForJsonPath(value??[], event, to);
         }
     }); 
@@ -62,7 +61,10 @@ const stage_map = (valmiAnalytics: AnalyticsInterface, event: any, pixel_event: 
       const key = Object.keys(obj)[0];
         const { to, beforeUpdate } = obj[key];
         const value = query(pixel_event, key);
-        if (beforeUpdate == undefined || beforeUpdate(value)) {
+        if(key.endsWith("phone")){
+          console.log("beforeupdate", beforeUpdate(value) , key, value);
+        }
+        if (beforeUpdate === undefined || beforeUpdate(value)) {
             setDataForJsonPath(value??[], event, to);
         }
     });
@@ -81,7 +83,7 @@ const analytics_call = (
   const gen_events = event_handlers(valmiAnalytics, pixel_event, analytics_state);
   return gen_events.map(({fn , data, mapping} : any) => {return {
     method: fn,
-    args: [stage_map(valmiAnalytics, stage_prepare(valmiAnalytics,data), data,mapping)],
+    args: stage_map(valmiAnalytics, stage_prepare(valmiAnalytics,data), data,mapping),
   }}); 
 };
 
@@ -99,6 +101,6 @@ export const transform = (
   // make the call
   ret.forEach((element:any) => {
     console.log("element", element);
-    element["method"]?.(...element["args"]);
+    element["method"]?.(element["args"]);
   });
 };

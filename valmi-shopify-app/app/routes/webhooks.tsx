@@ -67,6 +67,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       throw new Response("Unhandled webhook topic", { status: 404 });
     case "CARTS_CREATE":
     case "CARTS_UPDATE":
+    case "CUSTOMERS_CREATE":
+    case "CUSTOMERS_UPDATE":
       transform(valmiAnalytics, payload, state);
       break;
     
