@@ -41,10 +41,13 @@ export const mapping = (analytics_state: any): any => {
 };
 export const event_data = (valmiAnalytics: AnalyticsInterface, analytics_state: any, event: any) : any => {
   
+  //update cart
+  analytics_state.updateCart(event.token, event);
+  
   if(event.line_items.length > 0){
     event.line_item = event.line_items[0];
     return [{
-      name: "Product Added",
+      fn: valmiAnalytics.track.bind(null, "Product Added"),
       mapping: mapping.bind(null, analytics_state),
       data: event,
     }]

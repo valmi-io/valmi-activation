@@ -28,7 +28,7 @@ import { authenticate } from "../shopify.server";
 import db from "../db.server";
 import { AnalyticsInterface, jitsuAnalytics } from "@jitsu/js";
 import { transform } from "event_lib/transformer";
-
+import { analytics_state } from "./analyticsState";
 var valmiAnalytics : AnalyticsInterface = null;
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -47,6 +47,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     });
   }
  
+  console.log("webhook", topic, shop, session, payload);
+  if (payload) {
+    (payload as any)["topic"]=topic;
+  }
+  const state = analytics_state();
+  console.log("state", state); 
+
+  
   switch (topic) {
     case "APP_UNINSTALLED":
       if (session) {
@@ -58,8 +66,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     case "SHOP_REDACT":
       throw new Response("Unhandled webhook topic", { status: 404 });
     case "CARTS_CREATE":
-      transform(valmiAnalytics, payload,{} );// analytics_state);
+    case "CARTS_UPDATE":
+      transform(valmiAnalytics, payload, state);
       break;
+    
     default:
       console.log(topic, payload);
       throw new Response("valmi webhook events", { status: 200 });

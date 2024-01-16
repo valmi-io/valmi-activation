@@ -30,6 +30,7 @@ import { mapping as search_submitted_mapping } from "./shopify/search_submitted"
 import { mapping as collection_viewed_mapping } from "./shopify/collection_viewed";
 import { mapping as cart_viewed_mapping } from "./shopify/cart_viewed";
 import { event_data as cart_created_event_data } from "./shopify/cloud/cart_created";
+import { event_data as cart_updated_event_data } from "./shopify/cloud/cart_updated";
 
 export const event_handlers = (
   valmiAnalytics: AnalyticsInterface,
@@ -70,8 +71,11 @@ export const event_handlers = (
         data: event,
       },
     ];
-  } else if (event.topic == "CARTS_CREATED") {
+  } else if (event.topic == "CARTS_CREATE") {
     return cart_created_event_data(valmiAnalytics, analytics_state, event);
+  } else if (event.topic == "CARTS_UPDATE") {
+    console.log("CARTS_UPDATE", event);
+    return cart_updated_event_data(valmiAnalytics, analytics_state, event);
   } else {
     return [{ fn: () => {}, mapping: () => [] }];
   }

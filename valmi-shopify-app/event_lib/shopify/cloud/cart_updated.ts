@@ -46,11 +46,9 @@ const get_new_line_items =  (old_cart: any, new_cart:any) => {
   // overwrite line_items
   copied_cart.line_items =[];
   new_cart.line_items.forEach((element: any) => {
-    old_cart.line_items.forEach((old_e: any) => {
-      if (old_e.key != element.key){
-        copied_cart.line_items.push(element);
-      }
-    });
+    if (old_cart.line_items.find((old_e: any) => old_e.key == element.key) == undefined){
+      copied_cart.line_items.push(element);
+    }
   });
   return copied_cart;
 };
@@ -60,11 +58,9 @@ const get_removed_line_items =  (old_cart: any, new_cart:any) => {
   // overwrite line_items
   copied_cart.line_items =[];
   old_cart.line_items.forEach((element: any) => {
-    new_cart.line_items.forEach((old_e: any) => {
-      if (old_e.key != element.key){
-        copied_cart.line_items.push(element);
-      }
-    });
+    if (old_cart.line_items.find((old_e: any) => old_e.key == element.key) == undefined){
+      copied_cart.line_items.push(element);
+    }
   });
   return copied_cart;
 };
@@ -75,7 +71,7 @@ const get_quantity_added_items =  (old_cart: any, new_cart:any) => {
   copied_cart.line_items =[];
   new_cart.line_items.forEach((element: any) => {
     old_cart.line_items.forEach((old_e: any) => {
-      if (element.quantity > old_e.quantity){
+      if (old_e.key == element.key && element.quantity > old_e.quantity){
         const n_e = {...element};
         n_e.quantity = element.quantity - old_e.quantity;
         n_e.total_discount = element.total_discount - old_e.total_discount
@@ -94,7 +90,7 @@ const get_quantity_reduced_items =  (old_cart: any, new_cart:any) => {
   copied_cart.line_items =[];
   new_cart.line_items.forEach((element: any) => {
     old_cart.line_items.forEach((old_e: any) => {
-      if (element.quantity < old_e.quantity){
+      if (old_e.key == element.key && element.quantity < old_e.quantity){
         const n_e = {...element};
         n_e.quantity = old_e.quantity - element.quantity;
         n_e.total_discount = old_e.total_discount - element.total_discount
@@ -114,44 +110,62 @@ export const event_data = (valmiAnalytics: AnalyticsInterface, analytics_state: 
 
 
   const cart_token = event.token;
-  //const cart = analytics_state.findCartByToken(cart_token);
-  let  cart = null;
+  let cart: any = analytics_state.findCartByToken(cart_token);
+  console.log("old cart", cart);
   if (!cart){
     cart = {line_items:[]};
   }
+  //update cart
+  analytics_state.updateCart(cart_token, event);
+
+  console.log("cart", cart);
+  console.log("event", event);
   
   const new_line_items = get_new_line_items(cart,event);
   const removed_line_items = get_removed_line_items(cart,event);
   const quantity_added_items = get_quantity_added_items(cart, event);
   const quantity_reduced_items = get_quantity_reduced_items(cart, event);
+  console.log("new_line_items", new_line_items);  
+  console.log("removed_line_items", removed_line_items);
+  console.log("quantity_added_items", quantity_added_items);
+  console.log("quantity_reduced_items", quantity_reduced_items);
+
 
   const ret: any[] = [];
   new_line_items.line_items.forEach((element: any) => {
+    const sub_item = {...new_line_items};
+    sub_item.line_item = element;
     ret.push({
-      name: "Product Added",
+      fn: valmiAnalytics.track.bind(null, "Product Added"),
       mapping: mapping.bind(null, analytics_state),
-      data: element,
+      data: sub_item,
     }); 
   });
   removed_line_items.line_items.forEach((element: any) => {
+    const sub_item = {...removed_line_items};
+    sub_item.line_item = element;
     ret.push({
-      name: "Product Removed",
+      fn: valmiAnalytics.track.bind(null, "Product Removed"),
       mapping: mapping.bind(null, analytics_state),
-      data: element,
+      data: sub_item,
     }); 
   });
   quantity_added_items.line_items.forEach((element: any) => {
+    const sub_item = {...quantity_added_items};
+    sub_item.line_item = element;
     ret.push({
-      name: "Product Added",
+      fn: valmiAnalytics.track.bind(null, "Product Added"),
       mapping: mapping.bind(null, analytics_state),
-      data: element,
+      data: sub_item,
     }); 
   });
   quantity_reduced_items.line_items.forEach((element: any) => {
+    const sub_item = {...quantity_reduced_items};
+    sub_item.line_item = element;
     ret.push({
-      name: "Product Removed",
+      fn: valmiAnalytics.track.bind(null, "Product Removed"),
       mapping: mapping.bind(null, analytics_state),
-      data: element,
+      data: sub_item,
     }); 
   });
   return ret;

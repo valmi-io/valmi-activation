@@ -34,8 +34,12 @@ const setDataAtCurrentPath = (
     let x = [mappeddata];
     for (let i = 0; i < currentPath.length; i++) {
       x = x.flatMap((obj) => {
-        return obj[currentPath[i]];
+        if (obj && obj.hasOwnProperty(currentPath[i])) {
+          return obj[currentPath[i]];
+        }
+        else return null;
       });
+      x = x.filter((el: any) => el != null);
     }
     for (let i = 0; i < x.length; i++) {
       if (sourcedata.length <= i) {
@@ -58,9 +62,12 @@ const checkForPropertyAtPath = (
   for (let i = 0; i < currentPath.length; i++) {
     //console.log(key, x, currentPath);
     if (arrayIdx == i) {
-      x = x[currentPath[i]][0];
+      if(x && x.hasOwnProperty(currentPath[i]) && Array.isArray(x[currentPath[i]]) && x[currentPath[i]].length > 0)
+        x = x[currentPath[i]][0];
+      else return false;
     } else {
-      x = x[currentPath[i]];
+      if (!x || !x.hasOwnProperty(currentPath[i])) return false;
+        x = x[currentPath[i]];
     }
   }
   if (x.hasOwnProperty(key)) return true;
@@ -99,12 +106,20 @@ export const query = (obj: any, p: string) => {
           path[i + 1].expression.value == "*"
         ) {
           objs = objs.flatMap((el: any) => {
-            return el[element.expression.value];
+            if (el && el.hasOwnProperty(element.expression.value)) {
+              return el[element.expression.value];
+            }
+            else return null;
           });
+          objs = objs.filter((el: any) => el != null);
         } else {
           objs = objs.map((el: any) => {
-            return el[element.expression.value];
+            if (el && el.hasOwnProperty(element.expression.value)) {
+              return el[element.expression.value];
+            }
+            else return null;
           });
+          objs = objs.filter((el: any) => el != null);
         }
       }
     }

@@ -43,6 +43,6 @@ register(({ configuration, analytics, browser, init }) => {
     // https://help.shopify.com/en/manual/promoting-marketing/pixels/custom-pixels/code
     // https://help.shopify.com/en/manual/promoting-marketing/pixels/custom-pixels#custom-pixel-setup
 
-    transform(valmiAnalytics, event);
+    transform(valmiAnalytics, event, {});
   });
 });
