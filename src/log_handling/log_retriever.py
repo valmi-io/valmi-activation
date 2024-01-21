@@ -155,7 +155,7 @@ class LocalStorage(Storage):
     def get_data(self, files_list, meta):
         if len(files_list) <= 0:
             return {"meta": meta,
-                    "lines": []}
+                    "logs": []}
 
         con = db.connect(':memory:')
         time_filter = ""
@@ -175,8 +175,8 @@ class LocalStorage(Storage):
             ORDER BY timestamp_micros ASC"
             % (files_list, MAGIC_DELIM))
         '''
-        lines = con.fetchall()
-        return {"meta": meta, "logs": lines}
+        logs = con.fetchall()
+        return {"meta": meta, "logs": logs}
 
 
 def main():
