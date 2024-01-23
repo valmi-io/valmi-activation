@@ -69,6 +69,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     case "CARTS_UPDATE":
     case "CUSTOMERS_CREATE":
     case "CUSTOMERS_UPDATE":
+    case "CHECKOUTS_CREATE":
+    case "CHECKOUTS_UPDATE": 
       transform(valmiAnalytics, payload, state);
       break;
     

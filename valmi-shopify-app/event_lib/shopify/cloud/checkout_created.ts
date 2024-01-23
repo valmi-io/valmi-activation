@@ -23,6 +23,39 @@
  * SOFTWARE.
  */
 
+import { AnalyticsInterface } from "@jitsu/js";
+
+export const mapping = (analytics_state: any): any => {
+  return [  
+    { "$.cart_token": { to: "$.cart_id" } },
+    { "$.token": { to: "$.checkout_id" } },
+    { "$.total_tax": { to: "$.tax" } },
+    { "$.currency": { to: "$.currency" } },
+    { "$.total_discounts": { to: "$.discount" } },
+    { "$.subtotal_price": { to: "$.revenue" } },
+    { "$.total_price": { to: "$.value" } },
+    { "$.discount_codes": { to: "$.coupon" } },
+    { "$.line_items[*].quantity": { to: "$.products[*].quantity" } },
+    { "$.line_items[*].sku": { to: "$.products[*].sku" } },
+    { "$.line_items[*].title": { to: "$.products[*].name" } },
+    { "$.line_items[*].price": { to: "$.products[*].price" } },
+    { "$.line_items[*].variant_id": { to: "$.products[*].product_id" } },
+    { "$.line_items[*].line_price": { to: "$.products[*].value" } },
+    { "$.line_items[*].applied_discounts": { to: "$.products[*].coupon" } },
+    { "$.line_items[*].vendor": { to: "$.products[*].brand" } },
+  ];
+};
+export const event_data = (valmiAnalytics: AnalyticsInterface, analytics_state: any, event: any) : any => {
+  return [{
+    fn: valmiAnalytics.track.bind(null, "Checkout Started"),
+    mapping: mapping.bind(null, analytics_state),
+    data: event,
+  }]
+};
+
+export const fn = (valmiAnalytics: AnalyticsInterface) => valmiAnalytics.track;
+
+/*
 const src = {
     id: 34309611520214,
     token: 'f25117962ca5a0f0f78896f36ca232a2',
@@ -126,3 +159,4 @@ const src = {
     source: null,
     closed_at: null
   };
+  */

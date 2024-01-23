@@ -38,6 +38,8 @@ import { event_data as cart_created_event_data } from "./shopify/cloud/cart_crea
 import { event_data as cart_updated_event_data } from "./shopify/cloud/cart_updated";
 import { event_data as customers_created_event_data } from "./shopify/cloud/customer_created";
 import { event_data as customers_updated_event_data } from "./shopify/cloud/customer_updated";
+import { event_data as checkouts_created_event_data } from "./shopify/cloud/checkout_created";
+import { event_data as checkouts_updated_event_data } from "./shopify/cloud/checkout_updated";
 
 export const event_handlers = (
   valmiAnalytics: AnalyticsInterface,
@@ -100,12 +102,15 @@ export const event_handlers = (
     return cart_created_event_data(valmiAnalytics, analytics_state, event);
   } else if (event.topic == "CARTS_UPDATE") {
     return cart_updated_event_data(valmiAnalytics, analytics_state, event);
+  } else if (event.topic == "CHECKOUTS_CREATE") {
+    return checkouts_created_event_data(valmiAnalytics, analytics_state, event);
+  } else if (event.topic == "CHECKOUTS_UPDATE") {
+    return checkouts_updated_event_data(valmiAnalytics, analytics_state, event);
   } else if (event.topic == "CUSTOMERS_CREATE") {
     return customers_created_event_data(valmiAnalytics, analytics_state, event);
   } else if (event.topic == "CUSTOMERS_UPDATE") {
     return customers_updated_event_data(valmiAnalytics, analytics_state, event);
-  } 
-  else {
+  } else {
     return [{ fn: () => {}, mapping: () => [] }];
   }
 };

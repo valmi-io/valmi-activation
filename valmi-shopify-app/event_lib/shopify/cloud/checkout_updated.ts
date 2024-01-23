@@ -23,6 +23,33 @@
  * SOFTWARE.
  */
 
+import { AnalyticsInterface } from "@jitsu/js";
+
+export const mapping = (analytics_state: any): any => {
+  return [  
+    { "$.cart_token": { to: "$.cart_id" } },
+    { "$.token": { to: "$.checkout_id" } },
+    { "$.__shipping_method": { to: "$.shipping_method" } },
+  ];
+};
+
+export const event_data = (valmiAnalytics: AnalyticsInterface, analytics_state: any, event: any) : any => {
+  if(event.shipping_lines.length > 0 && event.shipping_address){
+    event.__shipping_method = event.shipping_lines[0].code;
+    return [{
+      fn: valmiAnalytics.track.bind(null, "Checkout Step Completed"),
+      mapping: mapping.bind(null, analytics_state),
+      data: event,
+    }]
+  }
+  else{
+    return [];
+  }
+};
+
+export const fn = (valmiAnalytics: AnalyticsInterface) => valmiAnalytics.track;
+
+/*
 const src =  {
   id: 34309611520214,
   token: 'f25117962ca5a0f0f78896f36ca232a2',
@@ -183,4 +210,4 @@ const src =  {
     country_code: 'IN',
     province_code: 'TS'
   }
-};
+};*/
