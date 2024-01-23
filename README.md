@@ -1,3 +1,5 @@
+  - ### We'd love to discuss your use-case and the problem you are trying to solve, if you are up for a 15-20 min call, please block a time on  [Co-Founder Raj Varkala's calendar](https://calendly.com/raj-varkala/30min)
+    
 <p align="center">
   <a href="https://valmi.io"><img width="400" src="https://blog.valmi.io/content/images/2023/06/valmilogo-1.png" alt="valmi.io"></a>
 </p>
@@ -28,8 +30,6 @@
 
   - ## See it in [Action](https://demo.valmi.io/spaces/a9195c50-60ca-4692-8f03-5a486ee9f270/syncs/d69cf9f9-0e20-4e2c-a683-2649404f52ed/runs)
     Quickly witness a One Million (1M) Rows Sync at [Live Sync](https://demo.valmi.io/spaces/a9195c50-60ca-4692-8f03-5a486ee9f270/syncs/d69cf9f9-0e20-4e2c-a683-2649404f52ed/runs).
-
-  - ### We'd love to discuss your use-case and the problem you are trying to solve, if you are up for a 15-20 min call, please block a time on  [Co-Founder Raj Varkala's calendar](https://calendly.com/raj-varkala/30min)
 
     <div align="center">
     
