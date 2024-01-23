@@ -1,3 +1,71 @@
+/*
+ * Copyright (c) 2024 valmi.io <https://github.com/valmi-io>
+ * 
+ * Created Date: Friday, January 12th 2024, 2:18:49 pm
+ * Author: Rajashekar Varkala @ valmi.io
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+import { AnalyticsInterface } from "@jitsu/js";
+
+export const mapping = (analytics_state: any): any => {
+  return [  
+    { "$.order_id": { to: "$.order_id" } }, 
+    { "$.total_tax": { to: "$.tax" } },
+    { "$.subtotal": { to: "$.revenue" } },
+    { "$.total": { to: "$.value" } },
+    { "$.currency": { to: "$.currency" } },
+  
+
+    { "$.refund_line_items[*].quantity": { to: "$.products[*].quantity" } },
+    { "$.refund_line_items[*].line_item.sku": { to: "$.products[*].sku" } },
+    { "$.refund_line_items[*].line_item.title": { to: "$.products[*].name" } },
+    { "$.refund_line_items[*].line_item.price": { to: "$.products[*].price" } },
+    { "$.refund_line_items[*].line_item.product_id": { to: "$.products[*].product_id" } },
+    { "$.refund_line_items[*].line_item.vendor": { to: "$.products[*].brand" } },
+  ];
+};
+export const event_data = (valmiAnalytics: AnalyticsInterface, analytics_state: any, event: any) : any => {
+  event.total_tax = 0;
+  event.subtotal = 0
+  event.total = 0;
+  if(event.refund_line_items.length > 0){
+    for(let i = 0; i < event.refund_line_items.length; i++){
+      event.total_tax += event.refund_line_items[i].total_tax;
+      event.subtotal += event.refund_line_items[i].subtotal;
+      event.total = event.total_tax + event.subtotal;
+    }
+  }
+  if(event.transactions.length >0){
+    event.currency = event.transactions[0].currency;
+  }
+  return [{
+    fn: valmiAnalytics.track.bind(null, "Order Refunded"),
+    mapping: mapping.bind(null, analytics_state),
+    data: event,
+  }]
+};
+
+export const fn = (valmiAnalytics: AnalyticsInterface) => valmiAnalytics.track;
+
+/*
 //without return
 const src = {
     id: 887837196502,
@@ -305,4 +373,4 @@ const src = {
         }
       ],
       "order_adjustments": []
-    };
+    };*/

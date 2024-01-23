@@ -40,6 +40,11 @@ import { event_data as customers_created_event_data } from "./shopify/cloud/cust
 import { event_data as customers_updated_event_data } from "./shopify/cloud/customer_updated";
 import { event_data as checkouts_created_event_data } from "./shopify/cloud/checkout_created";
 import { event_data as checkouts_updated_event_data } from "./shopify/cloud/checkout_updated";
+import { event_data as orders_created_event_data } from "./shopify/cloud/order_created";
+import { event_data as orders_cancelled_event_data } from "./shopify/cloud/order_cancelled";
+import { event_data as refunds_created_event_data } from "./shopify/cloud/refund_created";
+import { event_data as fulfillments_created_event_data } from "./shopify/cloud/fulfillment_created";
+import { event_data as fulfillments_updated_event_data } from "./shopify/cloud/fulfillment_updated";
 
 export const event_handlers = (
   valmiAnalytics: AnalyticsInterface,
@@ -106,6 +111,16 @@ export const event_handlers = (
     return checkouts_created_event_data(valmiAnalytics, analytics_state, event);
   } else if (event.topic == "CHECKOUTS_UPDATE") {
     return checkouts_updated_event_data(valmiAnalytics, analytics_state, event);
+  } else if (event.topic == "ORDERS_CREATE") {
+    return orders_created_event_data(valmiAnalytics, analytics_state, event);
+  } else if (event.topic == "ORDERS_CANCELLED") {
+    return orders_cancelled_event_data(valmiAnalytics, analytics_state, event);
+  } else if (event.topic == "REFUNDS_CREATE") {
+    return refunds_created_event_data(valmiAnalytics, analytics_state, event);
+  } else if (event.topic == "FULFILLMENTS_CREATE") {
+    return fulfillments_created_event_data(valmiAnalytics, analytics_state, event);
+  } else if (event.topic == "FULFILLMENTS_UPDATE") {
+    return fulfillments_updated_event_data(valmiAnalytics, analytics_state, event);
   } else if (event.topic == "CUSTOMERS_CREATE") {
     return customers_created_event_data(valmiAnalytics, analytics_state, event);
   } else if (event.topic == "CUSTOMERS_UPDATE") {

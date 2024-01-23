@@ -22,7 +22,36 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+import { AnalyticsInterface } from "@jitsu/js";
 
+export const mapping = (analytics_state: any): any => {
+  return [   
+    { "$.order_id": { to: "$.order_id" } }, 
+    { "$.tracking_company": { to: "$.tracking_company" } }, 
+    { "$.tracking_urls": { to: "$.tracking_urls" } }, 
+    { "$.tracking_numbers": { to: "$.tracking_numbers" } }, 
+
+    { "$.line_items[*].quantity": { to: "$.products[*].quantity" } },
+    { "$.line_items[*].sku": { to: "$.products[*].sku" } },
+    { "$.line_items[*].fulfillable_quantity": { to: "$.products[*].fulfillable_quantity" } },
+    { "$.line_items[*].title": { to: "$.products[*].name" } },
+    { "$.line_items[*].price": { to: "$.products[*].price" } },
+    { "$.line_items[*].product_id": { to: "$.products[*].product_id" } },
+    { "$.line_items[*].vendor": { to: "$.products[*].brand" } },
+    { "$.line_items[*].fulfillment_status": { to: "$.products[*].fulfillment_status" } },
+  ];
+};
+export const event_data = (valmiAnalytics: AnalyticsInterface, analytics_state: any, event: any) : any => {
+  return [{
+    fn: valmiAnalytics.track.bind(null, "Fulfillment Created"),
+    mapping: mapping.bind(null, analytics_state),
+    data: event,
+  }]
+};
+
+export const fn = (valmiAnalytics: AnalyticsInterface) => valmiAnalytics.track;
+
+/*
 const src ={
     id: 4829428613334,
     order_id: 5364786725078,
@@ -90,4 +119,4 @@ const src ={
     receipt: {},
     name: '#1006.1',
     admin_graphql_api_id: 'gid://shopify/Fulfillment/4829428613334'
-  }; 
+  }; */

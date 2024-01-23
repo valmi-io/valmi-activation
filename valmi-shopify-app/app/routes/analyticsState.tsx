@@ -1,8 +1,9 @@
-const carts: any = {};
+const carts: any = {}; // TODO: use a database
+
 export const analytics_state = () => {
   return {
     findCartByToken: (token: string) => {
-      console.log("find carts", carts);
+      // console.log("find carts", carts);
 
       if (carts.hasOwnProperty(token)) {
         return carts[token];
@@ -11,7 +12,7 @@ export const analytics_state = () => {
     },
     updateCart: (token: string, cart: any) => {
       carts[token] = cart;
-      console.log("carts", carts);
+      // console.log("carts", carts);
     },
   };
 };

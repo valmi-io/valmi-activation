@@ -39,7 +39,7 @@ export const mapping = (analytics_state: any): any => {
     { "$.line_items[*].sku": { to: "$.products[*].sku" } },
     { "$.line_items[*].title": { to: "$.products[*].name" } },
     { "$.line_items[*].price": { to: "$.products[*].price" } },
-    { "$.line_items[*].variant_id": { to: "$.products[*].product_id" } },
+    { "$.line_items[*].product_id": { to: "$.products[*].product_id" } },
     { "$.line_items[*].line_price": { to: "$.products[*].value" } },
     { "$.line_items[*].applied_discounts": { to: "$.products[*].coupon" } },
     { "$.line_items[*].vendor": { to: "$.products[*].brand" } },
