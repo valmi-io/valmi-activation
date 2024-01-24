@@ -37,7 +37,7 @@ export const event_data = (valmiAnalytics: AnalyticsInterface, analytics_state: 
   if(event.shipping_lines.length > 0 && event.shipping_address){
     event.__shipping_method = event.shipping_lines[0].code;
     return [{
-      fn: valmiAnalytics.track.bind(null, "Checkout Step Completed"),
+      fn: valmiAnalytics.track.bind(null, "Checkout Step Completed - s2s"),
       mapping: mapping.bind(null, analytics_state),
       data: event,
     }]

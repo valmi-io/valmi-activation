@@ -22,7 +22,13 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+import { mapping as checkout_mapping } from "./checkout_started";
 
+
+export const track_mapping = (): any => {
+  const arr = checkout_mapping(); 
+  return arr;
+};
 
 /*
 const src ={

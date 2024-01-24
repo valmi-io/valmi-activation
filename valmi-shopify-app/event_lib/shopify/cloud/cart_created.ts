@@ -47,7 +47,7 @@ export const event_data = (valmiAnalytics: AnalyticsInterface, analytics_state: 
   if(event.line_items.length > 0){
     event.line_item = event.line_items[0];
     return [{
-      fn: valmiAnalytics.track.bind(null, "Product Added"),
+      fn: valmiAnalytics.track.bind(null, "Product Added - s2s"),
       mapping: mapping.bind(null, analytics_state),
       data: event,
     }]

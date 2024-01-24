@@ -23,6 +23,37 @@
  * SOFTWARE.
  */
 
+import { AnalyticsInterface } from "@jitsu/js";
+
+export const mapping = (): any => {
+  return [ 
+    { "$.data.checkout.token": { to: "$.checkout_id" } },
+
+    { "$.data.checkout.currencyCode": { to: "$.currency" } },
+    { "$.data.checkout.totalTax": { to: "$.tax" } },
+    { "$.data.checkout.discountApplications": { to: "$.discountApplications" } },
+    { "$.data.checkout.subtotalPrice": { to: "$.revenue" } },
+    { "$.data.checkout.totalPrice": { to: "$.value" } },
+    
+    { "$.data.checkout.billingAddress": { to: "$.billing_address" } },
+    { "$.data.checkout.shippingAddress": { to: "$.shipping_address" } },
+    
+    { "$.data.checkout.lineItems[*].variant.price.amount": { to: "$.products[*].price" } },
+    { "$.data.checkout.lineItems[*].variant.image.src": { to: "$.products[*].image_url" } },
+    { "$.data.checkout.lineItems[*].variant.product.url": { to: "$.products[*].url" } },
+    { "$.data.checkout.lineItems[*].variant.product.title": { to: "$.products[*].name" } },
+    { "$.data.checkout.lineItems[*].variant.product.id": { to: "$.products[*].product_id" } },
+    { "$.data.checkout.lineItems[*].variant.product.type": { to: "$.products[*].category" } },
+    { "$.data.checkout.lineItems[*].variant.product.vendor": { to: "$.products[*].brand" } },
+    { "$.data.checkout.lineItems[*].quantity": { to: "$.products[*].quantity" } },
+
+    
+  ];
+};
+
+export const fn = (valmiAnalytics: AnalyticsInterface) => valmiAnalytics.track;
+
+/*
 const src = {
     "id": "sh-fc25464d-85AC-4A1C-CF92-DC0BFE51CA69",
     "name": "checkout_started",
@@ -137,4 +168,4 @@ const src = {
             "scrollY": 0
         }
     }
-};
+};*/

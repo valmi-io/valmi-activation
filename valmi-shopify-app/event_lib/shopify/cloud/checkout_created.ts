@@ -47,7 +47,7 @@ export const mapping = (analytics_state: any): any => {
 };
 export const event_data = (valmiAnalytics: AnalyticsInterface, analytics_state: any, event: any) : any => {
   return [{
-    fn: valmiAnalytics.track.bind(null, "Checkout Started"),
+    fn: valmiAnalytics.track.bind(null, "Checkout Started - s2s"),
     mapping: mapping.bind(null, analytics_state),
     data: event,
   }]

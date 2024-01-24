@@ -49,21 +49,31 @@ const stage_map = (valmiAnalytics: AnalyticsInterface, event: any, pixel_event: 
     const mapping = default_mapping(); 
     mapping.forEach((obj: any) => {
         const key = Object.keys(obj)[0];
+        // UGLY HACK - had to stop the shopify marathon
+        let value = null;
+        if(! key.startsWith("$.")){
+          value = [key];
+        } else {
+          value =  query(pixel_event, key);
+        }
         const { to, beforeUpdate } = obj[key];
-        const value =  query(pixel_event, key);
         //console.log("value", value);
         if (beforeUpdate === undefined ||beforeUpdate(value)) {
             setDataForJsonPath(value??[], event, to);
         }
     }); 
+
     const cmapping: any = event_mapping();
     cmapping.forEach((obj: any) => {
-      const key = Object.keys(obj)[0];
-        const { to, beforeUpdate } = obj[key];
-        const value = query(pixel_event, key);
-        if(key.endsWith("phone")){
-          console.log("beforeupdate", beforeUpdate(value) , key, value);
+        const key = Object.keys(obj)[0];
+        // UGLY HACK - had to stop the shopify marathon
+        let value = null;
+        if(! key.startsWith("$.")){
+          value = [key];
+        } else {
+          value =  query(pixel_event, key);
         }
+        const { to, beforeUpdate } = obj[key];
         if (beforeUpdate === undefined || beforeUpdate(value)) {
             setDataForJsonPath(value??[], event, to);
         }

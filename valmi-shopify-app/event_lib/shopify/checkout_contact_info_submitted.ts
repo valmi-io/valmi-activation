@@ -25,6 +25,7 @@
 
 import { AnalyticsInterface } from "@jitsu/js";
 import {ignoreIfEmpty} from '../common';
+import { mapping as checkout_mapping } from "./checkout_started";
 
 export const mapping = () : any => {
     return [
@@ -36,6 +37,14 @@ export const mapping = () : any => {
 export const fn = (valmiAnalytics: AnalyticsInterface) => valmiAnalytics.identify;
 
 
+export const track_mapping = (): any => {
+    const arr = checkout_mapping();
+    arr.push(
+      {"contact_info_submitted": { to: "$.step" }  },
+    )
+    return arr;
+  };
+  
 /*
 {
     "anonymousId": "507f191e810c19729de860ea",

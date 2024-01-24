@@ -57,7 +57,7 @@ export const event_data = (valmiAnalytics: AnalyticsInterface, analytics_state: 
     event.currency = event.transactions[0].currency;
   }
   return [{
-    fn: valmiAnalytics.track.bind(null, "Order Refunded"),
+    fn: valmiAnalytics.track.bind(null, "Order Refunded - s2s"),
     mapping: mapping.bind(null, analytics_state),
     data: event,
   }]

@@ -24,7 +24,7 @@
  */
 import { AnalyticsInterface } from "@jitsu/js";
 import { ignoreIfEmpty } from "event_lib/common";
-
+import { mapping as checkout_mapping } from "./checkout_started";
 export const mapping = () : any => {
     return [
       {"$.data.checkout.shippingAddress.address1":{to: "$.address.address1", beforeUpdate: ignoreIfEmpty}},
@@ -43,6 +43,17 @@ export const mapping = () : any => {
 };
 
 export const fn = (valmiAnalytics: AnalyticsInterface) => valmiAnalytics.identify;
+
+
+ 
+
+export const track_mapping = (): any => {
+  const arr = checkout_mapping();
+  arr.push(
+    {"address_info_submitted": { to: "$.step" }  },
+  )
+  return arr;
+};
 
 
 /*

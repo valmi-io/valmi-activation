@@ -23,6 +23,17 @@
  * SOFTWARE.
  */
 
+import { mapping as checkout_mapping } from "./checkout_started";
+
+ 
+
+export const track_mapping = (): any => {
+  const arr = checkout_mapping();
+  arr.push(
+    {"shipping_info_submitted": { to: "$.step" }  },
+  )
+  return arr;
+};
 
 /*
 const src = {

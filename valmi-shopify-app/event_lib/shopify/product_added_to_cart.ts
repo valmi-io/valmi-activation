@@ -23,6 +23,28 @@
  * SOFTWARE.
  */
 
+import { AnalyticsInterface } from "@jitsu/js";
+ 
+export const mapping = (): any => {
+  return [  
+    { "$.data.cartLine.merchandise.price.currencyCode": { to: "$.currency" } },
+    { "$.data.cartLine.merchandise.price.amount": { to: "$.price" } },
+    { "$.data.cartLine.merchandise.image.src": { to: "$.image_url" } },
+    { "$.data.cartLine.merchandise.product.url": { to: "$.url" } },
+    { "$.data.cartLine.merchandise.product.title": { to: "$.name" } },
+    { "$.data.cartLine.merchandise.sku": { to: "$.sku" } },
+    { "$.data.cartLine.merchandise.product.id": { to: "$.product_id" } },
+    { "$.data.cartLine.merchandise.product.type": { to: "$.category" } },
+    { "$.data.cartLine.merchandise.product.vendor": { to: "$.brand" } },
+    { "$.data.cartLine.cost.totalAmount.amount": { to: "$.value" } },
+    { "$.data.cartLine.quantity": { to: "$.quantity" } },
+
+  ];
+};
+
+export const fn = (valmiAnalytics: AnalyticsInterface) => valmiAnalytics.track;
+
+/*
 const src = {
     "id": "sh-fc065e5e-ED1B-4377-D2D5-2921947B586D",
     "name": "product_added_to_cart",
@@ -116,4 +138,4 @@ const src = {
             "scrollY": 0
         }
     }
-};
+};*/

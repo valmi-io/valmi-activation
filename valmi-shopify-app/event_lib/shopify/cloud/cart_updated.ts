@@ -136,7 +136,7 @@ export const event_data = (valmiAnalytics: AnalyticsInterface, analytics_state: 
     const sub_item = {...new_line_items};
     sub_item.line_item = element;
     ret.push({
-      fn: valmiAnalytics.track.bind(null, "Product Added"),
+      fn: valmiAnalytics.track.bind(null, "Product Added - s2s"),
       mapping: mapping.bind(null, analytics_state),
       data: sub_item,
     }); 
@@ -145,7 +145,7 @@ export const event_data = (valmiAnalytics: AnalyticsInterface, analytics_state: 
     const sub_item = {...removed_line_items};
     sub_item.line_item = element;
     ret.push({
-      fn: valmiAnalytics.track.bind(null, "Product Removed"),
+      fn: valmiAnalytics.track.bind(null, "Product Removed - s2s"),
       mapping: mapping.bind(null, analytics_state),
       data: sub_item,
     }); 
@@ -154,7 +154,7 @@ export const event_data = (valmiAnalytics: AnalyticsInterface, analytics_state: 
     const sub_item = {...quantity_added_items};
     sub_item.line_item = element;
     ret.push({
-      fn: valmiAnalytics.track.bind(null, "Product Added"),
+      fn: valmiAnalytics.track.bind(null, "Product Added - s2s"),
       mapping: mapping.bind(null, analytics_state),
       data: sub_item,
     }); 
@@ -163,7 +163,7 @@ export const event_data = (valmiAnalytics: AnalyticsInterface, analytics_state: 
     const sub_item = {...quantity_reduced_items};
     sub_item.line_item = element;
     ret.push({
-      fn: valmiAnalytics.track.bind(null, "Product Removed"),
+      fn: valmiAnalytics.track.bind(null, "Product Removed - s2s"),
       mapping: mapping.bind(null, analytics_state),
       data: sub_item,
     }); 
