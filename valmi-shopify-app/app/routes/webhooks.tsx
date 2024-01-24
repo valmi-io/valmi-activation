@@ -29,6 +29,7 @@ import db from "../db.server";
 import { AnalyticsInterface, jitsuAnalytics } from "@jitsu/js";
 import { transform } from "event_lib/transformer";
 import { analytics_state } from "./analyticsState";
+import { getValmiConfig } from "~/api/prisma.server";
 var valmiAnalytics : AnalyticsInterface = null;
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -40,10 +41,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     // The admin context isn't returned if the webhook fired after a shop was uninstalled.
     throw new Response();
   }
+
+  const valmiconf = await getValmiConfig();
   if( !valmiAnalytics){
     valmiAnalytics = jitsuAnalytics({
-      host: "https://www.mywavia.com",
-      writeKey: "Yze5gDoyX2w8Kk5doGK0qF59sF6CHxkJ:************",
+      host: valmiconf.host,
+      writeKey: valmiconf.writeKey,
     });
   }
  
