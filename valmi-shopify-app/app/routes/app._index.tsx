@@ -27,8 +27,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 const webPixelUpdate = async ({admin,host,writeKey}:any) => {
   try{
-    const pixel = await getWebPixel(writeKey);
-    console.log(pixel);
+    const pixel: any = await getWebPixel(writeKey);
+    //console.log(pixel);
     // webpixel  does not exist
     if( ! pixel.pixel_id){ 
       const response = await admin.graphql(

@@ -47,7 +47,18 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     valmiAnalytics = jitsuAnalytics({
       host: valmiconf.host,
       writeKey: valmiconf.writeKey,
-    });
+      //debug: true,
+    }); 
+
+    // FORCING ANONYMOUS ID
+    const storage= (valmiAnalytics as any).storage;
+    storage.setItem("__anon_id", "valmi_cloud_event_server");
+    const userState =  (valmiAnalytics as any).user();
+    if (userState) {
+      userState.anonymousId = "valmi_cloud_event_server";
+    }
+    (valmiAnalytics as any).setAnonymousId("valmi_cloud_event_server");
+    //valmiAnalytics.setAnonymousId("valmi_cloud_event_server"); -- WORKING ONLY IN DEBUG MODE
   }
  
   //console.log("webhook", topic, shop, session, payload);
