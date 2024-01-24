@@ -20,3 +20,14 @@ model Session {
   accessToken String
   userId      BigInt?
 }
+
+model Valmiconf {
+  id          String    @id
+  host        String
+  writeKey    String 
+}
+
+model WebPixel {
+  id String @id
+  pixel_id String
+}

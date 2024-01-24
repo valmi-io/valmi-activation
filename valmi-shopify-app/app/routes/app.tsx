@@ -134,7 +134,7 @@ export const webhookReregistration = async ({ request } : any) => {
     console.error(e);
   }
 } 
-
+/*
 export const action: ActionFunction = async ({request }) => {
   const {admin} = await authenticate.admin (request);
   // This mutation creates a web pixel, and sets the `accountID` declared in `shopify.extension.toml` to the value `234`.
@@ -176,17 +176,17 @@ export const action: ActionFunction = async ({request }) => {
   }
   return null;
 }
-
+*/
 export default function App() {
   const { apiKey } = useLoaderData<typeof loader>();
-  const actionData = useActionData<typeof action>();
-  //console.log(`actionData`, actionData);
-  const submit = useSubmit();
-  useEffect(() => {
-    if(!actionData)
-      submit({}, { method: "POST"});
-  }
-  , [actionData,submit]);
+  // const actionData = useActionData<typeof action>();
+  // //console.log(`actionData`, actionData);
+  // const submit = useSubmit();
+  // useEffect(() => {
+  //   if(!actionData)
+  //     submit({}, { method: "POST"});
+  // }
+  // , [actionData,submit]);
 
 
   return (
@@ -195,7 +195,7 @@ export default function App() {
         <Link to="/app" rel="home">
           Home
         </Link>
-        <Link to="/app/additional">Additional page</Link>
+       {/* <Link to="/app/additional">Additional page</Link> */}
       </ui-nav-menu>
       <Outlet />
     </AppProvider>

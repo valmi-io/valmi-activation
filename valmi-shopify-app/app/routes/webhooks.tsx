@@ -47,12 +47,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     });
   }
  
-  console.log("webhook", topic, shop, session, payload);
+  //console.log("webhook", topic, shop, session, payload);
   if (payload) {
     (payload as any)["topic"]=topic;
   }
   const state = analytics_state();
-  console.log("state", state); 
+  //console.log("state", state); 
 
   
   switch (topic) {
@@ -80,7 +80,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       break;
     
     default:
-      console.log(topic, payload);
+      // console.log(topic, payload);
       throw new Response("valmi webhook events", { status: 200 });
   }
   throw new Response();

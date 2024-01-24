@@ -97,10 +97,10 @@ export const transform = (
     pixel_event,
     analytics_state,
   );
-  console.log(JSON.stringify(ret));
+  //console.log(JSON.stringify(ret));
   // make the call
   ret.forEach((element:any) => {
-    console.log("element", element);
+    //console.log("element", element);
     element["method"]?.(element["args"]);
   });
 };

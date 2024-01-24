@@ -27,16 +27,15 @@ import {register} from "@shopify/web-pixels-extension";
 import {jitsuAnalytics} from "@jitsu/js";
 import {transform} from "../../../event_lib/transformer";
 
-register(({ configuration, analytics, browser, init }) => {
-
+register(({ analytics, browser, init, settings}) => {
   const valmiAnalytics = jitsuAnalytics({
-    host: "https://www.mywavia.com",
-    writeKey: "Yze5gDoyX2w8Kk5doGK0qF59sF6CHxkJ:************",
-}); 
+    host: settings.host,  
+    writeKey: settings.writeKey,
+  });
   // Subscribe to events
   analytics.subscribe('all_events', (event) => {
-    console.log("event",event);
-
+    //console.log("event",event);
+    //console.log("cofiguration", settings);
     // To capture PAYMENT FAILED event, we need to credit the theme app extension and edit the liquid file.
     // And then publish a custom pixel event and then subscribe to it on the custom pixel .
     // https://shopify.dev/docs/api/admin-graphql/2024-04/mutations/webPixelCreate

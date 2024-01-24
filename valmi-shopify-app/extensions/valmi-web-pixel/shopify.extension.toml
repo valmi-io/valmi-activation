@@ -6,9 +6,17 @@ runtime_context = "strict"
 [settings]
 type = "object"
 
-[settings.fields.accountID]
-name = "Account ID"
-description = "Account ID"
+[settings.fields.host]
+name = "Host"
+description = "Host"
+type = "single_line_text_field"
+validations =  [
+  { name = "min", value = "1" }
+]
+
+[settings.fields.writeKey]
+name = "Write Key"
+description = "Write Key"
 type = "single_line_text_field"
 validations =  [
   { name = "min", value = "1" }
