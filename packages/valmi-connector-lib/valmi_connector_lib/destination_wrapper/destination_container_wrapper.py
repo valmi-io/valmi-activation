@@ -1,5 +1,5 @@
 """
-Copyright (c) 2023 valmi.io <https://github.com/valmi-io>
+Copyright (c) 2024 valmi.io <https://github.com/valmi-io>
 
 Created Date: Sunday, March 12th 2023, 8:43:08 pm
 Author: Rajashekar Varkala @ valmi.io
