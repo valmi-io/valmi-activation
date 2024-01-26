@@ -26,6 +26,9 @@
 <a href="https://github.com/valmi-io/valmi-activation/blob/main/LICENSE.md" target="_blank">
     <img src="https://img.shields.io/static/v1?label=license&message=MIT&color=white" alt="License">
 </a>
+<a href="https://github.com/valmi-io/valmi-activation/blob/main/LICENSE.md" target="_blank">
+    <img src="https://img.shields.io/static/v1?label=license&message=ELv2&color=white" alt="License">
+</a>
 </p>
 
   - ## See it in [Action](https://demo.valmi.io/spaces/a9195c50-60ca-4692-8f03-5a486ee9f270/syncs/d69cf9f9-0e20-4e2c-a683-2649404f52ed/runs)
