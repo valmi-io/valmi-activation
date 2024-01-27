@@ -1,7 +1,10 @@
-  - ### We'd love to discuss your use-case and the problem you are trying to solve, if you are up for a 15-20 min call, please block a slot on  [Co-Founder Raj Varkala's calendar](https://calendly.com/raj-varkala/30min)
+  - #### We'd love to discuss your use-case and the problem you are trying to solve, if you are up for a 15-20 min call, please block a slot on  [Co-Founder Raj Varkala's calendar](https://calendly.com/raj-varkala/30min)
 
-  - ### We have launched EVENT Streams (powered by Jitsu). Checkout https://demo.valmi.io/
-   
+  - #### We have launched EVENT Streams (powered by Jitsu). Checkout https://demo.valmi.io/
+
+  - ### See it in [Action](https://demo.valmi.io/spaces/a9195c50-60ca-4692-8f03-5a486ee9f270/syncs/d69cf9f9-0e20-4e2c-a683-2649404f52ed/runs)
+    Quickly witness a One Million (1M) Rows Sync at [Live Sync](https://demo.valmi.io/spaces/a9195c50-60ca-4692-8f03-5a486ee9f270/syncs/d69cf9f9-0e20-4e2c-a683-2649404f52ed/runs).
+    
     Events  |  Shopify App
     :-------------------------:|:-------------------------:
     ![](http://profile.mywavia.com/im/events-valmi.png)  |  ![](http://profile.mywavia.com/im/shopify-valmi.png)
@@ -37,10 +40,8 @@
 </a>
 </p>
 
-  - ## See it in [Action](https://demo.valmi.io/spaces/a9195c50-60ca-4692-8f03-5a486ee9f270/syncs/d69cf9f9-0e20-4e2c-a683-2649404f52ed/runs)
-    Quickly witness a One Million (1M) Rows Sync at [Live Sync](https://demo.valmi.io/spaces/a9195c50-60ca-4692-8f03-5a486ee9f270/syncs/d69cf9f9-0e20-4e2c-a683-2649404f52ed/runs).
-
-    <div align="center">
+  -
+     <div align="center">
     
      [![valmi-activation](https://github.com/valmi-io/valmi-activation/actions/workflows/valmi-activation-docker-image-action.yml/badge.svg)](https://github.com/valmi-io/valmi-activation/actions/workflows/valmi-activation-docker-image-action.yml) [![valmi-connectors](https://github.com/valmi-io/valmi-activation/actions/workflows/valmi-connectors-docker-image-action.yml/badge.svg)](https://github.com/valmi-io/valmi-activation/actions/workflows/valmi-connectors-docker-image-action.yml) [![valmi-dagster](https://github.com/valmi-io/valmi-activation/actions/workflows/valmi-dagster-docker-image-action.yml/badge.svg)](https://github.com/valmi-io/valmi-activation/actions/workflows/valmi-dagster-docker-image-action.yml) 
     <br/>
@@ -49,12 +50,12 @@
       <!---
     <a href="/../../issues?q=is%3Aopen+is%3Aissue"> <img alt="GitHub issues" src="https://img.shields.io/github/issues-raw/valmi-io/valmi-activation?color=%23238636"></a> <a href="/../../issues?q=is%3Aissue+is%3Aclosed"> <img alt="GitHub closed issues" src="https://img.shields.io/github/issues-closed-raw/valmi-io/valmi-activation?color=%238957e5"> </a> <a href="/../../pulls?q=is%3Aopen+is%3Apr"> <img alt="GitHub pull requests" src="https://img.shields.io/github/issues-pr-raw/valmi-io/valmi-activation"> </a> <a href="/../../pulls?q=is%3Apr+is%3Aclosed"> <img alt="GitHub closed pull requests" src="https://img.shields.io/github/issues-pr-closed-raw/valmi-io/valmi-activation?color=%238957e5"> </a>
       --->
- </div>
+    </div>
 <p align="center">valmi.io uses some of the best tools to create an Open Source reverse-ETL (data activation) Platform. It is built over the <a href="https://airbyte.com/">airbyte</a> protocol. <a href="https://www.getdbt.com/">dbt</a> is the centerpiece of our source connectors, and <a href="https://duckdb.org/">duckdb</a> for metrics. We engineered our orchestrator over <a href="https://dagster.io/">dagster</a>, and dagster dovetails perfectly with our vision of being a multi-persona tool.  </p>
 
   
-- ### Checkout docs at - [https://www.valmi.io/docs/](https://www.valmi.io/docs/)
-- ### Read the variety of usecases valmi.io can enable for your organization - [https://www.valmi.io/blog/](https://www.valmi.io/blog/)  
+- #### Checkout docs at - [https://www.valmi.io/docs/](https://www.valmi.io/docs/)
+- #### Read the variety of usecases valmi.io can enable for your organization - [https://www.valmi.io/blog/](https://www.valmi.io/blog/)  
 - ### 3 ways to start with valmi.io
     
     #### 1. Use it in the cloud
