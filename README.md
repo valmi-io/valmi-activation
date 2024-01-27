@@ -104,12 +104,12 @@
     
     - Launch the reverse-etl service.
       ```bash
-      ./valmi prod
+      ./valmi prod --with-jitsu
       ```
       
     - To stop the service, run the following.
       ```bash
-      ./valmi prod down
+      ./valmi prod --with-jitsu down
       ```
       
     - Please wait for about 2 minutes before you access the service, since valmi-app builds an optimized compiled version of the app UI. To access the service, please check the ['Accessing the service'](https://github.com/valmi-io/valmi-activation#accessing-the-service-for-local-deployments) section for local deployments.
@@ -134,14 +134,14 @@
     
     - Run the service.
       ```bash
-      ./valmi dev
+      ./valmi dev --with-jitsu
       ```
        
     - To access the service, please check the ['Accessing the service'](https://github.com/valmi-io/valmi-activation#accessing-the-service-for-local-deployments) section for local deployments.
 
     - To Stop the service, run the following.
       ```bash
-      ./valmi dev down
+      ./valmi dev --with-jitsu down
       ```
     
 - ### Accessing the service for local deployments
