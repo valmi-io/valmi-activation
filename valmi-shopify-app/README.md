@@ -10,5 +10,7 @@
    Now, you should see your store events being tracked.
 3. For production deployment - please follow the shopify guide to deeploy on (fly.io or heroku).
 
+## Shopify App Screenshot on Shopify Admin Panel
+![](http://profile.mywavia.com/im/shopify-valmi.png)
 
 ## NOTE: We will publish the app on the shopify app store for single click deploys once we have the resources to follow up with the shopify team.
