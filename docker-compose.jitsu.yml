@@ -142,6 +142,7 @@ services:
     restart: "unless-stopped"
     platform: linux/amd64
     environment:
+      JITSU_DISABLE_ANONYMOUS_TELEMETRY: "true"
       DISABLE_FAST_STORE: "false"
       ROTOR_URL: "http://rotor:3401"
       BULKER_URL: "http://bulker:3042"
