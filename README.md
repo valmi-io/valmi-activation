@@ -1,3 +1,16 @@
+
+  - ### Trusted By
+	<div  style="display: flex;
+		width: calc(250px * 14);">
+		<span   style="
+		height: 100px;
+		width: 250px;">
+      <a href="https://kegmil.com/">
+			<img src="https://i0.wp.com/kegmil.com/wp-content/uploads/2019/11/KM_Logo_Full_Primary.png?resize=1024%2C152&ssl=1" height="30" width="202" alt="" />
+      </a>
+		</span>
+	</div>
+
   - #### We'd love to discuss your use-case and the problem you are trying to solve, if you are up for a 15-20 min call, please block a slot on  [Co-Founder Raj Varkala's calendar](https://calendly.com/raj-varkala/30min)
 
   - #### We have launched EVENT Streams (powered by Jitsu). Checkout https://demo.valmi.io/
