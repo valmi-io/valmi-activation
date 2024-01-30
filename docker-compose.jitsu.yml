@@ -24,7 +24,7 @@ services:
 
   bulker:
     tty: true
-    image: jitsucom/bulker:latest
+    image: valmiio/jitsu-bulker:latest
     platform: linux/amd64
     restart: "unless-stopped"
     environment:
@@ -53,7 +53,7 @@ services:
 
   syncctl:
     tty: true
-    image: jitsucom/syncctl:latest
+    image: valmiio/jitsu-syncctl:latest
     platform: linux/amd64
     restart: "on-failure"
     environment:
@@ -112,7 +112,7 @@ services:
 
   rotor:
     tty: true
-    image: jitsucom/rotor:latest
+    image: valmiio/jitsu-rotor:latest
     platform: linux/amd64
     restart: "unless-stopped"
     environment:
@@ -138,7 +138,7 @@ services:
   
   console:
     tty: true
-    image: jitsucom/console:latest
+    image: valmiio/jitsu-console:latest
     restart: "unless-stopped"
     platform: linux/amd64
     environment:

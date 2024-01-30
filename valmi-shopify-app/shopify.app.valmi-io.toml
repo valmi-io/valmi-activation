@@ -2,7 +2,7 @@
 
 name = "valmi-io"
 client_id = "723f508680a0733c81c28412effa6d2b"
-application_url = "https://being-ff-publication-mb.trycloudflare.com"
+application_url = "https://britney-precision-alice-recreational.trycloudflare.com"
 embedded = true
 
 [access_scopes]
@@ -11,9 +11,9 @@ scopes = "write_pixels,read_customer_events,read_customers,read_checkouts,read_o
 
 [auth]
 redirect_urls = [
-  "https://being-ff-publication-mb.trycloudflare.com/auth/callback",
-  "https://being-ff-publication-mb.trycloudflare.com/auth/shopify/callback",
-  "https://being-ff-publication-mb.trycloudflare.com/api/auth/callback"
+  "https://britney-precision-alice-recreational.trycloudflare.com/auth/callback",
+  "https://britney-precision-alice-recreational.trycloudflare.com/auth/shopify/callback",
+  "https://britney-precision-alice-recreational.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
