@@ -21,20 +21,21 @@ import { authenticate } from "../shopify.server";
 import { createValmiConfig, getValmiConfig, getWebPixel, storeWebPixel } from "~/api/prisma.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  await authenticate.admin(request);
+  const { session } = await authenticate.admin(request);
   try { 
-    const val = await getValmiConfig();
+    const val = await getValmiConfig(session.shop);
     return val;
   } catch (err) {
     console.log(err);
   }
+  return null;
 };
 
  
 
-const webPixelUpdate = async ({admin,host,writeKey}:any) => {
+const webPixelUpdate = async ({admin,shop, host,writeKey}:any) => {
   try{
-    const pixel: any = await getWebPixel(writeKey);
+    const pixel: any = await getWebPixel(shop);
     //console.log(pixel);
     // webpixel  does not exist
     if( ! pixel.pixel_id){ 
@@ -61,7 +62,7 @@ const webPixelUpdate = async ({admin,host,writeKey}:any) => {
         const json = await response.json();
         console.log(JSON.stringify(json)); 
         if(json?.data?.webPixelCreate?.webPixel?.id){
-          await storeWebPixel(json.data.webPixelCreate.webPixel.id);
+          await storeWebPixel(shop, json.data.webPixelCreate.webPixel.id);
         }
         return json;
       }
@@ -93,7 +94,7 @@ const webPixelUpdate = async ({admin,host,writeKey}:any) => {
         const json = await response.json();
         console.log(JSON.stringify(json)); 
         if(json?.data?.webPixelCreate?.webPixel?.id){
-          await storeWebPixel(json.data.webPixelCreate.webPixel.id);
+          await storeWebPixel(shop, json.data.webPixelCreate.webPixel.id);
         }
         return json;
       }
@@ -112,17 +113,18 @@ const webPixelUpdate = async ({admin,host,writeKey}:any) => {
 }
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const { admin } = await authenticate.admin(request);
+  const { admin, session } = await authenticate.admin(request);
 
   const formData = await request.formData();
   const host = formData.get("host");
   const writeKey = formData.get("writeKey");
+  const shop = session.shop;
   try {
-    const val = await createValmiConfig({host, writeKey});
+    const val = await createValmiConfig({ shop, host, writeKey});
 
 
     // Update Webpixel configuration
-    if(! webPixelUpdate({admin,host,writeKey}))
+    if(! webPixelUpdate({admin,shop,host,writeKey}))
       return null;
 
     return val;
@@ -170,7 +172,7 @@ export default function Index() {
             <Card>
               <BlockStack gap="200">
                 <Text as="h2" variant="headingMd">
-                  Please configure your valmi.io account
+                  Please add details of your valmi.io data plane deployment.
                 </Text>
                   <Form onSubmit={generateConfiguration} method="post">
 
