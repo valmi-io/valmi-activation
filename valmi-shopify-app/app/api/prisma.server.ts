@@ -25,6 +25,14 @@ export const createValmiConfig = async ({shop, host, writeKey}: any) => {
   return null;
 };
 
+export const deleteValmiConfig = async (shop: string) => {
+  return await prisma.valmiconf.delete({
+      where: {
+        id: shop,
+      }
+    })
+};
+
 export const getValmiConfig = async (shop: string) => { 
     const val =  await prisma.valmiconf.findFirst({
         where: {
@@ -38,10 +46,10 @@ export const getValmiConfig = async (shop: string) => {
     }
 };
 
-export const getWebPixel = async(writeKey : string) => {
+export const getWebPixel = async(shop : string) => {
   const val = await prisma.webPixel.findFirst({
     where: {
-      id: '0',
+      id: shop,
     }
   })
   if (val){
@@ -51,17 +59,26 @@ export const getWebPixel = async(writeKey : string) => {
   }
 }
 
-export const storeWebPixel = async (pixel_id: string) => {
+export const storeWebPixel = async (shop : string, pixel_id: string) => {
   return await prisma.webPixel.upsert({
       where: {
-        id: '0',
+        id: shop,
       }, 
       create: {
         pixel_id: pixel_id,
-        id: "0",
+        id: shop,
       },
       update:{
         pixel_id: pixel_id,
       }
     }) 
 };
+
+export const deleteWebPixel = async (shop: string) => {
+  return await prisma.webPixel.delete({
+      where: {
+        id: shop,
+      }
+    })
+}
+

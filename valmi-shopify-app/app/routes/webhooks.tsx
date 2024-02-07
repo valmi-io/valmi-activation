@@ -11,7 +11,7 @@ import db from "../db.server";
 import { AnalyticsInterface, jitsuAnalytics } from "@jitsu/js";
 import { transform } from "event_lib/transformer";
 import { analytics_state } from "./analyticsState";
-import { getValmiConfig } from "~/api/prisma.server";
+import { deleteValmiConfig, deleteWebPixel, getValmiConfig } from "~/api/prisma.server";
 var valmiAnalytics : AnalyticsInterface = null;
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -58,9 +58,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       }
       break;
     case "CUSTOMERS_DATA_REQUEST":
+      throw new Response("{}", { status: 200 });
     case "CUSTOMERS_REDACT":
+      throw new Response("Success", { status: 200 });
     case "SHOP_REDACT":
-      throw new Response("Unhandled webhook topic", { status: 404 });
+      deleteValmiConfig(session.shop);
+      deleteWebPixel(session.shop);
+      throw new Response("Success", { status: 200 });
     case "CARTS_CREATE":
     case "CARTS_UPDATE":
     case "CUSTOMERS_CREATE":

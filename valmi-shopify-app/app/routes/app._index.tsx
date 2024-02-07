@@ -32,9 +32,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
  
 
-const webPixelUpdate = async ({admin,host,writeKey}:any) => {
+const webPixelUpdate = async ({admin,shop, host,writeKey}:any) => {
   try{
-    const pixel: any = await getWebPixel(writeKey);
+    const pixel: any = await getWebPixel(shop);
     //console.log(pixel);
     // webpixel  does not exist
     if( ! pixel.pixel_id){ 
@@ -61,7 +61,7 @@ const webPixelUpdate = async ({admin,host,writeKey}:any) => {
         const json = await response.json();
         console.log(JSON.stringify(json)); 
         if(json?.data?.webPixelCreate?.webPixel?.id){
-          await storeWebPixel(json.data.webPixelCreate.webPixel.id);
+          await storeWebPixel(shop, json.data.webPixelCreate.webPixel.id);
         }
         return json;
       }
@@ -123,7 +123,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 
     // Update Webpixel configuration
-    if(! webPixelUpdate({admin,host,writeKey}))
+    if(! webPixelUpdate({admin,shop,host,writeKey}))
       return null;
 
     return val;
