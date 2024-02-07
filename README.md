@@ -40,7 +40,7 @@
 </p>
 
 <p align="center">
-    <em> <a href="https://valmi.io">valmi.io</a> is the open-source Reverse-ETL (data activation) platform to load data from warehouses into SaaS platforms such as Advertising(Facebook Ads, Google Ads), Marketing(Klaviyo, Braze), CRM (Salesforce, Hubspot), Accounting(Xero, Netsuite), Customer Support(Zendesk), Messaging(Slack), Webhook Apis etc.</em>
+    <em> <a href="https://valmi.io">valmi.io Customer Data Platform (CDP)</a> provides open-source Reverse-ETL (data activation) platform to load data from warehouses into SaaS platforms such as Advertising(Facebook Ads, Google Ads), Marketing(Klaviyo, Braze), CRM (Salesforce, Hubspot), Accounting(Xero, Netsuite), Customer Support(Zendesk), Messaging(Slack), Webhook Apis etc.</em>
 </p>
 <p align="center">
 <a href="https://github.com/valmi-io/valmi-activation/stargazers/" target="_blank">
