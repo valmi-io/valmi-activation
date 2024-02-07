@@ -14,10 +14,10 @@
   - :star: Star us here <a href="https://github.com/valmi-io/valmi-activation" target="_blank">
     <img src="https://img.shields.io/github/stars/valmi-io/valmi-activation?style=social&label=Star&maxAge=10000" alt="Test"> </a> 
 
-  - #### We have launched EVENT Streams (powered by Jitsu). Checkout https://demo.valmi.io/
+  - #### We have launched EVENT Streams (powered by Jitsu). Checkout https://cloud.valmi.io/
 
-  - ### See it in [Action](https://demo.valmi.io/spaces/a9195c50-60ca-4692-8f03-5a486ee9f270/syncs/d69cf9f9-0e20-4e2c-a683-2649404f52ed/runs)
-    Quickly witness a One Million (1M) Rows Sync at [Live Sync](https://demo.valmi.io/spaces/a9195c50-60ca-4692-8f03-5a486ee9f270/syncs/d69cf9f9-0e20-4e2c-a683-2649404f52ed/runs).
+  - ### See it in [Action](https://cloud.valmi.io/spaces/a9195c50-60ca-4692-8f03-5a486ee9f270/syncs/d69cf9f9-0e20-4e2c-a683-2649404f52ed/runs)
+    Quickly witness a One Million (1M) Rows Sync at [Live Sync](https://cloud.valmi.io/spaces/a9195c50-60ca-4692-8f03-5a486ee9f270/syncs/d69cf9f9-0e20-4e2c-a683-2649404f52ed/runs).
     
     Events  |  Shopify App
     :-------------------------:|:-------------------------:
@@ -72,7 +72,7 @@
 - ### 3 ways to start with valmi.io
     
     #### 1. Use it in the cloud
-    - You can immediately create a sync at [https://demo.valmi.io.](https://demo.valmi.io/)
+    - You can immediately create a sync at [https://cloud.valmi.io.](https://cloud.valmi.io/)
     - Watch a demo video to create a sync.
       
     <div align="center" >
