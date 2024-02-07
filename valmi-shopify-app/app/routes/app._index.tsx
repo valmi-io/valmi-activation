@@ -172,7 +172,7 @@ export default function Index() {
             <Card>
               <BlockStack gap="200">
                 <Text as="h2" variant="headingMd">
-                  Please configure your valmi.io account
+                  Please add details of your valmi.io data plane deployment.
                 </Text>
                   <Form onSubmit={generateConfiguration} method="post">
 

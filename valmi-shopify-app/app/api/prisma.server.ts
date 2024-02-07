@@ -4,6 +4,8 @@
  * Created Date: Wednesday, January 24th 2024, 4:23:32 am
  * Author: Rajashekar Varkala @ valmi.io
  */
+ 
+import prisma from "~/db.server";
 
 export const createValmiConfig = async ({shop, host, writeKey}: any) => {
   if (host && writeKey){
