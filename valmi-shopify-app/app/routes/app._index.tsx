@@ -28,6 +28,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   } catch (err) {
     console.log(err);
   }
+  return null;
 };
 
  
