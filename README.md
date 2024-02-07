@@ -14,7 +14,7 @@
   - :star: Star us here <a href="https://github.com/valmi-io/valmi-activation" target="_blank">
     <img src="https://img.shields.io/github/stars/valmi-io/valmi-activation?style=social&label=Star&maxAge=10000" alt="Test"> </a> 
 
-  - #### We have launched EVENT Streams (powered by Jitsu). Try free [cloud.valmi.io](https://cloud.valmi.io) both *User Activity Event Tracking* and *Data Activation*.
+  - #### We have launched EVENT Streams (powered by Jitsu). Try free [cloud.valmi.io](https://cloud.valmi.io) both *User Activity Events Tracking* and *Data Activation*.
 
   - ### See it in [Action](https://cloud.valmi.io/spaces/a9195c50-60ca-4692-8f03-5a486ee9f270/syncs/d69cf9f9-0e20-4e2c-a683-2649404f52ed/runs)
     Quickly witness a One Million (1M) Rows Sync at [Live Sync](https://cloud.valmi.io/spaces/a9195c50-60ca-4692-8f03-5a486ee9f270/syncs/d69cf9f9-0e20-4e2c-a683-2649404f52ed/runs).
