@@ -101,7 +101,7 @@ class AlertGenerator:
             self.alerts.append(alert_fn)
 
     def destroy(self) -> None:
-        self.cleaner_thread.exit_flag = True
+        self.alert_list_handler_thread.exit_flag = True
 
 
 class AlertListHandlerThread(threading.Thread):
