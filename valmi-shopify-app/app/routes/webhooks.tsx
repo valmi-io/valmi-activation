@@ -10,9 +10,8 @@ import { authenticate } from "../shopify.server";
 import db from "../db.server";
 import { AnalyticsInterface, jitsuAnalytics } from "@jitsu/js";
 import { transform } from "event_lib/transformer";
-import { analytics_state } from "./analyticsState";
+import { analytics_state, writeKeyTovalmiAnalyticsMap } from "./analyticsState";
 import { deleteValmiConfig, deleteWebPixel, getValmiConfig } from "~/api/prisma.server";
-var valmiAnalytics : AnalyticsInterface = null;
 
 export const action = async ({ request }: ActionFunctionArgs) => {
   const { topic, shop, session, admin, payload } = await authenticate.webhook(
@@ -25,13 +24,21 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   const valmiconf = await getValmiConfig(session.shop);
-  if( !valmiAnalytics && valmiconf.host && valmiconf.writeKey){
-    valmiAnalytics = jitsuAnalytics({
-      host: valmiconf.host,
-      writeKey: valmiconf.writeKey,
-      //debug: true,
-    }); 
+  if(valmiconf.host && valmiconf.writeKey){
+    var valmiAnalytics : AnalyticsInterface = null;
 
+    if (writeKeyTovalmiAnalyticsMap.hasOwnProperty(valmiconf.writeKey)) {
+      valmiAnalytics = writeKeyTovalmiAnalyticsMap[valmiconf.writeKey];
+    }
+    if (!valmiAnalytics) {
+      valmiAnalytics = jitsuAnalytics({
+        host: valmiconf.host,
+        writeKey: valmiconf.writeKey,
+        //debug: true,
+      });
+      writeKeyTovalmiAnalyticsMap[valmiconf.writeKey] = valmiAnalytics; 
+    }
+    
     // FORCING ANONYMOUS ID
     const storage= (valmiAnalytics as any).storage;
     storage.setItem("__anon_id", "valmi_cloud_event_server");
