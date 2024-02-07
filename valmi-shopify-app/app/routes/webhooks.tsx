@@ -24,7 +24,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     throw new Response();
   }
 
-  const valmiconf = await getValmiConfig();
+  const valmiconf = await getValmiConfig(session.shop);
   if( !valmiAnalytics){
     valmiAnalytics = jitsuAnalytics({
       host: valmiconf.host,

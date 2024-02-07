@@ -21,9 +21,9 @@ import { authenticate } from "../shopify.server";
 import { createValmiConfig, getValmiConfig, getWebPixel, storeWebPixel } from "~/api/prisma.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  await authenticate.admin(request);
+  const { session } = await authenticate.admin(request);
   try { 
-    const val = await getValmiConfig();
+    const val = await getValmiConfig(session.shop);
     return val;
   } catch (err) {
     console.log(err);
@@ -112,13 +112,14 @@ const webPixelUpdate = async ({admin,host,writeKey}:any) => {
 }
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const { admin } = await authenticate.admin(request);
+  const { admin, session } = await authenticate.admin(request);
 
   const formData = await request.formData();
   const host = formData.get("host");
   const writeKey = formData.get("writeKey");
+  const shop = session.shop;
   try {
-    const val = await createValmiConfig({host, writeKey});
+    const val = await createValmiConfig({ shop, host, writeKey});
 
 
     // Update Webpixel configuration

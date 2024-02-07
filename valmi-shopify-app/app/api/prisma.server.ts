@@ -5,18 +5,18 @@
  * Author: Rajashekar Varkala @ valmi.io
  */
 
-export const createValmiConfig = async ({host, writeKey}: any) => {
+export const createValmiConfig = async ({shop, host, writeKey}: any) => {
   if (host && writeKey){
     return await prisma.valmiconf.upsert({
         where: {
-          id: '0',
+          id: shop,
         },
         update: {
           writeKey: writeKey,
           host: host,
         },
         create: {
-          id: '0',
+          id: shop,
           host: host,
           writeKey: writeKey,
         },
@@ -25,10 +25,10 @@ export const createValmiConfig = async ({host, writeKey}: any) => {
   return null;
 };
 
-export const getValmiConfig = async () => { 
+export const getValmiConfig = async (shop: string) => { 
     const val =  await prisma.valmiconf.findFirst({
         where: {
-          id: '0',
+          id: shop,
         }
     })
     if (val){

@@ -1,8 +1,8 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-name = "valmi-io"
-client_id = "723f508680a0733c81c28412effa6d2b"
-application_url = "https://justin-shelf-successful-full.trycloudflare.com"
+name = "valmi.io data platform"
+client_id = "5433cb46ca2e8e55679d1d257fc4ace7"
+application_url = "https://control-doom-boot-say.trycloudflare.com"
 embedded = true
 
 [access_scopes]
@@ -11,9 +11,9 @@ scopes = "write_pixels,read_customer_events,read_customers,read_checkouts,read_o
 
 [auth]
 redirect_urls = [
-  "https://justin-shelf-successful-full.trycloudflare.com/auth/callback",
-  "https://justin-shelf-successful-full.trycloudflare.com/auth/shopify/callback",
-  "https://justin-shelf-successful-full.trycloudflare.com/api/auth/callback"
+  "https://control-doom-boot-say.trycloudflare.com/auth/callback",
+  "https://control-doom-boot-say.trycloudflare.com/auth/shopify/callback",
+  "https://control-doom-boot-say.trycloudflare.com/api/auth/callback"
 ]
 
 [webhooks]
@@ -24,4 +24,4 @@ embedded = false
 
 [build]
 automatically_update_urls_on_dev = true
-dev_store_url = "quickstart-6ebc0909.myshopify.com"
+dev_store_url = "quickstart-ca35a911.myshopify.com"
