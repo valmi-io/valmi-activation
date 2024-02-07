@@ -61,6 +61,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   switch (topic) {
     case "APP_UNINSTALLED":
       if (session) {
+        await deleteValmiConfig(session.shop);
+        await deleteWebPixel(session.shop);
         await db.session.deleteMany({ where: { shop } });
       }
       break;
@@ -69,8 +71,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     case "CUSTOMERS_REDACT":
       throw new Response("Success", { status: 200 });
     case "SHOP_REDACT":
-      deleteValmiConfig(session.shop);
-      deleteWebPixel(session.shop);
+      await deleteValmiConfig(session.shop);
+      await deleteWebPixel(session.shop);
       throw new Response("Success", { status: 200 });
     case "CARTS_CREATE":
     case "CARTS_UPDATE":
