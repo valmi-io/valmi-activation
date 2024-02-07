@@ -25,7 +25,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   }
 
   const valmiconf = await getValmiConfig(session.shop);
-  if( !valmiAnalytics){
+  if( !valmiAnalytics && valmiconf.host && valmiconf.writeKey){
     valmiAnalytics = jitsuAnalytics({
       host: valmiconf.host,
       writeKey: valmiconf.writeKey,
