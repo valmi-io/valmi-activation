@@ -11,7 +11,8 @@
 		</span>
 	</div>
 
-  - #### We'd love to discuss your use-case and the problem you are trying to solve, if you are up for a 15-20 min call, please block a slot on  [Co-Founder Raj Varkala's calendar](https://calendly.com/raj-varkala/30min)
+  - :star: Star us here <a href="https://github.com/valmi-io/valmi-activation/stargazers/" target="_blank">
+    <img src="https://img.shields.io/github/stars/valmi-io/valmi-activation?style=social&label=Star&maxAge=10000" alt="Test"> </a> 
 
   - #### We have launched EVENT Streams (powered by Jitsu). Checkout https://demo.valmi.io/
 
@@ -39,7 +40,7 @@
 </p>
 
 <p align="center">
-    <em> <a href="https://valmi.io">valmi.io</a> is the open-source Reverse-ETL (data activation) platform to load data from warehouses into SaaS platforms, Webhook Apis etc.</em>
+    <em> <a href="https://valmi.io">valmi.io</a> is the open-source Reverse-ETL (data activation) platform to load data from warehouses into SaaS platforms such as Advertising(Facebook Ads, Google Ads), Marketing(Klaviyo, Braze), CRM (Salesforce, Hubspot), Accounting(Xero, Netsuite), Customer Support(Zendesk), Webhook Apis etc.</em>
 </p>
 <p align="center">
 <a href="https://github.com/valmi-io/valmi-activation/stargazers/" target="_blank">
@@ -63,8 +64,7 @@
       <!---
     <a href="/../../issues?q=is%3Aopen+is%3Aissue"> <img alt="GitHub issues" src="https://img.shields.io/github/issues-raw/valmi-io/valmi-activation?color=%23238636"></a> <a href="/../../issues?q=is%3Aissue+is%3Aclosed"> <img alt="GitHub closed issues" src="https://img.shields.io/github/issues-closed-raw/valmi-io/valmi-activation?color=%238957e5"> </a> <a href="/../../pulls?q=is%3Aopen+is%3Apr"> <img alt="GitHub pull requests" src="https://img.shields.io/github/issues-pr-raw/valmi-io/valmi-activation"> </a> <a href="/../../pulls?q=is%3Apr+is%3Aclosed"> <img alt="GitHub closed pull requests" src="https://img.shields.io/github/issues-pr-closed-raw/valmi-io/valmi-activation?color=%238957e5"> </a>
       --->
-    </div>
-<p align="center">valmi.io uses some of the best tools to create an Open Source reverse-ETL (data activation) Platform. It is built over the <a href="https://airbyte.com/">airbyte</a> protocol. <a href="https://www.getdbt.com/">dbt</a> is the centerpiece of our source connectors, and <a href="https://duckdb.org/">duckdb</a> for metrics. We engineered our orchestrator over <a href="https://dagster.io/">dagster</a>, and dagster dovetails perfectly with our vision of being a multi-persona tool.  </p>
+    </div> 
 
   
 - #### Checkout docs at - [https://www.valmi.io/docs/](https://www.valmi.io/docs/)
