@@ -93,7 +93,7 @@ const webPixelUpdate = async ({admin,shop, host,writeKey}:any) => {
         const json = await response.json();
         console.log(JSON.stringify(json)); 
         if(json?.data?.webPixelCreate?.webPixel?.id){
-          await storeWebPixel(json.data.webPixelCreate.webPixel.id);
+          await storeWebPixel(shop, json.data.webPixelCreate.webPixel.id);
         }
         return json;
       }
