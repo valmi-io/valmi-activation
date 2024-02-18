@@ -27,6 +27,7 @@
   <a href="https://valmi.io"><img width="400" src="https://blog.valmi.io/content/images/2023/06/valmilogo-1.png" alt="valmi.io"></a>
 </p>
 
+
 <p align="center">
   <b>
     <a href="https://www.valmi.io">Website</a>
@@ -36,6 +37,10 @@
     <a href="https://www.valmi.io/docs/">Documentation</a>
     ·
     <a href="https://www.valmi.io/blog/">Blog</a>
+    .
+    <a href="https://gist.github.com/S-Nagendra/0904e9cac9ca016fba58ac63b6e748a4">Changelog</a>
+    .
+    <a href="https://gist.github.com/S-Nagendra/ba70a68809a0ddd08ac4f65f5c76f472">Roadmap</a>
   </b>
 </p>
 
