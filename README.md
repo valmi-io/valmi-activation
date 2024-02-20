@@ -11,8 +11,6 @@
 		</span>
 	</div>
 
-  - :star: Star us here <a href="https://github.com/valmi-io/valmi-activation" target="_blank">
-    <img src="https://img.shields.io/github/stars/valmi-io/valmi-activation?style=social&label=Star&maxAge=10000" alt="Test"> </a> 
 
   - We have launched EVENT Streams (powered by Jitsu). Try free @ [cloud.valmi.io](https://cloud.valmi.io) both **User Activity Events Tracking** and **Data Activation**
 
