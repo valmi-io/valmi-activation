@@ -132,7 +132,7 @@ def main():
     # populate run_time_args
     populate_run_time_args(airbyte_command, engine, config_file_path=config_file)
 
-    if airbyte_command in ["spec", "check", "discover"]:
+    if airbyte_command in ["spec", "check", "discover", "create"]:
         # initialize handlers
         for key in stdout_handlers.keys():
             stdout_handlers[key] = stdout_handlers[key](engine=engine, store_writer=None, stdout_writer=None)
