@@ -57,7 +57,7 @@ class Metrics:
         if delete_db:
             self.con.execute(f"DROP TABLE IF EXISTS {METRICS_TABLE}")
         self.con.sql(
-            f"CREATE TABLE {METRICS_TABLE} IF NOT EXISTS (sync_id VARCHAR, connector_id VARCHAR, run_id VARCHAR, \
+            f"CREATE TABLE IF NOT EXISTS {METRICS_TABLE} (sync_id VARCHAR, connector_id VARCHAR, run_id VARCHAR, \
                 chunk_id BIGINT, metric_type VARCHAR,\
                 count BIGINT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)"
         )
