@@ -37,6 +37,7 @@ from requests.adapters import HTTPAdapter, Retry
 
 from valmi_connector_lib.common.logs import SingletonLogWriter, TimeAndChunkEndFlushPolicy
 from valmi_connector_lib.common.samples import SampleWriter
+from valmi_connector_lib.valmi_protocol import ValmiFinalisedRecordMessage
 
 # TODO: Constants - need to become env vars
 MAGIC_NUM = 0x7FFFFFFF
@@ -125,7 +126,8 @@ class Engine(NullEngine):
         self.connector_state = ConnectorState(run_time_args=run_time_args)
 
     def current_run_details(self):
-        sync_id = du(os.environ.get("DAGSTER_RUN_JOB_NAME", "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"))
+        sync_id = du(os.environ.get("DAGSTER_RUN_JOB_NAME", "cf280e5c-1184-4052-b089-f9f41b25138e"))
+        #sync_id = du(os.environ.get("DAGSTER_RUN_JOB_NAME", "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"))
         r = self.session_with_retries.get(
             f"{self.engine_url}/syncs/{sync_id}/runs/current_run_details/{CONNECTOR_STRING}",
             timeout=HTTP_TIMEOUT,
@@ -305,6 +307,13 @@ class RecordHandler(DefaultHandler):
         super(RecordHandler, self).__init__(*args, **kwargs)
 
     def handle(self, record):
+
+        # HACK:
+        if not isinstance(record, ValmiFinalisedRecordMessage):
+            record["record"]["rejected"] = False
+            record["record"]["metric_type"] = "succeeded"
+        # 
+
         if not record["record"]["rejected"]:
             self.store_writer.write(record)
 
@@ -434,6 +443,8 @@ def main():
     # populate run_time_args
     populate_run_time_args(airbyte_command, engine, config_file_path=config_file)
 
+    
+
     if airbyte_command == "read":
         # initialize LogWriter
         SingletonLogWriter(os.environ["VALMI_INTERMEDIATE_STORE"],
@@ -465,11 +476,14 @@ def main():
     )
 
     # check engine errors every CHUNK_SIZE records
+    
+
     record_types = handlers.keys()
     for line in io.TextIOWrapper(proc.stdout, encoding="utf-8"):  # or another encoding
         if line.strip() == "":
             continue
-        # print(line)
+        
+        
         json_record = json.loads(line)
         if json_record["type"] not in record_types:
             handlers["default"].handle(json_record)
