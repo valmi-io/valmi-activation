@@ -52,27 +52,15 @@ class Metrics:
     def __init__(self, delete_db=False, *args, **kwargs) -> None:
         if Metrics.__initialized:
             return
-
         Metrics.__initialized = True
         self.con = duckdb.connect(DB_NAME)
-
-        metric_table_found = False
         if delete_db:
             self.con.execute(f"DROP TABLE IF EXISTS {METRICS_TABLE}")
-        else:
-            self.con.execute("SHOW TABLES")
-            tables = self.con.fetchall()
-
-            for table in tables:
-                if table[0] == METRICS_TABLE:
-                    metric_table_found = True
-
-        if not metric_table_found:
-            self.con.sql(
-                f"CREATE TABLE {METRICS_TABLE} (sync_id VARCHAR, connector_id VARCHAR, run_id VARCHAR, \
-                    chunk_id BIGINT, metric_type VARCHAR,\
-                    count BIGINT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)"
-            )
+        self.con.sql(
+            f"CREATE TABLE IF NOT EXISTS {METRICS_TABLE} (sync_id VARCHAR, connector_id VARCHAR, run_id VARCHAR, \
+                chunk_id BIGINT, metric_type VARCHAR,\
+                count BIGINT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)"
+        )
 
     def clear_metrics(self, sync_id: UUID4, run_id: UUID4) -> None:
         try:

@@ -110,7 +110,8 @@ class Engine(NullEngine):
         self.connector_state = ConnectorState(run_time_args=run_time_args)
 
     def current_run_details(self):
-        sync_id = du(os.environ.get("DAGSTER_RUN_JOB_NAME", "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"))
+        sync_id = du(os.environ.get("DAGSTER_RUN_JOB_NAME", "cf280e5c-1184-4052-b089-f9f41b25138e"))
+        # sync_id = du(os.environ.get("DAGSTER_RUN_JOB_NAME", "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"))
         r = self.session_with_retries.get(
             f"{self.engine_url}/syncs/{sync_id}/runs/current_run_details/{CONNECTOR_STRING}",
             timeout=HTTP_TIMEOUT,

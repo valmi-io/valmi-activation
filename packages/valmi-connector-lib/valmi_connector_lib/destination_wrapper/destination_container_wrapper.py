@@ -54,7 +54,7 @@ handlers = {
 def get_airbyte_command():
     entrypoint_str = os.environ["VALMI_ENTRYPOINT"]
     entrypoint = entrypoint_str.split(" ")
-
+    
     airbyte_command = sys.argv[3]
     for i, arg in enumerate(sys.argv[1:]):
         if i >= len(entrypoint):
