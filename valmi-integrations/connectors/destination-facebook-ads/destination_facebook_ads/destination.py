@@ -24,6 +24,7 @@ SOFTWARE.
 """
 
 import json
+import logging
 from typing import Any, Dict, Iterable, Mapping
 
 from airbyte_cdk import AirbyteLogger
@@ -48,6 +49,7 @@ from facebook_business.adobjects.customaudience import CustomAudience
 
 from .fb_ads_utils import FBAdsUtils
 
+logger = logging.getLogger(__name__)
 
 class FBAdsWriter(DestinationWriteWrapper):
     def initialise_message_handling(self):
@@ -102,26 +104,29 @@ class DestinationFacebookAds(ValmiDestination):
         self,
         logger: AirbyteLogger,
         config: json,
-        object_spec: json,
-    ) -> AirbyteConnectionStatus:
+    ) -> json:
         try:
             credentials = config["credentials"]
             FacebookAdsApi.init(credentials["app_id"], credentials["app_secret"],
                                 credentials["long_term_acccess_token"], crash_log=False)
             fields = []
             params = {
-                "name": f"{object_spec['audience_name']}",
+                "name": config["createdValue"],
                 "subtype": "CUSTOM",
-                "description": f"{object_spec['audience_description']}",
+                "description": "Created Using Valmi.io",
                 "customer_file_source": "USER_PROVIDED_ONLY",
             }
-            my_account = AdAccount(config["account"])
 
-            my_account.create_custom_audience(
-                fields=fields,
-                params=params,
-            )
-            return AirbyteConnectionStatus(status=Status.SUCCEEDED)
+            if "account" in config:
+                my_ad_account = AdAccount(f'act_{config["account"]}')
+                logger.info(my_ad_account)
+                response = AdAccount(my_ad_account["id"]).create_custom_audience(
+                    fields=fields,
+                    params=params,
+                )
+            logger.info("Created audience...")            
+            result = response['id']
+            return result
         except Exception as err:
             return AirbyteConnectionStatus(status=Status.FAILED, message=f"An exception occurred: {repr(err)}")
 

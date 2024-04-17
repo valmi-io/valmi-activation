@@ -154,30 +154,33 @@ class CheckpointHandler(DefaultHandler):
         print("Checkpoint seen")
         print(record)
 
-        records_delivered = record["state"]["data"]["records_delivered"]
-        finished = record["state"]["data"]["finished"]
-        commit_state = record["state"]["data"]["commit_state"]
-        commit_metric = record["state"]["data"]["commit_metric"]
+        if os.environ.get('MODE', 'any') == 'etl':
+            return True
+        else :
+            records_delivered = record["state"]["data"]["records_delivered"]
+            finished = record["state"]["data"]["finished"]
+            commit_state = record["state"]["data"]["commit_state"]
+            commit_metric = record["state"]["data"]["commit_metric"]
 
-        total_records = 0
-        for k, v in records_delivered.items():
-            total_records += v
+            total_records = 0
+            for k, v in records_delivered.items():
+                total_records += v
 
-        self.engine.connector_state.register_records(total_records)
+            self.engine.connector_state.register_records(total_records)
 
-        if commit_metric:
-            self.engine.metric_ext(records_delivered, record["state"]["data"]["chunk_id"], commit=True)
-            # self.engine.connector_state.register_chunk()
-        if commit_state:
-            self.engine.checkpoint(record)
-            if SingletonLogWriter.instance() is not None:
-                SingletonLogWriter.instance().data_chunk_flush_callback()
-            SampleWriter.data_chunk_flush_callback()
-        else:
-            if SingletonLogWriter.instance() is not None:
-                SingletonLogWriter.instance().check_for_flush()
+            if commit_metric:
+                self.engine.metric_ext(records_delivered, record["state"]["data"]["chunk_id"], commit=True)
+                # self.engine.connector_state.register_chunk()
+            if commit_state:
+                self.engine.checkpoint(record)
+                if SingletonLogWriter.instance() is not None:
+                    SingletonLogWriter.instance().data_chunk_flush_callback()
+                SampleWriter.data_chunk_flush_callback()
+            else:
+                if SingletonLogWriter.instance() is not None:
+                    SingletonLogWriter.instance().check_for_flush()
 
-        return True
+            return True
 
 
 class RecordHandler(DefaultHandler):

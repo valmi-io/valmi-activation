@@ -121,7 +121,7 @@ class ValmiDestination(Destination):
         cmd = parsed_args.command
 
         # if cmd not in ["discover", "write"]:
-        if cmd not in ["discover", "write"]:
+        if cmd not in ["discover", "write", "create"]:
             for msg in super().run_cmd(parsed_args):
                 yield msg
             return
@@ -157,10 +157,9 @@ class ValmiDestination(Destination):
         try:
             object_schema = self.read_config(config_path=parsed_args.object)
 
-            self.create(logger, config, object_schema)
-            yield AirbyteMessage(
-                type=Type.CONNECTION_STATUS, connectionStatus=AirbyteConnectionStatus(status=Status.SUCCEEDED)
-            )
+            create_response=self.create(logger, object_schema)
+            
+            yield AirbyteMessage(type=Type.CATALOG, create_response=create_response)
         except Exception as err:
             yield AirbyteMessage(
                 type=Type.CONNECTION_STATUS,

@@ -112,10 +112,15 @@ async def get_current_run_details_for_connector_string(
         )  # TODO: Have to find a better way instead of so many refreshes
 
     # Get connector run config
-    dst_connector_type = "_".join(sync_schedule.dst_connector_type.split('_')[1:])
+    connector_type = ""
+    if connector_string == "src":
+        connector_type = "_".join(sync_schedule.src_connector_type.split('_')[1:])
+    else:
+        connector_type = "_".join(sync_schedule.dst_connector_type.split('_')[1:])
+
     connector_run_config = {}
-    if dst_connector_type in v.get("CONNECTOR_RUN_CONFIG"):
-        connector_run_config = v.get("CONNECTOR_RUN_CONFIG")[dst_connector_type]
+    if connector_type in v.get("CONNECTOR_RUN_CONFIG"):
+        connector_run_config = v.get("CONNECTOR_RUN_CONFIG")[connector_type]
 
 
     # TODO: get saved checkpoint state of the run_id & create column run_time_args in the sync_runs table to get repeatable runs
