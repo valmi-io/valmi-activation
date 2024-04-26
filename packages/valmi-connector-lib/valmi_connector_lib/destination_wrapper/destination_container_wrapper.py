@@ -23,24 +23,23 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+import io
 import json
 import os
-import sys
 import subprocess
-import io
+import sys
 from typing import Any, Dict
 
-from valmi_connector_lib.common.logs import SingletonLogWriter, TimeAndChunkEndFlushPolicy
+from valmi_connector_lib.common.logs import (SingletonLogWriter,
+                                             TimeAndChunkEndFlushPolicy)
+from valmi_connector_lib.common.samples import SampleWriter
 from valmi_connector_lib.destination_wrapper.engine import CONNECTOR_STRING
 
+from .proc_stdout_event_handlers import Engine, NullEngine, StoreReader
 from .proc_stdout_handler import ProcStdoutHandlerThread
-from .proc_stdout_event_handlers import (
-    Engine,
-    StoreReader,
-    NullEngine,
-)
-from .read_handlers import ReadCheckpointHandler, ReadDefaultHandler, ReadLogHandler, ReadRecordHandler
 from .proc_stdout_handler import handlers as stdout_handlers
+from .read_handlers import (ReadCheckpointHandler, ReadDefaultHandler,
+                            ReadLogHandler, ReadRecordHandler)
 
 handlers = {
     "LOG": ReadLogHandler,
