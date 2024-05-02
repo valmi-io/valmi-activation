@@ -23,6 +23,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 from datetime import datetime
+from api.schemas.sync_status import LastSyncStatus
 from pydantic import UUID4
 from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session
@@ -34,6 +35,8 @@ from typing import Any, List
 from metastore.models import SyncStatus
 from .base import BaseService
 from sqlalchemy.orm.attributes import flag_modified
+import logging 
+logger = logging.getLogger(__name__)
 
 
 class SyncRunsService(BaseService[SyncRun, SyncRunCreate, Any]):
@@ -106,3 +109,15 @@ class SyncRunsService(BaseService[SyncRun, SyncRunCreate, Any]):
         flag_modified(sync_run, "extra")
 
         self.db_session.commit()
+
+    def last_run_status(self,sync_id) -> str:
+        logger.debug("in service method")
+        return (
+        self.db_session.query(self.model)
+        .filter(SyncRun.sync_id == sync_id)
+        .order_by(SyncRun.created_at)
+        .limit(1)
+        .first()
+    ).status
+        
+        
