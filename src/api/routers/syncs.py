@@ -31,7 +31,7 @@ import json
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from api.schemas.sync_status import LastSyncStatus
+
 from fastapi import Depends
 
 from fastapi.routing import APIRouter
@@ -395,7 +395,7 @@ async def get_samples(
     return await sample_handling_service.read_sample_retriever_data(sample_retriever_task=sample_retriever_task)
 
 
-@router.get("/{sync_id}/last/run/status", response_model=str)
+@router.get("/{sync_id}/lastRunStatus", response_model=str)
 def get_run_status(sync_id,
     sync_runs_service: SyncRunsService = Depends(get_sync_runs_service)):
     return sync_runs_service.last_run_status(sync_id)

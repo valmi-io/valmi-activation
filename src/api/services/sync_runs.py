@@ -23,7 +23,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 from datetime import datetime
-from api.schemas.sync_status import LastSyncStatus
 from pydantic import UUID4
 from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session
@@ -112,12 +111,16 @@ class SyncRunsService(BaseService[SyncRun, SyncRunCreate, Any]):
 
     def last_run_status(self,sync_id) -> str:
         logger.debug("in service method")
-        return (
-        self.db_session.query(self.model)
-        .filter(SyncRun.sync_id == sync_id)
-        .order_by(SyncRun.created_at)
-        .limit(1)
-        .first()
-    ).status
-        
+        try:
+
+            return (
+            self.db_session.query(self.model)
+            .filter(SyncRun.sync_id == sync_id)
+            .order_by(SyncRun.created_at.desc())
+            .limit(1)
+            .first()
+        ).status
+        except Exception as e:
+            logger.error(e)
+            return e.message
         
