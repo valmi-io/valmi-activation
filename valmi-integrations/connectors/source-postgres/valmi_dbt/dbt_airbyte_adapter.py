@@ -118,12 +118,24 @@ class DbtAirbyteAdpater:
 
         with self.adapter.connection_named("discover-connection"):
             if "namespace" in config:
+                relations = self.adapter.list_relations(self.faldbt._config.credentials.database, schema=config["namespace"])
+                if "table" in config:
+                    # get subset of the relations
+                    subset = []
+                    for relation in relations:
+                        if relation.path.identifier.lower() == config["table"].lower() \
+                            and relation.path.schema.lower() == config["namespace"].lower():
+                            subset.append(relation)
+                            break
+                    return (
+                        False,
+                        subset
+                    )
                 return (
                     False,
                     self.adapter.list_relations(self.faldbt._config.credentials.database, schema=config["namespace"]),
                 )
-            else:
-                return (True, self.adapter.list_schemas(self.faldbt._config.credentials.database))
+            return (True, self.adapter.list_schemas(self.faldbt._config.credentials.database))
 
     def get_columns(self, adapter: SQLAdapter, relation: BaseRelation):
         with self.adapter.connection_named("getcolumns-connection"):
