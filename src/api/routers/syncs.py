@@ -31,6 +31,7 @@ import json
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
+
 from fastapi import Depends
 
 from fastapi.routing import APIRouter
@@ -73,7 +74,7 @@ meter = get_meter_provider().get_meter("activation_engine_syncs/api", "test_vers
 
 
 # Create /{sync_id}/runs api counter
-activation_sync_runs_api_counter = meter.create_counter("activation_sync_runs_api_counter")
+activation_sync_runs_api_counter = meter.create_counter("activation_sync_runs_api_counter") 
 
 
 @router.get("/", response_model=List[SyncSchedule])
@@ -392,3 +393,9 @@ async def get_samples(
     sample_handling_service.add_sample_retriever_task(
         sample_retriever_task=sample_retriever_task)
     return await sample_handling_service.read_sample_retriever_data(sample_retriever_task=sample_retriever_task)
+
+
+@router.get("/{sync_id}/latestRunStatus", response_model=str)
+def get_run_status(sync_id,
+    sync_runs_service: SyncRunsService = Depends(get_sync_runs_service)):
+    return sync_runs_service.last_run_status(sync_id)

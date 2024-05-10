@@ -34,6 +34,8 @@ from typing import Any, List
 from metastore.models import SyncStatus
 from .base import BaseService
 from sqlalchemy.orm.attributes import flag_modified
+import logging 
+logger = logging.getLogger(__name__)
 
 
 class SyncRunsService(BaseService[SyncRun, SyncRunCreate, Any]):
@@ -106,3 +108,19 @@ class SyncRunsService(BaseService[SyncRun, SyncRunCreate, Any]):
         flag_modified(sync_run, "extra")
 
         self.db_session.commit()
+
+    def last_run_status(self,sync_id) -> str:
+        logger.debug("in service method")
+        try:
+
+            return (
+            self.db_session.query(self.model)
+            .filter(SyncRun.sync_id == sync_id)
+            .order_by(SyncRun.created_at.desc())
+            .limit(1)
+            .first()
+        ).status
+        except Exception as e:
+            logger.error(e)
+            return e.message
+        
