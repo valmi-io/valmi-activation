@@ -182,6 +182,12 @@ def main():
 
         # create the subprocess
         subprocess_args = sys.argv[1:]
+
+        if os.environ.get('MODE', 'any') == 'etl' and "--destination_catalog" in subprocess_args:
+            arg_idx = subprocess_args.index("--destination_catalog")
+            subprocess_args.remove("--destination_catalog")
+            subprocess_args.pop(arg_idx)
+            
         if is_state_available():
             subprocess_args.append("--state")
             subprocess_args.append(state_file_path)
