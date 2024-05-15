@@ -127,7 +127,7 @@ class Engine(NullEngine):
 
     def current_run_details(self):
         sync_id = du(os.environ.get("DAGSTER_RUN_JOB_NAME", "cf280e5c-1184-4052-b089-f9f41b25138e"))
-        #sync_id = du(os.environ.get("DAGSTER_RUN_JOB_NAME", "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"))
+        # sync_id = du(os.environ.get("DAGSTER_RUN_JOB_NAME", "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"))
         r = self.session_with_retries.get(
             f"{self.engine_url}/syncs/{sync_id}/runs/current_run_details/{CONNECTOR_STRING}",
             timeout=HTTP_TIMEOUT,
@@ -239,8 +239,15 @@ class StoreWriter(NullWriter):
 
     def write(self, record, last=False):
         self.records.append(record)
-        self.connector_state.register_record()
-        if self.connector_state.records_in_chunk >= self.connector_state.run_time_args["chunk_size"]:
+        is_state_message = record['type'] == "STATE"
+        if not is_state_message:
+            self.connector_state.register_record()
+
+        etl_mode = os.environ.get('MODE', 'any') == 'etl'
+
+        # For ETL the chunk flush should happen only after seeing STATE message.
+        if (etl_mode and is_state_message) or \
+                (not etl_mode and self.connector_state.records_in_chunk >= self.connector_state.run_time_args["chunk_size"]):
             self.flush(last=False)
             self.records = []
             self.engine.metric(commit=True)
