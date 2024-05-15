@@ -58,13 +58,17 @@ class StoreReader:
         self.engine = engine
         self.connector_state: ConnectorState = self.engine.connector_state
         self.loaded_state = state
+        self.current_file_name = None
 
         store_config = json.loads(os.environ["VALMI_INTERMEDIATE_STORE"])
         if store_config["provider"] == "local":
             path_name = join(store_config["local"]["directory"], self.connector_state.run_time_args["run_id"], "data")
             os.makedirs(path_name, exist_ok=True)
             self.path_name = path_name
-            self.last_handled_fn = self.get_file_name_from_chunk_id(self.read_chunk_id_checkpoint())
+            if os.environ.get('MODE', 'any') == 'etl':
+                self.last_handled_fn = self.read_file_marker_from_checkpoint()
+            else:
+                self.last_handled_fn = self.get_file_name_from_chunk_id(self.read_chunk_id_checkpoint())
 
     def read(self):
         while True:
@@ -76,6 +80,7 @@ class StoreReader:
                 if self.last_handled_fn is not None and int(fn[:-5]) <= int(self.last_handled_fn[:-5]):
                     continue
                 if fn.endswith(".vald"):
+                    self.current_file_name = fn
                     with open(join(self.path_name, fn), "r") as f:
                         for line in f.readlines():
                             # print("yiedling", line)
@@ -105,6 +110,14 @@ class StoreReader:
                 and 'data' in self.loaded_state['state'] \
                 and 'chunk_id' in self.loaded_state['state']['data']:
             return self.loaded_state['state']['data']['chunk_id']
+        return None
+    
+    def read_file_marker_from_checkpoint(self):
+        if self.loaded_state is not None \
+                and 'state' in self.loaded_state \
+                and 'data' in self.loaded_state['state'] \
+                and 'file_marker' in self.loaded_state['state']['data']:
+            return self.loaded_state["state"]["data"]["file_marker"]
         return None
 
     def get_file_name_from_chunk_id(self, chunk_id):

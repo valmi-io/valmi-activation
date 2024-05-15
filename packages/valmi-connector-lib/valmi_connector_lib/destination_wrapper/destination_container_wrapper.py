@@ -166,7 +166,7 @@ def main():
                            engine.connector_state.run_time_args["sync_id"],
                            engine.connector_state.run_time_args["run_id"],
                            CONNECTOR_STRING)
-       
+
         # initialize SampleWriter
         SampleWriter.get_writer_by_metric_type(store_config_str=os.environ["VALMI_INTERMEDIATE_STORE"],
                                                sync_id=engine.connector_state.run_time_args["sync_id"],
@@ -183,12 +183,14 @@ def main():
         # create the subprocess
         subprocess_args = sys.argv[1:]
 
+        # For ETL, there is no concept of destination catalog
         if os.environ.get('MODE', 'any') == 'etl' and "--destination_catalog" in subprocess_args:
             arg_idx = subprocess_args.index("--destination_catalog")
             subprocess_args.remove("--destination_catalog")
             subprocess_args.pop(arg_idx)
-            
-        if is_state_available():
+
+        # For ETL, internal connectors do not need any state information  
+        if os.environ.get('MODE', 'any') != 'etl' and is_state_available():
             subprocess_args.append("--state")
             subprocess_args.append(state_file_path)
         proc = subprocess.Popen(subprocess_args, stdin=subprocess.PIPE, stdout=subprocess.PIPE)

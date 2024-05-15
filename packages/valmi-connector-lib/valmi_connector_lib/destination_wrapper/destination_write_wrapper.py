@@ -59,6 +59,7 @@ class DestinationWriteWrapper:
             return self.previous_state['state']['data']['chunk_id'] + 1
         return 1
 
+
     def start_message_handling(self, input_messages: Iterable[AirbyteMessage]) -> AirbyteMessage:
         counter: int = 0
         counter_by_type: dict[str, int] = defaultdict(lambda: 0)

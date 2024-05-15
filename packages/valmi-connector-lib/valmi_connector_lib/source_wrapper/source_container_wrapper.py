@@ -296,9 +296,9 @@ class CheckpointHandler(DefaultHandler):
 
     def handle(self, record):
         print(json.dumps(record))
-        
+
         if os.environ.get('MODE', 'any') == 'etl':
-            record['state']['data']['chunk_id']= self.engine.connector_state.num_chunks - 1 # Not oprating on chunk boundary -- fix
+            # record['state']['data']['chunk_id'] = self.engine.connector_state.num_chunks - 1  # Not oprating on chunk boundary -- fix
             self.store_writer.write(record)
 
         self.engine.checkpoint(record)
