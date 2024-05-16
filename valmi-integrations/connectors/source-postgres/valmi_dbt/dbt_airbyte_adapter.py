@@ -118,13 +118,19 @@ class DbtAirbyteAdpater:
 
         with self.adapter.connection_named("discover-connection"):
             if "namespace" in config:
-                relations = self.adapter.list_relations(self.faldbt._config.credentials.database, schema=config["namespace"])
+                relations = self.adapter.list_relations(
+                    self.faldbt._config.credentials.database, schema=config["namespace"])
+                if "query" in config:
+                    adapter_resp, agate_table = self.adapter.execute(config["query"], fetch=True)
+                    # adapter_resp, agate_table = self.execute_sql(self.faldbt, logger, config["query"])
+                    # logger.info(agate_table)
+                    return (False, agate_table)
                 if "table" in config:
                     # get subset of the relations
                     subset = []
                     for relation in relations:
                         if relation.path.identifier.lower() == config["table"].lower() \
-                            and relation.path.schema.lower() == config["namespace"].lower():
+                                and relation.path.schema.lower() == config["namespace"].lower():
                             subset.append(relation)
                             break
                     return (
@@ -229,7 +235,7 @@ class DbtAirbyteAdpater:
             stderr=subprocess.PIPE,
             stdout=subprocess.PIPE,
         )
-        
+
         logs = []
         for line in iter(proc.stdout.readline, b''):
             logs.append(line)
