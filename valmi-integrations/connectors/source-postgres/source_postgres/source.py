@@ -112,6 +112,35 @@ class SourcePostgres(Source):
             catalog.__setattr__("more", more)
             return catalog
         else:
+            if "query" in config:
+                streams = []
+                properties = {}
+                json_schema = {
+                    "$schema": "http://json-schema.org/draft-07/schema#",
+                    "type": "object",
+                    "properties": properties
+                }
+                for column_name in result_streams.column_names:
+                    predefined_type = {
+                        "type": "character varying"
+                    }
+                    properties[column_name] = predefined_type
+                stream = {
+                    "name": "dvdrental.public.shop",
+                    "json_schema": json_schema,
+                    "supported_sync_modes": [
+                        "full_refresh",
+                        "incremental"
+                    ],
+                    "label": "dvdrental.public.shop",
+
+                }
+                streams.append(stream)
+                catalog = ValmiCatalog(streams=streams)
+                catalog.__setattr__("type", "table")
+                catalog.__setattr__("more", more)
+                return catalog
+
             streams = []
             for row in result_streams:
                 stream_name = str(row)
@@ -141,7 +170,7 @@ class SourcePostgres(Source):
         if state is None or 'state' not in state:
             return False
         return True
-    
+
     def read_chunk_id_checkpoint(self, state: Dict[str, any]):
         if state is not None \
                 and 'state' in state \
@@ -188,7 +217,7 @@ class SourcePostgres(Source):
                     ),
                 )
                 return
-     
+
         # initialise chunk_size
         if "run_time_args" in config and "chunk_size" in config["run_time_args"]:
             chunk_size = config["run_time_args"]["chunk_size"]
@@ -282,7 +311,7 @@ class SourcePostgres(Source):
                 ),
             )
     '''
-    
+
     def generate_sync_metrics(self, faldbt, logger, sync_id, catalog) -> Generator[AirbyteMessage, None, None]:
         adapter_resp, agate_table = self.dbt_adapter.execute_sql(
             faldbt,
