@@ -137,7 +137,7 @@ async def get_current_run_details_for_connector_string(
         "records_per_metric":  connector_run_config["records_per_metric"]
         if "records_per_metric" in connector_run_config
         else 10,
-        
+
         "previous_run_status": "success" if previous_run is None
         or ("run_manager" in previous_run.extra and previous_run.extra["run_manager"]["status"]["status"] == "success")
         else "failure",  # For first run also, previous_run_status will be success
@@ -149,8 +149,9 @@ async def get_current_run_details_for_connector_string(
         run_args["full_refresh"] = current_run.run_time_args["full_refresh"]
 
     # Set Connector State for the run_time_args to restart the run from the checkpoint
-    if current_run.extra is not None and connector_string in current_run.extra and 'state' in current_run.extra[connector_string]:
-        run_args["state"] = current_run.extra[connector_string]['state']['state']
+    if current_run.extra is not None and connector_string in current_run.extra \
+            and 'state' in current_run.extra[connector_string]:
+        run_args["state"] = current_run.extra[connector_string]['state']
 
     return SyncCurrentRunArgs(**run_args)
 
@@ -194,11 +195,12 @@ async def synchronize_connector(
     return ConnectorSynchronization(abort_required=abort_required)
 
 
-@router.post("/{sync_id}/runs/{run_id}/state/{connector_string}/", response_model=GenericResponse)
+@router.post("/{sync_id}/runs/{run_id}/state/{connector_string}/{mode}", response_model=GenericResponse)
 async def state(
     sync_id: UUID4,
     run_id: UUID4,
     connector_string: str,
+    mode: str,
     state: Dict,
     sync_runs_service: SyncRunsService = Depends(get_sync_runs_service),
 ) -> GenericResponse:
@@ -206,7 +208,7 @@ async def state(
     if str(sync_id) == "cf280e5c-1184-4052-b089-f9f41b25138e":
         return GenericResponse()
 
-    sync_runs_service.save_state(sync_id, run_id, connector_string, state)
+    sync_runs_service.save_state(sync_id, run_id, connector_string, mode, state)
     return GenericResponse()
 
 

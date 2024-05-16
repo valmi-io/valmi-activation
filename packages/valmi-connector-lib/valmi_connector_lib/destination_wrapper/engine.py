@@ -199,7 +199,7 @@ class Engine(NullEngine):
         sync_id = self.connector_state.run_time_args["sync_id"]
         run_id = self.connector_state.run_time_args["run_id"]
         r = self.session_with_retries.post(
-            f"{self.engine_url}/syncs/{sync_id}/runs/{run_id}/state/{CONNECTOR_STRING}/",
+            f"{self.engine_url}/syncs/{sync_id}/runs/{run_id}/state/{CONNECTOR_STRING}/{os.environ.get('MODE', 'any')}",
             timeout=HTTP_TIMEOUT,
             json=state,
         )

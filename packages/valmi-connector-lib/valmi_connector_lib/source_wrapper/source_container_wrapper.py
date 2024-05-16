@@ -60,13 +60,12 @@ class ConnectorState:
         self.records_in_chunk = 0
         self.run_time_args = run_time_args
         self.total_records = 0
-        
+
     def reset_chunk_id_from_state(self, state):
         if state is not None \
-            and 'state' in state \
-                and 'data' in state['state'] \
-                    and 'chunk_id' in state['state']['data']:
-            self.num_chunks = state['state']['data']['chunk_id'] + 1
+                and 'data' in state \
+                    and 'chunk_id' in state['data']:
+            self.num_chunks = state['data']['chunk_id'] + 1
         else:
             self.num_chunks = 1
         self.total_records = (self.num_chunks - 1) * self.run_time_args["chunk_size"]
@@ -200,7 +199,7 @@ class Engine(NullEngine):
         sync_id = self.connector_state.run_time_args["sync_id"]
         run_id = self.connector_state.run_time_args["run_id"]
         r = self.session_with_retries.post(
-            f"{self.engine_url}/syncs/{sync_id}/runs/{run_id}/state/{CONNECTOR_STRING}/",
+            f"{self.engine_url}/syncs/{sync_id}/runs/{run_id}/state/{CONNECTOR_STRING}/{os.environ.get('MODE', 'any')}",
             timeout=HTTP_TIMEOUT,
             json=state,
         )
@@ -308,7 +307,7 @@ class CheckpointHandler(DefaultHandler):
             # record['state']['data']['chunk_id'] = self.engine.connector_state.num_chunks - 1  # Not oprating on chunk boundary -- fix
             self.store_writer.write(record)
 
-        self.engine.checkpoint(record)
+        self.engine.checkpoint(record['state'])
         if SingletonLogWriter.instance() is not None:
             SingletonLogWriter.instance().data_chunk_flush_callback()
         SampleWriter.data_chunk_flush_callback()

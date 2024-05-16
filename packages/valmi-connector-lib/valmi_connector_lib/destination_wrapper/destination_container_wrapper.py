@@ -173,12 +173,13 @@ def main():
                                                run_id=engine.connector_state.run_time_args["run_id"],
                                                connector=CONNECTOR_STRING)
 
-        # initialize handler
-        for key in handlers.keys():
-            handlers[key] = handlers[key](engine=engine, store_writer=None, stdout_writer=None)
-
         global loaded_state
         store_reader = StoreReader(engine=engine, state=loaded_state)
+
+        # initialize handler
+        for key in handlers.keys():
+            handlers[key] = handlers[key](engine=engine, store_writer=None,
+                                          stdout_writer=None, store_reader=store_reader)
 
         # create the subprocess
         subprocess_args = sys.argv[1:]

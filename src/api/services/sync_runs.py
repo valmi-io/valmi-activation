@@ -81,7 +81,7 @@ class SyncRunsService(BaseService[SyncRun, SyncRunCreate, Any]):
 
         self.db_session.commit()
 
-    def save_state(self, sync_id, run_id, connector_string, state):
+    def save_state(self, sync_id, run_id, connector_string, mode, state):
         sync_run = self.get(run_id)
         self.db_session.refresh(sync_run)
 
@@ -89,7 +89,27 @@ class SyncRunsService(BaseService[SyncRun, SyncRunCreate, Any]):
             sync_run.extra = {}
         if connector_string not in sync_run.extra:
             sync_run.extra[connector_string] = {}
-        sync_run.extra[connector_string]["state"] = {"state": state}
+
+        # PER STREAM STATE message in etl sources
+        if mode == "etl" and connector_string == "src":
+            state_to_input: List = None
+            if "state" in sync_run.extra[connector_string]:
+                state_to_input = sync_run.extra[connector_string]["state"]
+            if state_to_input is None:
+                state_to_input = [state]
+            else:
+                current_stream: str = state['stream']['stream_descriptor']['name']
+                new_state = []
+                for s in state_to_input:
+                    print(s)
+                    if current_stream != s['stream']['stream_descriptor']['name']:
+                        new_state.append(s)
+                new_state.append(state)
+                state_to_input = new_state
+        else:
+            state_to_input = state
+
+        sync_run.extra[connector_string]["state"] = state_to_input
         flag_modified(sync_run, "extra")
 
         self.db_session.commit()

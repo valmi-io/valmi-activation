@@ -67,7 +67,7 @@ class ReadCheckpointHandler(ReadDefaultHandler):
         # because state is dictated by the source.
         if os.environ.get('MODE', 'any') == 'etl':
             record["state"]["data"]["file_marker"] = self.store_reader.current_file_name
-            self.engine.checkpoint(record)
+            self.engine.checkpoint(record["state"])
         return True
 
 

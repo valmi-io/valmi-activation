@@ -106,18 +106,16 @@ class StoreReader:
     def read_chunk_id_checkpoint(self):
         # TODO: connector_state is not being used for destination, clean it up.
         if self.loaded_state is not None \
-                and 'state' in self.loaded_state \
-                and 'data' in self.loaded_state['state'] \
-                and 'chunk_id' in self.loaded_state['state']['data']:
-            return self.loaded_state['state']['data']['chunk_id']
+                and 'data' in self.loaded_state \
+                and 'chunk_id' in self.loaded_state['data']:
+            return self.loaded_state['data']['chunk_id']
         return None
     
     def read_file_marker_from_checkpoint(self):
         if self.loaded_state is not None \
-                and 'state' in self.loaded_state \
-                and 'data' in self.loaded_state['state'] \
-                and 'file_marker' in self.loaded_state['state']['data']:
-            return self.loaded_state["state"]["data"]["file_marker"]
+                and 'data' in self.loaded_state \
+                and 'file_marker' in self.loaded_state['data']:
+            return self.loaded_state["data"]["file_marker"]
         return None
 
     def get_file_name_from_chunk_id(self, chunk_id):
@@ -185,7 +183,7 @@ class CheckpointHandler(DefaultHandler):
                 self.engine.metric_ext(records_delivered, record["state"]["data"]["chunk_id"], commit=True)
                 # self.engine.connector_state.register_chunk()
             if commit_state:
-                self.engine.checkpoint(record)
+                self.engine.checkpoint(record["state"])
                 if SingletonLogWriter.instance() is not None:
                     SingletonLogWriter.instance().data_chunk_flush_callback()
                 SampleWriter.data_chunk_flush_callback()
