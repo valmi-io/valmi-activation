@@ -111,7 +111,7 @@ def normalization_op(context, a, b):
         jitter=Jitter.PLUS_MINUS,
     ),
 )
-def transformation_po_op(context, c) -> None:
+def transformation_po_op(context, c):
     execute_docker_container(
         context,
         image = "valmiio/transform-po:latest",
