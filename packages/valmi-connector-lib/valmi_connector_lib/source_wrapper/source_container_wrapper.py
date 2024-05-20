@@ -454,7 +454,6 @@ def main():
     # populate run_time_args
     populate_run_time_args(airbyte_command, engine, config_file_path=config_file)
 
-    print("in valmi-lib-after populate run_time_args")
 
     if airbyte_command == "read":
         # initialize LogWriter
@@ -469,7 +468,6 @@ def main():
                                                sync_id=engine.connector_state.run_time_args["sync_id"],
                                                run_id=engine.connector_state.run_time_args["run_id"],
                                                connector=CONNECTOR_STRING)
-    print("in valmi-lib-after creating log and samplewriter")
 
     stdout_writer = StdoutWriter(engine)
 
@@ -488,15 +486,11 @@ def main():
     )
 
     # check engine errors every CHUNK_SIZE records
-    print("in valmi-lib-getting to reading stdout")
 
     record_types = handlers.keys()
     for line in io.TextIOWrapper(proc.stdout, encoding="utf-8"):  # or another encoding
         if line.strip() == "":
             continue
-        print("in valmi-lib-begin")
-        print(line)
-        print("in valmi-lib-end")
         json_record = json.loads(line)
         if json_record["type"] not in record_types:
             handlers["default"].handle(json_record)
