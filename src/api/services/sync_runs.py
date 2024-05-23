@@ -157,8 +157,8 @@ class SyncRunsService(BaseService[SyncRun, SyncRunCreate, Any]):
             )
 
             if result is None:
-                return {"found": False, "timestamp": "0000-00-00 00:00:00.000000"}
-            return {"found":True,"timestamp": result.run_end_at}
+                return {"found": False, "run_end_at": "0000-00-00 00:00:00.000000"}
+            return {"found":True,"run_end_at": result.run_end_at}
         except Exception as e:
             logger.error(e)
             raise e
