@@ -29,7 +29,7 @@ from sqlalchemy.orm import Session
 
 from metastore.models import SyncRun
 from api.schemas import SyncRunCreate
-from typing import Any, List
+from typing import Any, Dict, List, Optional
 
 from metastore.models import SyncStatus
 from .base import BaseService
@@ -142,5 +142,38 @@ class SyncRunsService(BaseService[SyncRun, SyncRunCreate, Any]):
         ).status
         except Exception as e:
             logger.error(e)
-            return e.message
-        
+            raise e
+    def last_successful_sync_run(self, sync_id) -> Dict:
+        try:
+            logger.debug('here in activation below is query')
+
+            # Query for the latest stopped sync run
+            result = (
+                self.db_session.query(self.model)
+                .filter(SyncRun.sync_id == sync_id, SyncRun.status == "stopped")
+                .order_by(SyncRun.created_at.desc())
+                .limit(1)
+                .first()
+            )
+
+            if result is None:
+                return {"found": False, "timestamp": "0000-00-00 00:00:00.000000"}
+            return {"found":True,"timestamp": result.run_end_at}
+        except Exception as e:
+            logger.error(e)
+            raise e
+    def latest_sync_info(self, sync_id)->Dict:
+        try:
+            result = (
+                self.db_session.query(self.model)
+                .filter(SyncRun.sync_id == sync_id)
+                .order_by(SyncRun.created_at.desc())
+                .limit(1)
+                .first()
+            )
+            if result is None:
+                return {"enabled": False}
+            return {"enabled":True,"status":result.status,"created_at":result.created_at}
+        except Exception as e:
+            logger.error(e)
+            raise e

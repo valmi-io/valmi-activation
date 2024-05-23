@@ -401,3 +401,13 @@ async def get_samples(
 def get_run_status(sync_id,
     sync_runs_service: SyncRunsService = Depends(get_sync_runs_service)):
     return sync_runs_service.last_run_status(sync_id)
+
+@router.get("/{sync_id}/last_successful_sync", response_model=dict)
+def get_last_sync_sucess_time(sync_id,
+    sync_runs_service: SyncRunsService = Depends(get_sync_runs_service)):
+    return sync_runs_service.last_successful_sync_run(sync_id)
+
+@router.get("/{sync_id}/latest_sync_info", response_model=dict)
+def get_latest_sync_inof(sync_id,
+    sync_runs_service: SyncRunsService = Depends(get_sync_runs_service)):
+    return sync_runs_service.latest_sync_info(sync_id)
