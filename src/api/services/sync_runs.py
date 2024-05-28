@@ -32,6 +32,7 @@ from api.schemas import SyncRunCreate
 from typing import Any, Dict, List, Optional
 
 from metastore.models import SyncStatus
+from api.schemas.sync import LastSuccessfulSync, LatestSyncInfo
 from .base import BaseService
 from sqlalchemy.orm.attributes import flag_modified
 import logging 
@@ -129,21 +130,7 @@ class SyncRunsService(BaseService[SyncRun, SyncRunCreate, Any]):
 
         self.db_session.commit()
 
-    def last_run_status(self,sync_id) -> str:
-        logger.debug("in service method")
-        try:
-
-            return (
-            self.db_session.query(self.model)
-            .filter(SyncRun.sync_id == sync_id)
-            .order_by(SyncRun.created_at.desc())
-            .limit(1)
-            .first()
-        ).status
-        except Exception as e:
-            logger.error(e)
-            raise e
-    def last_successful_sync_run(self, sync_id) -> Dict:
+    def last_successful_sync_run(self, sync_id) -> LastSuccessfulSync:
         try:
             logger.debug('here in activation below is query')
 
@@ -157,12 +144,11 @@ class SyncRunsService(BaseService[SyncRun, SyncRunCreate, Any]):
             )
 
             if result is None:
-                return {"found": False, "run_end_at": "0000-00-00 00:00:00.000000"}
-            return {"found":True,"run_end_at": result.run_end_at}
+                return LastSuccessfulSync(found=False)
+            return LastSuccessfulSync(found=True,run_end_at = result.run_end_at)
         except Exception as e:
             logger.error(e)
-            raise e
-    def latest_sync_info(self, sync_id)->Dict:
+    def latest_sync_info(self, sync_id)->LatestSyncInfo:
         try:
             result = (
                 self.db_session.query(self.model)
@@ -172,8 +158,7 @@ class SyncRunsService(BaseService[SyncRun, SyncRunCreate, Any]):
                 .first()
             )
             if result is None:
-                return {"enabled": False}
-            return {"enabled":True,"status":result.status,"created_at":result.created_at}
+                return LatestSyncInfo(found=False)
+            return LatestSyncInfo(found=True,status=result.status,created_at=result.created_at) 
         except Exception as e:
             logger.error(e)
-            raise e

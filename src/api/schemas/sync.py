@@ -34,3 +34,13 @@ class SyncCurrentRunArgs(BaseModel):
 
     class Config:
         extra = Extra.allow
+
+
+class LastSuccessfulSync(BaseModel):
+    found: bool
+    run_end_at: Optional[datetime] = None
+
+class LatestSyncInfo(BaseModel):
+    found: bool
+    status: Optional[str] = None
+    created_at: Optional[datetime] = None
