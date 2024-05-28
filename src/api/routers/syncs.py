@@ -32,11 +32,12 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 
-from fastapi import Depends
-
+from fastapi import Depends,Response
+from fastapi.responses import JSONResponse
 from fastapi.routing import APIRouter
 from orchestrator.run_manager import SyncRunnerThread
 from pydantic import UUID4, Json
+from api.schemas.sync import LastSuccessfulSync, LatestSyncInfo
 from vyper import v
 
 from metastore import models
@@ -106,6 +107,7 @@ async def get_current_run_details_for_connector_string(
 
     sync_schedule = sync_service.get(sync_id)
     runs = sync_runs_service.get_runs(sync_id, datetime.now(), 2)
+   
     previous_run = runs[1] if len(runs) > 1 else None
     if previous_run is not None:
         sync_runs_service.db_session.refresh(
@@ -122,7 +124,9 @@ async def get_current_run_details_for_connector_string(
     connector_run_config = {}
     if connector_type in v.get("CONNECTOR_RUN_CONFIG"):
         connector_run_config = v.get("CONNECTOR_RUN_CONFIG")[connector_type]
-
+    print(sync_id)
+    print(previous_run)
+    print(connector_string)
 
     # TODO: get saved checkpoint state of the run_id & create column run_time_args in the sync_runs table to get repeatable runs
     run_args = {
@@ -266,12 +270,17 @@ async def new_run(
     with sync_service.api_and_run_manager_mutex:
         sync = sync_service.get_sync(sync_id)
         runs = sync_runs_service.get_runs(sync_id, datetime.now(), 2)
-        previous_run = runs[0] if len(runs) > 1 else None
+
+        previous_run = runs[0] if len(runs) >= 1 else None
         previous_run_status = previous_run.status if previous_run is not None else None
+        print(previous_run)
+        print(previous_run_status)
+
 
         if sync.status == SyncConfigStatus.ACTIVE and (
             previous_run is None or previous_run.status == SyncStatus.STOPPED
         ):
+            print("inside creating run")
             run = SyncRunCreate(
                 run_id=uuid.uuid4(),
                 sync_id=sync.sync_id,
@@ -285,6 +294,9 @@ async def new_run(
             sync.last_run_id = run.run_id
 
             sync_service.update_sync_and_create_run(sync, run)
+            print("sync" , sync)
+            print("run", run)
+
             SyncRunnerThread.refresh_db_session()
 
             return GenericResponse(success=True, message=f"Sync run started with run_id: {run.run_id}")
@@ -397,7 +409,20 @@ async def get_samples(
     return await sample_handling_service.read_sample_retriever_data(sample_retriever_task=sample_retriever_task)
 
 
-@router.get("/{sync_id}/latestRunStatus", response_model=str)
-def get_run_status(sync_id,
-    sync_runs_service: SyncRunsService = Depends(get_sync_runs_service)):
-    return sync_runs_service.last_run_status(sync_id)
+@router.get("/{sync_id}/last_successful_sync", response_model=LastSuccessfulSync)
+def get_last_sync_sucess_time(sync_id,
+    sync_runs_service: SyncRunsService = Depends(get_sync_runs_service)) -> LastSuccessfulSync:
+    try:
+        return sync_runs_service.last_successful_sync_run(sync_id)
+    except Exception as e:
+        logger.error(f"An error occurred while fetching the last successful sync run: {e}")
+        return JSONResponse(status_code=500, content={"detail": "Internal Server Error"})  
+
+@router.get("/{sync_id}/latest_sync_info", response_model=LatestSyncInfo)
+def get_latest_sync_inof(sync_id,
+    sync_runs_service: SyncRunsService = Depends(get_sync_runs_service)) -> LatestSyncInfo:
+    try:
+        return sync_runs_service.latest_sync_info(sync_id)
+    except Exception as e:
+        logger.error(f"An error occurred while fetching the latest sync info: {e}")
+        return JSONResponse(status_code=500, content={"detail": "Internal Server Error"})   
