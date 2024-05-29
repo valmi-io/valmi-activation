@@ -66,7 +66,8 @@ class ReadCheckpointHandler(ReadDefaultHandler):
         # For ETL, we store the checkpoint for the reader instead of the destination stdout state, 
         # because state is dictated by the source.
         if os.environ.get('MODE', 'any') == 'etl':
-            record["state"]["data"]["file_marker"] = self.store_reader.current_file_name
+            _valmi_meta = {"file_marker": self.store_reader.current_file_name}
+            record["state"]["_valmi_meta"] = _valmi_meta
             self.engine.checkpoint(record["state"])
         return True
 

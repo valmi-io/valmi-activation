@@ -63,9 +63,9 @@ class ConnectorState:
 
     def reset_chunk_id_from_state(self, state):
         if state is not None \
-                and 'data' in state \
-                    and 'chunk_id' in state['data']:
-            self.num_chunks = state['data']['chunk_id'] + 1
+                and '_valmi_meta' in state \
+                    and 'chunk_id' in state['_valmi_meta']:
+            self.num_chunks = state['_valmi_meta']['chunk_id'] + 1
         else:
             self.num_chunks = 1
         self.total_records = (self.num_chunks - 1) * self.run_time_args["chunk_size"]
@@ -304,7 +304,8 @@ class CheckpointHandler(DefaultHandler):
         print(json.dumps(record))
 
         if os.environ.get('MODE', 'any') == 'etl':
-            # record['state']['data']['chunk_id'] = self.engine.connector_state.num_chunks - 1  # Not oprating on chunk boundary -- fix
+            _valmi_meta = {"chunk_id": self.engine.connector_state.num_chunks - 1}
+            record['state']['_valmi_meta'] = _valmi_meta
             self.store_writer.write(record)
 
         self.engine.checkpoint(record['state'])
@@ -323,7 +324,7 @@ class RecordHandler(DefaultHandler):
         if not isinstance(record, ValmiFinalisedRecordMessage):
             record["record"]["rejected"] = False
             record["record"]["metric_type"] = "succeeded"
-        # 
+        #
 
         if not record["record"]["rejected"]:
             self.store_writer.write(record)
@@ -409,7 +410,11 @@ def populate_run_time_args(airbyte_command, engine, config_file_path):
             engine.connector_state.reset_chunk_id_from_state(loaded_state)
             print("num_chunks", engine.connector_state.num_chunks)
             with open(state_file_path, "w") as f:
-                f.write(json.dumps(run_time_args['state']))
+                etl_mode = os.environ.get('MODE', 'any') == 'etl'
+                state = loaded_state
+                if etl_mode:
+                    state = loaded_state["global"]
+                f.write(json.dumps(state))
 
 
 def sync_engine_for_error(proc: subprocess, engine: NullEngine):

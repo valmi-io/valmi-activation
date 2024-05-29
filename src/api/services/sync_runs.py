@@ -94,19 +94,27 @@ class SyncRunsService(BaseService[SyncRun, SyncRunCreate, Any]):
         # PER STREAM STATE message in etl sources
         if mode == "etl" and connector_string == "src":
             state_to_input: List = None
+            _valmi_meta = None
+            if "_valmi_meta" in state:
+                _valmi_meta = state['_valmi_meta']
+                del state['_valmi_meta']
+
             if "state" in sync_run.extra[connector_string]:
                 state_to_input = sync_run.extra[connector_string]["state"]
+
             if state_to_input is None:
-                state_to_input = [state]
+                state_to_input = {}
+                state_to_input["global"] = [state]
             else:
                 current_stream: str = state['stream']['stream_descriptor']['name']
                 new_state = []
-                for s in state_to_input:
+                for s in state_to_input["global"]:
                     print(s)
                     if current_stream != s['stream']['stream_descriptor']['name']:
                         new_state.append(s)
                 new_state.append(state)
-                state_to_input = new_state
+                state_to_input["global"] = new_state
+            state_to_input["_valmi_meta"] = _valmi_meta
         else:
             state_to_input = state
 

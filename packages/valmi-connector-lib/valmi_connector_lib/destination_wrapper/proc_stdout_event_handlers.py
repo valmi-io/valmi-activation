@@ -106,16 +106,16 @@ class StoreReader:
     def read_chunk_id_checkpoint(self):
         # TODO: connector_state is not being used for destination, clean it up.
         if self.loaded_state is not None \
-                and 'data' in self.loaded_state \
-                and 'chunk_id' in self.loaded_state['data']:
-            return self.loaded_state['data']['chunk_id']
+                and '_valmi_meta' in self.loaded_state \
+                and 'chunk_id' in self.loaded_state['_valmi_meta']:
+            return self.loaded_state['_valmi_meta']['chunk_id']
         return None
     
     def read_file_marker_from_checkpoint(self):
         if self.loaded_state is not None \
-                and 'data' in self.loaded_state \
-                and 'file_marker' in self.loaded_state['data']:
-            return self.loaded_state["data"]["file_marker"]
+                and '_valmi_meta' in self.loaded_state \
+                and 'file_marker' in self.loaded_state['_valmi_meta']:
+            return self.loaded_state["_valmi_meta"]["file_marker"]
         return None
 
     def get_file_name_from_chunk_id(self, chunk_id):
