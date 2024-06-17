@@ -395,7 +395,7 @@ class RecordHandler(DefaultHandler):
         sample_writer.write(record)
 
     def finalize(self):
-        self.store_writer.flush(last=True)
+        self.store_writer.finalize()
         
 
 
