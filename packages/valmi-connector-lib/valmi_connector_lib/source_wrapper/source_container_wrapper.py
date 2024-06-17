@@ -31,9 +31,11 @@ import subprocess
 import io
 from typing import Any, Dict
 import uuid
+import gzip
 from pydantic import UUID4
 import requests
 from requests.adapters import HTTPAdapter, Retry
+from minio import Minio
 
 from valmi_connector_lib.common.logs import SingletonLogWriter, TimeAndChunkEndFlushPolicy
 from valmi_connector_lib.common.samples import SampleWriter
@@ -229,24 +231,31 @@ class StoreWriter(NullWriter):
         self.engine = engine
         self.connector_state: ConnectorState = self.engine.connector_state
         store_config = json.loads(os.environ["VALMI_INTERMEDIATE_STORE"])
+        self.etl_mode = os.environ.get('MODE', 'any') == 'etl'
+        
+        path_name = join(store_config["local"]["directory"], self.connector_state.run_time_args["run_id"], "data")
+        os.makedirs(path_name, exist_ok=True)
+        self.path_name = path_name
+        self.records = []
+
+        # create flusher instance
         if store_config["provider"] == "local":
-            path_name = join(store_config["local"]["directory"], self.connector_state.run_time_args["run_id"], "data")
-            os.makedirs(path_name, exist_ok=True)
-
-            self.path_name = path_name
-            self.records = []
-
+            print("storage mode: local")
+            self.flusher=localFlusher()
+        elif store_config["provider"]=="minio":
+            print("storage mode: cloud(minio)")
+            self.flusher=minioFlusher()
     def write(self, record, last=False):
         self.records.append(record)
+        
         is_state_message = record['type'] == "STATE"
         if not is_state_message:
             self.connector_state.register_record()
 
-        etl_mode = os.environ.get('MODE', 'any') == 'etl'
 
         # For ETL the chunk flush should happen only after seeing STATE message.
-        if (etl_mode and is_state_message) or \
-                (not etl_mode and self.connector_state.records_in_chunk >= self.connector_state.run_time_args["chunk_size"]):
+        if (self.etl_mode and is_state_message) or \
+                (not self.etl_mode and self.connector_state.records_in_chunk >= self.connector_state.run_time_args["chunk_size"]):
             self.flush(last=False)
             self.records = []
             self.engine.metric(commit=True)
@@ -257,14 +266,62 @@ class StoreWriter(NullWriter):
     def flush(self, last=False):
         # list_dir = sorted([f.lower() for f in os.listdir(self.path_name)], key=lambda x: int(x[:-5]))
         new_file_name = f"{MAGIC_NUM}.vald" if last else f"{self.engine.connector_state.num_chunks}.vald"
-        with open(join(self.path_name, new_file_name), "w") as f:
-            for record in self.records:
-                f.write(json.dumps(record))
-                f.write("\n")
-
+        file_path=join(self.path_name,new_file_name)
+        self.flusher.flush(file_path,self.records)
     def finalize(self):
         self.flush(last=True)
         self.engine.metric(commit=True)
+
+class DefaultFlusher:
+    def __init__(self):
+        pass
+    def flush():
+        pass
+    
+class localFlusher(DefaultFlusher):
+    def __init__(self):
+        pass
+    def flush(self,file_path,records):
+        with open(file_path, "w") as f:
+            for record in records:
+                f.write(json.dumps(record)+"\n")
+
+class minioFlusher(DefaultFlusher):
+    def __init__(self):
+        self.minio_host = os.getenv('MINIO_HOST','localhost:9000')
+        self.access_key = os.getenv('MINIO_ACCESS_KEY','YOURACCESSKEY')
+        self.secret_key = os.getenv('MINIO_SECRET_KEY','YOURSECRETKEY')
+        self.secure = os.getenv('MINIO_SECURE', 'True').lower() == 'false'
+
+        self.minio_client = Minio(self.minio_host,
+                                  access_key=self.access_key,
+                                  secret_key=self.secret_key,
+                                  secure=self.secure)
+        
+        self.bucket_name=os.getenv('BUCKET_NAME','intermediate-store')
+    def flush(self,file_path,records):
+        with open(file_path, "w") as f:
+            for record in records:
+                f.write(json.dumps(record)+"\n")
+                
+        gzip_file_path=f"{file_path}.gz"
+        with open(file_path, 'rb') as f_in:
+            with gzip.open(gzip_file_path, 'wb') as f_out:
+                f_out.writelines(f_in)
+        os.remove(file_path)
+        
+        # Extract object name (key) from file_path
+        object_name = os.path.basename(gzip_file_path)
+
+        if not self.minio_client.bucket_exists(self.bucket_name):
+            self.minio_client.make_bucket(self.bucket_name)
+
+        try:
+            self.minio_client.fput_object(self.bucket_name, object_name, gzip_file_path)
+            print(f"File {object_name} uploaded successfully to bucket {self.bucket_name}")
+        except ResponseError as err:
+            print(f"Error uploading file: {err}")
+
 
 
 class DefaultHandler:
@@ -308,7 +365,9 @@ class CheckpointHandler(DefaultHandler):
             record['state']['_valmi_meta'] = _valmi_meta
             self.store_writer.write(record)
 
+        # store [STATE] log as checkpoint in Engine, to restart after last sync point. 
         self.engine.checkpoint(record['state'])
+        
         if SingletonLogWriter.instance() is not None:
             SingletonLogWriter.instance().data_chunk_flush_callback()
         SampleWriter.data_chunk_flush_callback()
@@ -336,7 +395,8 @@ class RecordHandler(DefaultHandler):
         sample_writer.write(record)
 
     def finalize(self):
-        self.store_writer.finalize()
+        self.store_writer.flush(last=True)
+        
 
 
 class TraceHandler(DefaultHandler):
@@ -485,13 +545,13 @@ def main():
     if is_state_available():
         subprocess_args.append("--state")
         subprocess_args.append(state_file_path)
+        
     proc = subprocess.Popen(
         subprocess_args,
         stdout=subprocess.PIPE,
     )
 
     # check engine errors every CHUNK_SIZE records
-
     record_types = handlers.keys()
     for line in io.TextIOWrapper(proc.stdout, encoding="utf-8"):  # or another encoding
         if line.strip() == "":
@@ -518,7 +578,8 @@ def main():
         sys.exit(return_code)
     else:
         if airbyte_command == "read":
-            store_writer.finalize()
+            # this triggers the flush of the last chunk of the sync.
+            handlers["RECORD"].finalize()
         engine.success()
 
 
