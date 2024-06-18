@@ -31,11 +31,11 @@ import subprocess
 import io
 from typing import Any, Dict
 import uuid
-import gzip
 from pydantic import UUID4
 import requests
 from requests.adapters import HTTPAdapter, Retry
 from minio import Minio
+from minio.error import S3Error
 
 from valmi_connector_lib.common.logs import SingletonLogWriter, TimeAndChunkEndFlushPolicy
 from valmi_connector_lib.common.samples import SampleWriter
@@ -304,20 +304,13 @@ class minioFlusher(DefaultFlusher):
             for record in records:
                 f.write(json.dumps(record)+"\n")
                 
-        gzip_file_path=f"{file_path}.gz"
-        with open(file_path, 'rb') as f_in:
-            with gzip.open(gzip_file_path, 'wb') as f_out:
-                f_out.writelines(f_in)
-        os.remove(file_path)
-        
-        # Extract object name (key) from file_path
-        object_name = os.path.basename(gzip_file_path)
+        object_name = os.path.basename(file_path)
 
         if not self.minio_client.bucket_exists(self.bucket_name):
             self.minio_client.make_bucket(self.bucket_name)
 
         try:
-            self.minio_client.fput_object(self.bucket_name, object_name, gzip_file_path)
+            self.minio_client.fput_object(self.bucket_name, object_name, file_path)
             print(f"File {object_name} uploaded successfully to bucket {self.bucket_name}")
         except ResponseError as err:
             print(f"Error uploading file: {err}")
@@ -395,7 +388,7 @@ class RecordHandler(DefaultHandler):
         sample_writer.write(record)
 
     def finalize(self):
-        self.store_writer.finalize()
+        self.store_writer.flush(last=True)
         
 
 
