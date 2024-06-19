@@ -60,13 +60,12 @@ class ConnectorState:
         self.records_in_chunk = 0
         self.run_time_args = run_time_args
         self.total_records = 0
-        
+
     def reset_chunk_id_from_state(self, state):
         if state is not None \
-            and 'state' in state \
-                and 'data' in state['state'] \
-                    and 'chunk_id' in state['state']['data']:
-            self.num_chunks = state['state']['data']['chunk_id'] + 1
+                and '_valmi_meta' in state \
+                    and 'chunk_id' in state['_valmi_meta']:
+            self.num_chunks = state['_valmi_meta']['chunk_id'] + 1
         else:
             self.num_chunks = 1
         self.total_records = (self.num_chunks - 1) * self.run_time_args["chunk_size"]
@@ -127,7 +126,7 @@ class Engine(NullEngine):
 
     def current_run_details(self):
         sync_id = du(os.environ.get("DAGSTER_RUN_JOB_NAME", "cf280e5c-1184-4052-b089-f9f41b25138e"))
-        #sync_id = du(os.environ.get("DAGSTER_RUN_JOB_NAME", "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"))
+        # sync_id = du(os.environ.get("DAGSTER_RUN_JOB_NAME", "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"))
         r = self.session_with_retries.get(
             f"{self.engine_url}/syncs/{sync_id}/runs/current_run_details/{CONNECTOR_STRING}",
             timeout=HTTP_TIMEOUT,
@@ -200,7 +199,7 @@ class Engine(NullEngine):
         sync_id = self.connector_state.run_time_args["sync_id"]
         run_id = self.connector_state.run_time_args["run_id"]
         r = self.session_with_retries.post(
-            f"{self.engine_url}/syncs/{sync_id}/runs/{run_id}/state/{CONNECTOR_STRING}/",
+            f"{self.engine_url}/syncs/{sync_id}/runs/{run_id}/state/{CONNECTOR_STRING}/{os.environ.get('MODE', 'any')}",
             timeout=HTTP_TIMEOUT,
             json=state,
         )
@@ -239,8 +238,15 @@ class StoreWriter(NullWriter):
 
     def write(self, record, last=False):
         self.records.append(record)
-        self.connector_state.register_record()
-        if self.connector_state.records_in_chunk >= self.connector_state.run_time_args["chunk_size"]:
+        is_state_message = record['type'] == "STATE"
+        if not is_state_message:
+            self.connector_state.register_record()
+
+        etl_mode = os.environ.get('MODE', 'any') == 'etl'
+
+        # For ETL the chunk flush should happen only after seeing STATE message.
+        if (etl_mode and is_state_message) or \
+                (not etl_mode and self.connector_state.records_in_chunk >= self.connector_state.run_time_args["chunk_size"]):
             self.flush(last=False)
             self.records = []
             self.engine.metric(commit=True)
@@ -296,7 +302,13 @@ class CheckpointHandler(DefaultHandler):
 
     def handle(self, record):
         print(json.dumps(record))
-        self.engine.checkpoint(record)
+
+        if os.environ.get('MODE', 'any') == 'etl':
+            _valmi_meta = {"chunk_id": self.engine.connector_state.num_chunks - 1}
+            record['state']['_valmi_meta'] = _valmi_meta
+            self.store_writer.write(record)
+
+        self.engine.checkpoint(record['state'])
         if SingletonLogWriter.instance() is not None:
             SingletonLogWriter.instance().data_chunk_flush_callback()
         SampleWriter.data_chunk_flush_callback()
@@ -312,7 +324,7 @@ class RecordHandler(DefaultHandler):
         if not isinstance(record, ValmiFinalisedRecordMessage):
             record["record"]["rejected"] = False
             record["record"]["metric_type"] = "succeeded"
-        # 
+        #
 
         if not record["record"]["rejected"]:
             self.store_writer.write(record)
@@ -398,7 +410,11 @@ def populate_run_time_args(airbyte_command, engine, config_file_path):
             engine.connector_state.reset_chunk_id_from_state(loaded_state)
             print("num_chunks", engine.connector_state.num_chunks)
             with open(state_file_path, "w") as f:
-                f.write(json.dumps(run_time_args['state']))
+                etl_mode = os.environ.get('MODE', 'any') == 'etl'
+                state = loaded_state
+                if etl_mode:
+                    state = loaded_state["global"]
+                f.write(json.dumps(state))
 
 
 def sync_engine_for_error(proc: subprocess, engine: NullEngine):
@@ -443,7 +459,6 @@ def main():
     # populate run_time_args
     populate_run_time_args(airbyte_command, engine, config_file_path=config_file)
 
-    
 
     if airbyte_command == "read":
         # initialize LogWriter
@@ -476,14 +491,11 @@ def main():
     )
 
     # check engine errors every CHUNK_SIZE records
-    
 
     record_types = handlers.keys()
     for line in io.TextIOWrapper(proc.stdout, encoding="utf-8"):  # or another encoding
         if line.strip() == "":
             continue
-        
-        
         json_record = json.loads(line)
         if json_record["type"] not in record_types:
             handlers["default"].handle(json_record)

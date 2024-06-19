@@ -31,11 +31,13 @@ import json
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from fastapi import Depends
 
+from fastapi import Depends,Response
+from fastapi.responses import JSONResponse
 from fastapi.routing import APIRouter
 from orchestrator.run_manager import SyncRunnerThread
 from pydantic import UUID4, Json
+from api.schemas.sync import LastSuccessfulSync, LatestSyncInfo
 from vyper import v
 
 from metastore import models
@@ -73,7 +75,7 @@ meter = get_meter_provider().get_meter("activation_engine_syncs/api", "test_vers
 
 
 # Create /{sync_id}/runs api counter
-activation_sync_runs_api_counter = meter.create_counter("activation_sync_runs_api_counter")
+activation_sync_runs_api_counter = meter.create_counter("activation_sync_runs_api_counter") 
 
 
 @router.get("/", response_model=List[SyncSchedule])
@@ -90,8 +92,22 @@ async def get_current_run_details_for_connector_string(
     sync_service: SyncsService = Depends(get_syncs_service),
     sync_runs_service: SyncRunsService = Depends(get_sync_runs_service),
 ) -> SyncCurrentRunArgs:
+
+    # Hardcoded for testing
+    if str(sync_id) == "cf280e5c-1184-4052-b089-f9f41b25138e":
+        return SyncCurrentRunArgs(**{
+            "sync_id": sync_id,
+            "run_id": sync_id,
+            "chunk_size": 300,
+            "chunk_id": 0,
+            "records_per_metric": 10,
+            "previous_run_status": "success",
+            "full_refresh": False,
+        })
+
     sync_schedule = sync_service.get(sync_id)
     runs = sync_runs_service.get_runs(sync_id, datetime.now(), 2)
+   
     previous_run = runs[1] if len(runs) > 1 else None
     if previous_run is not None:
         sync_runs_service.db_session.refresh(
@@ -99,11 +115,18 @@ async def get_current_run_details_for_connector_string(
         )  # TODO: Have to find a better way instead of so many refreshes
 
     # Get connector run config
-    dst_connector_type = "_".join(sync_schedule.dst_connector_type.split('_')[1:])
-    connector_run_config = {}
-    if dst_connector_type in v.get("CONNECTOR_RUN_CONFIG"):
-        connector_run_config = v.get("CONNECTOR_RUN_CONFIG")[dst_connector_type]
+    connector_type = ""
+    if connector_string == "src":
+        connector_type = "_".join(sync_schedule.src_connector_type.split('_')[1:])
+    else:
+        connector_type = "_".join(sync_schedule.dst_connector_type.split('_')[1:])
 
+    connector_run_config = {}
+    if connector_type in v.get("CONNECTOR_RUN_CONFIG"):
+        connector_run_config = v.get("CONNECTOR_RUN_CONFIG")[connector_type]
+    print(sync_id)
+    print(previous_run)
+    print(connector_string)
 
     # TODO: get saved checkpoint state of the run_id & create column run_time_args in the sync_runs table to get repeatable runs
     run_args = {
@@ -118,7 +141,7 @@ async def get_current_run_details_for_connector_string(
         "records_per_metric":  connector_run_config["records_per_metric"]
         if "records_per_metric" in connector_run_config
         else 10,
-        
+
         "previous_run_status": "success" if previous_run is None
         or ("run_manager" in previous_run.extra and previous_run.extra["run_manager"]["status"]["status"] == "success")
         else "failure",  # For first run also, previous_run_status will be success
@@ -130,11 +153,12 @@ async def get_current_run_details_for_connector_string(
         run_args["full_refresh"] = current_run.run_time_args["full_refresh"]
 
     # Set Connector State for the run_time_args to restart the run from the checkpoint
-    if current_run.extra is not None and connector_string in current_run.extra and 'state' in current_run.extra[connector_string]:
-        run_args["state"] = current_run.extra[connector_string]['state']['state']
+    if current_run.extra is not None and connector_string in current_run.extra \
+            and 'state' in current_run.extra[connector_string]:
+        run_args["state"] = current_run.extra[connector_string]['state']
 
     return SyncCurrentRunArgs(**run_args)
-    
+
 
 @router.get("/{sync_id}/runs/current_run_details", response_model=SyncCurrentRunArgs)
 async def get_current_run_details(
@@ -151,6 +175,11 @@ async def synchronize_connector(
     run_id: UUID4,
     sync_runs_service: SyncRunsService = Depends(get_sync_runs_service),
 ) -> ConnectorSynchronization:
+
+    # Hardcoded for testing
+    if str(sync_id) == "cf280e5c-1184-4052-b089-f9f41b25138e":
+        return ConnectorSynchronization(abort_required=False)
+
     run = sync_runs_service.get(run_id)
     abort_required = False
 
@@ -170,15 +199,20 @@ async def synchronize_connector(
     return ConnectorSynchronization(abort_required=abort_required)
 
 
-@router.post("/{sync_id}/runs/{run_id}/state/{connector_string}/", response_model=GenericResponse)
+@router.post("/{sync_id}/runs/{run_id}/state/{connector_string}/{mode}", response_model=GenericResponse)
 async def state(
     sync_id: UUID4,
     run_id: UUID4,
     connector_string: str,
+    mode: str,
     state: Dict,
     sync_runs_service: SyncRunsService = Depends(get_sync_runs_service),
 ) -> GenericResponse:
-    sync_runs_service.save_state(sync_id, run_id, connector_string, state)
+    # Hardcoded for testing
+    if str(sync_id) == "cf280e5c-1184-4052-b089-f9f41b25138e":
+        return GenericResponse()
+
+    sync_runs_service.save_state(sync_id, run_id, connector_string, mode, state)
     return GenericResponse()
 
 
@@ -190,6 +224,10 @@ async def status(
     status: Dict,
     sync_runs_service: SyncRunsService = Depends(get_sync_runs_service),
 ) -> GenericResponse:
+    # Hardcoded for testing
+    if str(sync_id) == "cf280e5c-1184-4052-b089-f9f41b25138e":
+        return GenericResponse()
+
     sync_runs_service.save_status(sync_id, run_id, connector_string, status)
     return GenericResponse()
 
@@ -232,12 +270,17 @@ async def new_run(
     with sync_service.api_and_run_manager_mutex:
         sync = sync_service.get_sync(sync_id)
         runs = sync_runs_service.get_runs(sync_id, datetime.now(), 2)
-        previous_run = runs[0] if len(runs) > 1 else None
+
+        previous_run = runs[0] if len(runs) >= 1 else None
         previous_run_status = previous_run.status if previous_run is not None else None
+        print(previous_run)
+        print(previous_run_status)
+
 
         if sync.status == SyncConfigStatus.ACTIVE and (
             previous_run is None or previous_run.status == SyncStatus.STOPPED
         ):
+            print("inside creating run")
             run = SyncRunCreate(
                 run_id=uuid.uuid4(),
                 sync_id=sync.sync_id,
@@ -251,6 +294,9 @@ async def new_run(
             sync.last_run_id = run.run_id
 
             sync_service.update_sync_and_create_run(sync, run)
+            print("sync" , sync)
+            print("run", run)
+
             SyncRunnerThread.refresh_db_session()
 
             return GenericResponse(success=True, message=f"Sync run started with run_id: {run.run_id}")
@@ -361,3 +407,22 @@ async def get_samples(
     sample_handling_service.add_sample_retriever_task(
         sample_retriever_task=sample_retriever_task)
     return await sample_handling_service.read_sample_retriever_data(sample_retriever_task=sample_retriever_task)
+
+
+@router.get("/{sync_id}/last_successful_sync", response_model=LastSuccessfulSync)
+def get_last_sync_sucess_time(sync_id,
+    sync_runs_service: SyncRunsService = Depends(get_sync_runs_service)) -> LastSuccessfulSync:
+    try:
+        return sync_runs_service.last_successful_sync_run(sync_id)
+    except Exception as e:
+        logger.error(f"An error occurred while fetching the last successful sync run: {e}")
+        return JSONResponse(status_code=500, content={"detail": "Internal Server Error"})  
+
+@router.get("/{sync_id}/latest_sync_info", response_model=LatestSyncInfo)
+def get_latest_sync_inof(sync_id,
+    sync_runs_service: SyncRunsService = Depends(get_sync_runs_service)) -> LatestSyncInfo:
+    try:
+        return sync_runs_service.latest_sync_info(sync_id)
+    except Exception as e:
+        logger.error(f"An error occurred while fetching the latest sync info: {e}")
+        return JSONResponse(status_code=500, content={"detail": "Internal Server Error"})   

@@ -118,12 +118,30 @@ class DbtAirbyteAdpater:
 
         with self.adapter.connection_named("discover-connection"):
             if "namespace" in config:
+                relations = self.adapter.list_relations(
+                    self.faldbt._config.credentials.database, schema=config["namespace"])
+                if "query" in config:
+                    adapter_resp, agate_table = self.adapter.execute(config["query"], fetch=True)
+                    # adapter_resp, agate_table = self.execute_sql(self.faldbt, logger, config["query"])
+                    # logger.info(agate_table)
+                    return (False, agate_table)
+                if "table" in config:
+                    # get subset of the relations
+                    subset = []
+                    for relation in relations:
+                        if relation.path.identifier.lower() == config["table"].lower() \
+                                and relation.path.schema.lower() == config["namespace"].lower():
+                            subset.append(relation)
+                            break
+                    return (
+                        False,
+                        subset
+                    )
                 return (
                     False,
                     self.adapter.list_relations(self.faldbt._config.credentials.database, schema=config["namespace"]),
                 )
-            else:
-                return (True, self.adapter.list_schemas(self.faldbt._config.credentials.database))
+            return (True, self.adapter.list_schemas(self.faldbt._config.credentials.database))
 
     def get_columns(self, adapter: SQLAdapter, relation: BaseRelation):
         with self.adapter.connection_named("getcolumns-connection"):
@@ -165,6 +183,7 @@ class DbtAirbyteAdpater:
             "columns": f"[{col_arr_str}]",
             "id_key": catalog.streams[0].id_key,
             "name": self.get_table_name(catalog.streams[0].stream.name),
+            "query": config["query"],
             "previous_run_status": previous_run_status,
             "destination_sync_mode": catalog.streams[0].destination_sync_mode.value,
         }
@@ -217,7 +236,7 @@ class DbtAirbyteAdpater:
             stderr=subprocess.PIPE,
             stdout=subprocess.PIPE,
         )
-        
+
         logs = []
         for line in iter(proc.stdout.readline, b''):
             logs.append(line)

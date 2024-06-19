@@ -31,6 +31,7 @@ import io
 from typing import Any, Dict
 
 from valmi_connector_lib.common.logs import SingletonLogWriter, TimeAndChunkEndFlushPolicy
+from valmi_connector_lib.common.samples import SampleWriter
 from valmi_connector_lib.destination_wrapper.engine import CONNECTOR_STRING
 
 from .proc_stdout_handler import ProcStdoutHandlerThread
@@ -53,7 +54,7 @@ handlers = {
 def get_airbyte_command():
     entrypoint_str = os.environ["VALMI_ENTRYPOINT"]
     entrypoint = entrypoint_str.split(" ")
-
+    
     airbyte_command = sys.argv[3]
     for i, arg in enumerate(sys.argv[1:]):
         if i >= len(entrypoint):
@@ -165,30 +166,32 @@ def main():
                            engine.connector_state.run_time_args["sync_id"],
                            engine.connector_state.run_time_args["run_id"],
                            CONNECTOR_STRING)
-       
-        #initialize SampleWriter
-        SampleWriter.get_writer_by_metric_type(store_config_str=os.environ["VALMI_INTERMEDIATE_STORE"],
-                                                sync_id=engine.connector_state.run_time_args["sync_id"],
-                                                run_id=engine.connector_state.run_time_args["run_id"],
-                                                connector=CONNECTOR_STRING)
 
-        # initialize handler
-        for key in handlers.keys():
-            handlers[key] = handlers[key](engine=engine, store_writer=None, stdout_writer=None)
+        # initialize SampleWriter
+        SampleWriter.get_writer_by_metric_type(store_config_str=os.environ["VALMI_INTERMEDIATE_STORE"],
+                                               sync_id=engine.connector_state.run_time_args["sync_id"],
+                                               run_id=engine.connector_state.run_time_args["run_id"],
+                                               connector=CONNECTOR_STRING)
 
         global loaded_state
         store_reader = StoreReader(engine=engine, state=loaded_state)
 
+        # initialize handler
+        for key in handlers.keys():
+            handlers[key] = handlers[key](engine=engine, store_writer=None,
+                                          stdout_writer=None, store_reader=store_reader)
+
         # create the subprocess
         subprocess_args = sys.argv[1:]
 
-        # HACK: Remove destination_catalog command line argument when working with etl destination
+        # For ETL, there is no concept of destination catalog
         if os.environ.get('MODE', 'any') == 'etl' and "--destination_catalog" in subprocess_args:
             arg_idx = subprocess_args.index("--destination_catalog")
             subprocess_args.remove("--destination_catalog")
             subprocess_args.pop(arg_idx)
 
-        if is_state_available():
+        # For ETL, internal connectors do not need any state information  
+        if os.environ.get('MODE', 'any') != 'etl' and is_state_available():
             subprocess_args.append("--state")
             subprocess_args.append(state_file_path)
         proc = subprocess.Popen(subprocess_args, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
@@ -202,8 +205,6 @@ def main():
             record_types = handlers.keys()
 
             for line in store_reader.read():
-                print("Reading")
-                print(line)
                 if line.strip() == "":
                     continue
                 json_record = json.loads(line)

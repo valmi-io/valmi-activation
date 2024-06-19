@@ -29,6 +29,7 @@ from .proc_stdout_event_handlers import (
     StoreReader,
     StdoutWriter,
 )
+import os
 
 
 class ReadDefaultHandler:
@@ -62,7 +63,12 @@ class ReadCheckpointHandler(ReadDefaultHandler):
         super(ReadCheckpointHandler, self).__init__(*args, **kwargs)
 
     def handle(self, record) -> bool:
-        # do an engine call to proceed.
+        # For ETL, we store the checkpoint for the reader instead of the destination stdout state, 
+        # because state is dictated by the source.
+        if os.environ.get('MODE', 'any') == 'etl':
+            _valmi_meta = {"file_marker": self.store_reader.current_file_name}
+            record["state"]["_valmi_meta"] = _valmi_meta
+            self.engine.checkpoint(record["state"])
         return True
 
 

@@ -53,10 +53,9 @@ class DestinationWriteWrapper:
 
     def read_chunk_id_checkpoint(self):
         if self.previous_state is not None \
-                and 'state' in self.previous_state \
-                and 'data' in self.previous_state['state'] \
-                and 'chunk_id' in self.previous_state['state']['data']:
-            return self.previous_state['state']['data']['chunk_id'] + 1
+                and '_valmi_meta' in self.previous_state \
+                and 'chunk_id' in self.previous_state['_valmi_meta']:
+            return self.previous_state['_valmi_meta']['chunk_id'] + 1
         return 1
 
     def start_message_handling(self, input_messages: Iterable[AirbyteMessage]) -> AirbyteMessage:
