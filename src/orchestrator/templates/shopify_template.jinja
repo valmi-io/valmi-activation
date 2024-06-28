@@ -38,7 +38,7 @@ from dagster import (
     Permissive,
     StringSource
 )
-
+import json
  
 
 DOCKER_CONFIG_SCHEMA = {
@@ -245,22 +245,25 @@ def job():
                     jitter=Jitter.PLUS_MINUS,
                 )
             )(i)
+        
         c = normalization_op.with_retry_policy(
                 RetryPolicy(
-                    max_retries=100,
+                    max_retries=5,
                     delay=2,  # 2s
                     backoff=Backoff.EXPONENTIAL,
                     jitter=Jitter.PLUS_MINUS,
                 )
             )(src=a,dst=b)
+        update_norm_status(c)
         d = transformation_po_op.with_retry_policy(
                 RetryPolicy(
-                    max_retries=100,
+                    max_retries=5,
                     delay=2,  # 2s
                     backoff=Backoff.EXPONENTIAL,
                     jitter=Jitter.PLUS_MINUS,
                 )
             )(c)
+        update_transformation_status(d)
         finalizer(d) 
 
     return sync_graph.to_job(name="{{ sync['id'].replace('-','_') }}")
@@ -286,6 +289,43 @@ def finalise_on_run_failure(context: RunStatusSensorContext):
     context.log.info("finalizer on run failure")
     finalise_this_run()
 
+@op(name="normalization_status_updater_{{ sync['id'].replace('-','_') }}" , retry_policy=RetryPolicy(
+        max_retries=5,
+        delay=2,  # 2s
+        backoff=Backoff.EXPONENTIAL,
+        jitter=Jitter.PLUS_MINUS,
+    ),
+)
+def update_norm_status(a):
+    update_dag_status("normalization")
+
+@op(name="transform_status_updater_{{ sync['id'].replace('-','_') }}" , retry_policy=RetryPolicy(
+        max_retries=5,
+        delay=2,  # 2s
+        backoff=Backoff.EXPONENTIAL,
+        jitter=Jitter.PLUS_MINUS,
+    ),
+)
+def update_transformation_status(a):
+    update_dag_status("transformation")
+
+
+def update_dag_status(state):
+    activation_url = os.environ["ACTIVATION_ENGINE_URL"]
+    session = requests.Session()
+    retry = Retry(connect=5, backoff_factor=5)
+    adapter = HTTPAdapter(max_retries=retry)
+    session.mount('http://', adapter)
+    session.mount('https://', adapter)
+    sync_id = "{{sync['id']}}"
+    response = session.get(f"{activation_url}/syncs/{sync_id}/runs/current_run_details/{state}")
+    response.raise_for_status()
+    run_id = response.json()["run_id"]
+    data = {
+        "status": "success"
+    }
+    response = session.post(f"{activation_url}/syncs/{sync_id}/runs/{run_id}/status/{state}", data = json.dumps(data))
+    response.raise_for_status()
 
 def finalise_this_run():
     activation_url = os.environ["ACTIVATION_ENGINE_URL"]
