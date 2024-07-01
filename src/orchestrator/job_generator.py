@@ -183,8 +183,14 @@ class JobCreatorThread(threading.Thread):
         file_loader = FileSystemLoader(join(dirname(__file__), "templates"))
         env = Environment(loader=file_loader)
         template_name = "job_template.jinja"
+        logger.debug("*"*800)
+        logger.debug(sync["source"]["credential"]["connector_type"])
         if sync["source"]["credential"]["connector_type"] == "SRC_SHOPIFY":
             template_name = "shopify_template.jinja"
+        elif sync["source"]["credential"]["connector_type"] == "SRC_GOOGLE_ANALYTICS":
+            logger.debug("in api_job_template")
+            logger.debug("*"*800)
+            template_name = "google_analytics_template.jinja"
         template = env.get_template(template_name)
         output = template.render(sync=sync, app=v.get("APP"), prefix=SHARED_DIR)
         with open(join(dirs[GENERATED_DIR], f"{sync['id'].replace('-','_')}.py"), "w") as f:
