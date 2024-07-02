@@ -220,7 +220,7 @@ class SyncRunnerThread(threading.Thread):
                                     # if either of the source or destination failed, then the sync should be failed.
                                     error_msg = None
                                     status = "success"
-                                    keys_to_check = ["src", "dest"]
+                                    keys_to_check = ["src", "dest", "normalization", "transformation"]
                                     for key in keys_to_check:
                                         if (
                                             run.extra is not None
@@ -236,7 +236,7 @@ class SyncRunnerThread(threading.Thread):
                                                 # Send an alert
                                                 AlertGenerator().sync_status_alert(sync.sync_id, run.run_id, status, error_msg)
                                                 break
-
+                                        
                                     if error_msg is None:
                                         sync.run_status = SyncStatus.STOPPED
                                         run.status = SyncStatus.STOPPED

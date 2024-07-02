@@ -197,22 +197,6 @@ normalization_op = my_docker_container_op.configured(
 )
 
 
-transformation_po_op = docker_container_op.configured(
-    {
-        "image":"valmiio/transform-po:latest",
-        "command": [
-            "--config-file", 
-            "/tmp/config.json",
-            ],
-        "container_kwargs" : {  # keyword args to be passed to the container. example:
-            "volumes": ["{{ prefix }}/intermediate_store:{{ prefix }}/intermediate_store","{{ prefix }}/{{ app }}/repo/config/{{sync['id']}}-{{ sync['destination']['id'] }}.json:/tmp/config.json" ],
-        },
-        "env_vars": list({**os.environ}.keys()),
-
-    },
-    name="transformation_po_op_{{ sync['id'].replace('-','_') }}"
-)
-
 @op(name="finalizer_{{ sync['id'].replace('-','_') }}" , retry_policy=RetryPolicy(
         max_retries=5,
         delay=2,  # 2s
@@ -255,17 +239,7 @@ def job():
                 )
             )(src=a,dst=b)
         update_norm_status(c)
-        d = transformation_po_op.with_retry_policy(
-                RetryPolicy(
-                    max_retries=5,
-                    delay=2,  # 2s
-                    backoff=Backoff.EXPONENTIAL,
-                    jitter=Jitter.PLUS_MINUS,
-                )
-            )(c)
-        update_transformation_status(d)
-        finalizer(d) 
-
+        finalizer(c) 
     return sync_graph.to_job(name="{{ sync['id'].replace('-','_') }}")
 
 
@@ -298,17 +272,6 @@ def finalise_on_run_failure(context: RunStatusSensorContext):
 )
 def update_norm_status(a):
     update_dag_status("normalization")
-
-@op(name="transform_status_updater_{{ sync['id'].replace('-','_') }}" , retry_policy=RetryPolicy(
-        max_retries=5,
-        delay=2,  # 2s
-        backoff=Backoff.EXPONENTIAL,
-        jitter=Jitter.PLUS_MINUS,
-    ),
-)
-def update_transformation_status(a):
-    update_dag_status("transformation")
-
 
 def update_dag_status(state):
     activation_url = os.environ["ACTIVATION_ENGINE_URL"]
