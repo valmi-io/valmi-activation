@@ -20,7 +20,7 @@ valmi_core = "0.1.26"
 
 valmi_app_backend = "0.1.39"
 
-valmi_app = "0.1.44"
+valmi_app = "0.1.45"
 
 valmi_dagster = "0.1.5"
 
