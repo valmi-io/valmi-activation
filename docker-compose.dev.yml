@@ -57,6 +57,20 @@ services:
     volumes:
       - ./valmi-app:/workspace:z
       - ./valmi-app/.env:/app/.env
+  
+  valmi-recommendation-engine:
+    image: valmiio/valmi-recommendation-engine:latest
+    env_file:
+      - .env
+    ports:
+      - "8001:8001"
+    container_name: valmi-recommendation-engine
+    restart: on-failure
+    networks:
+      - valmi-network
+    volumes:
+      - ./valmi-app-backend/.env:/.env:z
+
 
 networks:
   valmi-network:
